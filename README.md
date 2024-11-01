@@ -40,19 +40,48 @@ Discuss what you need to develop this project. This includes background informat
 <table>
 <tr>
     <td align="center">
-        <a href="https://github.com/ApplebaumIan">
-            <img src="https://avatars.githubusercontent.com/u/9451941?v=4" width="100;" alt="ApplebaumIan"/>
+        <a href="https://github.com/gutbash">
+            <img src="https://avatars.githubusercontent.com/u/44552816?v=4" width="100;" alt="gutbash"/>
             <br />
-            <sub><b>Ian Tyler Applebaum</b></sub>
+            <sub><b>Bash</b></sub>
         </a>
     </td>
     <td align="center">
-        <a href="https://github.com/leighflagg">
-            <img src="https://avatars.githubusercontent.com/u/77810293?v=4" width="100;" alt="leighflagg"/>
+        <a href="https://github.com/khanhquocng2801">
+            <img src="https://avatars.githubusercontent.com/u/102694034?v=4" width="100;" alt="khanhquocng2801"/>
             <br />
-            <sub><b>Null</b></sub>
+            <sub><b>Khan</b></sub>
         </a>
-    </td></tr>
+    </td>
+    <td align="center">
+        <a href="https://github.com/omarshakir8">
+            <img src="https://avatars.githubusercontent.com/u/71716775?v=4" width="100;" alt="omarshakir8"/>
+            <br />
+            <sub><b>Omar</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/Ruben-amalgam">
+            <img src="https://avatars.githubusercontent.com/u/171351822?v=4" width="100;" alt="Ruben-amalgam"/>
+            <br />
+            <sub><b>Ruben</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/tus29603">
+            <img src="https://avatars.githubusercontent.com/u/157152397?v=4" width="100;" alt="tus29603"/>
+            <br />
+            <sub><b>Tes</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/Youngdoul">
+            <img src="https://avatars.githubusercontent.com/u/157045613?v=4" width="100;" alt="Youngdoul"/>
+            <br />
+            <sub><b>Doul</b></sub>
+        </a>
+    </td>
+</tr>
 </table>
 
 [//]: # ( readme: collaborators -end )
