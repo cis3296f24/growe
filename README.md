@@ -36,16 +36,16 @@ A collaborative habit-building app that leverages social accountability to help 
 
 _Examples of generating plant assets with Stable Diffusion 3.5 Large._
 
-| Setting            | Value                                           |
-|--------------------|-------------------------------------------------|
-| **Prompt**         | isolated {plant_name} plant at the {growth_stage}, white background, isometric perspective, 8-bit pixel art style |
-| **Aspect Ratio**   | 1:1                                             |
-| **CFG**            | 3.5                                             |
-| **Prompt Strength**| 0.85 (1.0 might be better)                                           |
-| **Steps**          | 40 (35 might be better)                                             |
-| **Seed**           | 227468720                                       |
-| **Output Format**  | webp                                            |
-| **Output Quality** | 90                                              |
+| Setting            | Value                                                                                                             |
+|--------------------|-------------------------------------------------------------------------------------------------------------------|
+| **Prompt**         | isolated `{plant_name}` plant at the `{growth_stage}`, white background, isometric perspective, 8-bit pixel art style |
+| **Aspect Ratio**   | 1:1                                                                                                               |
+| **CFG**            | 3.5                                                                                                               |
+| **Prompt Strength**| 0.85 (1.0 might be better)                                                                                        |
+| **Steps**          | 40 (35 might be better)                                                                                           |
+| **Seed**           | 227468720                                                                                                         |
+| **Output Format**  | webp                                                                                                              |
+| **Output Quality** | 90                                                                                                                |
 
 _The settings to generate the previous examples. Curly brackets indicate arguments to the template prompt. Growth stages indicate the progression of the plant at a certain life cycle._
 
