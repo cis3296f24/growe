@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 import { signUp, login, logout } from '../utils/authenticate';
-import { User } from 'firebase/auth'; // Adjust the import path based on your setup
+import { User } from 'firebase/auth';
 
 export function Auth() {
   const [email, setEmail] = useState('');
