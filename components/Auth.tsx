@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
-import { signUp, login, logout } from '../utils/authenticate';
+import { signUp, login, logout, checkUsernameExists, checkEmailExists } from '../utils/authenticate';
 import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
 
@@ -10,14 +10,25 @@ export function Auth() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(' ');
 
   const handleSignUp = async () => {
-    const newUser = await signUp(email, password);
+    const newUser = await signUp(email, password, username);
     setUser(newUser);
+  };
+
+  const handleStep = (newStep: typeof step) => {
+    setStep(newStep);
+    setError(' ');
   };
 
   const handleLogin = async () => {
     const loggedInUser = await login(email, password);
+    if (!loggedInUser) {
+      setError('Invalid email or password');
+      return;
+    }
     setUser(loggedInUser);
   };
 
@@ -26,6 +37,32 @@ export function Auth() {
     setUser(null);
     setStep('initial');
   };
+
+  const handleCheckUsername = async () => {
+    const exists = await checkUsernameExists(username);
+    if (exists) {
+      setError('That username is already taken. Try another one.');
+    } else {
+      setPassword('');
+      setStep('signup-password');
+      setError(' ');
+    }
+  };
+
+  const handleCheckEmail = async () => {
+    const exists = await checkEmailExists(email);
+    if (exists) {
+      setError('That email is already in use. Log in instead.');
+    } else {
+      setStep('signup-username');
+      setError(' ');
+    }
+  }
+
+  const handleLoginPassword = () => {
+    setPassword('');
+    setStep('login-password');
+  }
 
   return (
     <View style={styles.container}>
@@ -39,20 +76,24 @@ export function Auth() {
         <View>
           {step === 'initial' && (
             <View style={styles.buttonContainer}>
-              <Button title="sign up" onPress={() => setStep('signup-email')} />
-              <Button title="login" onPress={() => setStep('login-email')} />
+              <Button title="sign up" onPress={() => handleStep('signup-email')} />
+              <Button title="login" onPress={() => handleStep('login-email')} />
             </View>
           )}
           {step === 'login-email' && (
             <View>
               <TextInput
-                placeholder="Email or Username"
+                placeholder="Email"
                 placeholderTextColor="gray"
                 value={email}
                 onChangeText={setEmail}
                 style={styles.input}
               />
-              <Button title="next" onPress={() => setStep('login-password')} />
+              {error && <Text style={styles.error}>{error}</Text>}
+              <View style={styles.buttonContainer}>
+                <Button title='back' onPress={() => handleStep('initial')} />
+                {email.includes('@') && <Button title="next" onPress={handleLoginPassword} />}
+              </View>
             </View>
           )}
           {step === 'login-password' && (
@@ -65,7 +106,11 @@ export function Auth() {
                 secureTextEntry
                 style={styles.input}
               />
-              <Button title="login" onPress={handleLogin} />
+              {error && <Text style={styles.error}>{error}</Text>}
+              <View style={styles.buttonContainer}>
+                <Button title='back' onPress={() => handleStep('login-email')} />
+                {password && <Button title="login" onPress={handleLogin} />}
+              </View>
             </View>
           )}
           {step === 'signup-email' && (
@@ -77,7 +122,11 @@ export function Auth() {
                 onChangeText={setEmail}
                 style={styles.input}
               />
-              <Button title="next" onPress={() => setStep('signup-username')} />
+              {error && <Text style={styles.error}>{error}</Text>}
+              <View style={styles.buttonContainer}>
+                <Button title='back' onPress={() => handleStep('initial')} />
+                {email.includes('@') && <Button title="next" onPress={handleCheckEmail} />}
+              </View>
             </View>
           )}
           {step === 'signup-username' && (
@@ -89,7 +138,11 @@ export function Auth() {
                 onChangeText={setUsername}
                 style={styles.input}
               />
-              <Button title="next" onPress={() => setStep('signup-password')} />
+              {error && <Text style={styles.error}>{error}</Text>}
+              <View style={styles.buttonContainer}>
+                <Button title='back' onPress={() => handleStep('signup-email')}/>
+                {username && <Button title="next" onPress={handleCheckUsername} />}
+              </View>
             </View>
           )}
           {step === 'signup-password' && (
@@ -102,7 +155,11 @@ export function Auth() {
                 secureTextEntry
                 style={styles.input}
               />
-              <Button title="sign up" onPress={handleSignUp} />
+              {error && <Text style={styles.error}>{error}</Text>}
+              <View style={styles.buttonContainer}>
+                <Button title='back' onPress={() => handleStep('signup-username')} />
+                {password.length >= 6 && <Button title="sign up" onPress={handleSignUp} />}
+              </View>
             </View>
           )}
         </View>
@@ -112,6 +169,9 @@ export function Auth() {
 }
 
 const styles = StyleSheet.create({
+  error: {
+    color: 'red',
+  },
   icon: {
     marginBottom: 12,
   },
@@ -123,7 +183,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    minWidth: 200,
+    minWidth: 300,
     width: '100%',
     borderColor: 'lightgray',
     borderWidth: 1,
