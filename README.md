@@ -49,7 +49,7 @@ _Examples of generating plant assets with Stable Diffusion 3.5 Large._
 
 _The settings to generate the previous examples. Curly brackets indicate arguments to the template prompt. Growth stages indicate the progression of the plant at a certain life cycle._
 
-| Stage | Description |
+| State | Description |
 |--------------------|-------------------------------------------------|
 | **Sprouting** | sprouting stage where it germinates and grows its first leaf |
 | **Seedling** | seedling stage where a small green shoot emerges above the soil with tiny leaves starting to spread |
@@ -58,6 +58,7 @@ _The settings to generate the previous examples. Curly brackets indicate argumen
 | **Flowering** | flowering stage where the plant displays fully opened and prominent flowers |
 | **Fruiting** | fruiting stage where the plant produces fruits as the flowers fade |
 | **Dying** | dying stage where the plant turns brown and wilts |
+| **Dead** | dead plant |
 
 **Yucca**
 
@@ -145,6 +146,9 @@ Make pledges at the beginning of the week to commit to n days that will log a ha
   <img src="https://github.com/user-attachments/assets/81a28e94-d5fc-476c-9ac9-e22dcfedd989" height="400" />
   <img src="https://github.com/user-attachments/assets/cec70125-a9c1-4847-bd50-a8e3a67bc51d" height="400" />
 </p>
+
+## Database Collections
+![image](https://github.com/user-attachments/assets/2be00592-6da5-4fde-aa76-756979f58eab)
 
 # Background
 This is the life cycle of a user on this app for a three person group with the goal to workout 3 days a week:
