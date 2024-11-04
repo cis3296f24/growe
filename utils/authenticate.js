@@ -1,29 +1,14 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, initializeAuth, getReactNativePersistence } from 'firebase/auth';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
-
-// Firebase configuration
-const firebaseConfig = {
-    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-    measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-});
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut} from 'firebase/auth';
+import { collection, getDocs } from 'firebase/firestore';
+import { addUser } from './collection';
+import { auth, db } from './firebaseConfig';
 
 // Sign Up Function
-export const signUp = async (email, password) => {
+export const signUp = async (email, password, username) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     console.log('User signed up:', userCredential.user);
+    await addUser(userCredential.user, username);
     return userCredential.user;
   } catch (error) {
     console.error('Error signing up:', error.message);
@@ -52,3 +37,31 @@ export const logout = async () => {
     console.error('Error logging out:', error.message);
   }
 };
+
+export const checkUsernameExists = async (username) => {
+  // Check if username exists in database
+
+  // Access the users collection
+  const usersCollection = collection(db, 'users');
+
+  // Get all users
+  const usersSnapshot = await getDocs(usersCollection);
+
+  // Check if username exists
+  const usernameExists = usersSnapshot.docs.some((doc) => doc.data().username === username);
+  return usernameExists;
+};
+
+export const checkEmailExists = async (email) => {
+  // Check if email exists in database
+
+  // Access the users collection
+  const usersCollection = collection(db, 'users');
+
+  // Get all users
+  const usersSnapshot = await getDocs(usersCollection);
+
+  // Check if email exists
+  const emailExists = usersSnapshot.docs.some((doc) => doc.data().email === email);
+  return emailExists;
+}
