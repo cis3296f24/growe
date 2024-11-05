@@ -3,8 +3,10 @@ import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 import { signUp, login, logout, checkUsernameExists, checkEmailExists } from '../utils/authenticate';
 import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
+import { useRouter } from 'expo-router';
 
 export function Auth() {
+  const router = useRouter();
   const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password'>('initial');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -15,7 +17,10 @@ export function Auth() {
 
   const handleSignUp = async () => {
     const newUser = await signUp(email, password, username);
-    setUser(newUser);
+    if (newUser) {
+      setUser(newUser);
+      router.push({ pathname: '/home', params: {} });
+    }
   };
 
   const handleStep = (newStep: typeof step) => {
@@ -30,6 +35,7 @@ export function Auth() {
       return;
     }
     setUser(loggedInUser);
+    router.push({ pathname: '/home', params: {} });
   };
 
   const handleLogout = async () => {
