@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
 import { Auth } from '../components/Auth';
+import { UserProvider } from '../components/UserContext';
 
 export default function Index() {
   return (
@@ -10,7 +11,9 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Auth />
+      <UserProvider>
+        <Auth />
+      </UserProvider>
     </View>
   );
 }

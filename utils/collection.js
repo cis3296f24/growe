@@ -1,6 +1,7 @@
 
 import { collection, getDocs, query, where, doc, setDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import { DocumentReference } from 'firebase/firestore';
 
 // add user to collection
 export const addUser = async (user, username) => {
@@ -11,6 +12,7 @@ export const addUser = async (user, username) => {
     await setDoc(doc(usersCollection, user.uid), {
         email: user.email, // set email
         username: username, // set username
+        displayName: user.displayName, // set display name
         createdAt: new Date(), // set current date
         profileImageUrl: null, // set default profile image
         groups: [], // reference to groups user is in
@@ -31,4 +33,35 @@ export const addUser = async (user, username) => {
 
     // return user
     return user;
+}
+
+export const createGroup = async (user, groupName, habit, frequency) => {
+
+    const db = getFirestore();
+    const groupRef = collection(db, 'groups');
+    if (!user?.uid) {
+        console.error('User UID is undefined');
+        return;
+    }
+    const userRef = doc(db, 'users', user.uid);
+    const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const groupDoc = {
+        users: [user?.uid],
+        // get name from user input or user display to make a group
+        name: groupName,
+        // set user reference as admin
+        admin: userRef,
+        habit: habit,
+        frequency: frequency,
+        garden: null,
+        streak: 0,
+        // generate random phrase for join code
+        joinCode: joinCode,
+    };
+    const newUserGroup = await addDoc(groupRef, groupDoc);
+    const userDoc = {
+        groups: [...groups, newUserGroup]
+    };
+    await updateDoc(userRef, userDoc);
+    return newUserGroup;
 }

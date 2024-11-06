@@ -4,14 +4,15 @@ import { addUser } from './collection';
 import { auth, db } from './firebaseConfig';
 
 // Sign Up Function
-export const signUp = async (email, password, username) => {
+export const signUp = async (email, password, username, displayName) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     console.log('User signed up:', userCredential.user);
+    await updateProfile(userCredential.user, { displayName });
     await addUser(userCredential.user, username);
     return userCredential.user;
   } catch (error) {
-    console.error('Error signing up:', error.message);
+    console.error(`Error signing up with email ${email}: ${error.message}`);
     return null;
   }
 };

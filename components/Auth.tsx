@@ -4,19 +4,21 @@ import { signUp, login, logout, checkUsernameExists, checkEmailExists } from '..
 import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
 import { useRouter } from 'expo-router';
+import { useUser } from './UserContext';
 
 export function Auth() {
   const router = useRouter();
   const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password'>('initial');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
-  const [user, setUser] = useState<User | null>(null);
+  const {user, setUser} = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(' ');
 
   const handleSignUp = async () => {
-    const newUser = await signUp(email, password, username);
+    const newUser = await signUp(email, password, username, displayName);
     if (newUser) {
       setUser(newUser);
       router.push({ pathname: '/home', params: {} });
@@ -144,10 +146,17 @@ export function Auth() {
                 onChangeText={setUsername}
                 style={styles.input}
               />
+              <TextInput
+                placeholder="Display Name"
+                placeholderTextColor="gray"
+                value={displayName}
+                onChangeText={setDisplayName}
+                style={styles.input}
+              />
               {error && <Text style={styles.error}>{error}</Text>}
               <View style={styles.buttonContainer}>
                 <Button title='back' onPress={() => handleStep('signup-email')}/>
-                {username && <Button title="next" onPress={handleCheckUsername} />}
+                {(username && displayName) && <Button title="next" onPress={handleCheckUsername} />}
               </View>
             </View>
           )}
