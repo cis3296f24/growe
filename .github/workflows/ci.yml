@@ -12,7 +12,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '18.18.0'  # Ensure this matches your project's Node version
+          node-version: '18.18.0'
 
       - name: Install dependencies
         run: npm install
@@ -34,5 +34,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run Expo Start
-        run: npx expo start --offline --non-interactive
+      - name: Run Expo Start and Verify
+        id: expo_start
+        env:
+          CI: true  # Set CI environment variable for Expo
+        run: |
+          # Run Expo start in offline mode, redirecting output to log.txt
+          npx expo start --offline > log.txt 2>&1 || exit 1
+          # Check if log.txt contains a success message
+          if ! grep -q "Metro waiting on" log.txt; then
+            echo "Expo start failed to run correctly."
+            cat log.txt  # Output log for debugging
+            exit 1
+          fi
+          echo "Expo started successfully."
