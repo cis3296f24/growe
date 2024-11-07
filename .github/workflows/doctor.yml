@@ -3,7 +3,7 @@ name: Expo Doctor
 on: [pull_request]
 
 jobs:
-  start-dev:
+  expo-doctor:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
