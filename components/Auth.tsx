@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
-import { signUp, login, logout, checkUsernameExists, checkEmailExists } from '../utils/authenticate';
+import { signUp, login, logout, checkUsernameExists, checkEmailExists, resetPassword } from '../utils/authenticate';
 import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
 
 export function Auth() {
-  const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password'>('initial');
+  const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password' |'reset-password'>('initial');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -48,9 +48,16 @@ export function Auth() {
       setError(' ');
     }
   };
-
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
   const handleCheckEmail = async () => {
     const exists = await checkEmailExists(email);
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
     if (exists) {
       setError('That email is already in use. Log in instead.');
     } else {
@@ -63,6 +70,18 @@ export function Auth() {
     setPassword('');
     setStep('login-password');
   }
+  const handleResetPassword = async () => {
+    const success = await resetPassword(email);
+    if (success) {
+      setError('Password reset email sent!');
+      setStep('login-email');
+    } else {
+      setError('Error sending password reset email');
+    }
+  }
+  ;
+  
+  
 
   return (
     <View style={styles.container}>
@@ -86,7 +105,10 @@ export function Auth() {
                 placeholder="Email"
                 placeholderTextColor="gray"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setError(isValidEmail(text) ? ' ' : 'Please enter a valid email address');
+                }}
                 style={styles.input}
               />
               {error && <Text style={styles.error}>{error}</Text>}
@@ -94,6 +116,7 @@ export function Auth() {
                 <Button title='back' onPress={() => handleStep('initial')} />
                 {email.includes('@') && <Button title="next" onPress={handleLoginPassword} />}
               </View>
+              
             </View>
           )}
           {step === 'login-password' && (
@@ -111,6 +134,7 @@ export function Auth() {
                 <Button title='back' onPress={() => handleStep('login-email')} />
                 {password && <Button title="login" onPress={handleLogin} />}
               </View>
+              <Button title="Forgot Password?" onPress={() => handleStep('reset-password')} />
             </View>
           )}
           {step === 'signup-email' && (
@@ -162,6 +186,23 @@ export function Auth() {
               </View>
             </View>
           )}
+          {step === 'reset-password' && (
+              <View>
+                <TextInput
+                  placeholder="Enter your email"
+                  placeholderTextColor="gray"
+                  value={email}
+                  onChangeText={setEmail}
+                  style={styles.input}
+                />
+                {error && <Text style={styles.error}>{error}</Text>}
+                <View style={styles.buttonContainer}>
+                  <Button title="Back" onPress={() => handleStep('login-email')} />
+                  {email.includes('@') && <Button title="Send Reset Email" onPress={handleResetPassword} />}
+                </View>
+              </View>
+            )}
+
         </View>
       )}
     </View>
