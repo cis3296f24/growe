@@ -1,7 +1,12 @@
 const { getDefaultConfig } = require("expo/metro-config");
+const path = require("path");
+const { fileURLToPath } = require('url');
+
+// Get directory path
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 module.exports = (() => {
-  const config = getDefaultConfig(__dirname);
+  const config = getDefaultConfig(path.resolve(dirname));
 
   const { transformer, resolver } = config;
 
