@@ -1,0 +1,29 @@
+name: Build Verification
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.18.0'
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+      
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build for iOS and Android
+        run: npx expo export --platform all
