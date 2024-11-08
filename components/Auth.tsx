@@ -20,7 +20,7 @@ export function Auth() {
     const newUser = await signUp(email, password, username);
     if (newUser) {
       setUser(newUser);
-      router.push({ pathname: '/home', params: {} });
+      router.push('./home');
     }
   };
 
@@ -36,7 +36,7 @@ export function Auth() {
       return;
     }
     setUser(loggedInUser);
-    router.push({ pathname: '/home', params: {} });
+    router.push('./home');
   };
 
   const handleLogout = async () => {
