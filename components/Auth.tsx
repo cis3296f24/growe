@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
-import { signUp, login, logout, checkUsernameExists, checkEmailExists } from '../utils/authenticate';
+import { signUp, login, logout, checkUsernameExists, checkEmailExists, resetPassword } from '../utils/authenticate';
 import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
 import { useRouter } from 'expo-router';
 
 export function Auth() {
   const router = useRouter();
-  const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password'>('initial');
+  const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password' |'reset-password'>('initial');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(' ');
+  const [emailValid, setEmailValid] = useState(false);
 
   const handleSignUp = async () => {
     const newUser = await signUp(email, password, username);
@@ -55,8 +56,25 @@ export function Auth() {
     }
   };
 
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const valid = emailRegex.test(email);
+    if (!valid) {
+      setEmailValid(false);
+      return false;
+    } else {
+      setEmailValid(true);
+      setError(' ');
+      return true;
+    }
+  }
+  
   const handleCheckEmail = async () => {
     const exists = await checkEmailExists(email);
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
     if (exists) {
       setError('That email is already in use. Log in instead.');
     } else {
@@ -68,6 +86,16 @@ export function Auth() {
   const handleLoginPassword = () => {
     setPassword('');
     setStep('login-password');
+  }
+
+  const handleResetPassword = async () => {
+    const success = await resetPassword(email);
+    if (success) {
+      setError('Password reset email sent!');
+      setStep('login-email');
+    } else {
+      setError('Error sending password reset email');
+    }
   }
 
   return (
@@ -92,13 +120,16 @@ export function Auth() {
                 placeholder="Email"
                 placeholderTextColor="gray"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  isValidEmail(text);
+                }}
                 style={styles.input}
               />
               {error && <Text style={styles.error}>{error}</Text>}
               <View style={styles.buttonContainer}>
                 <Button title='back' onPress={() => handleStep('initial')} />
-                {email.includes('@') && <Button title="next" onPress={handleLoginPassword} />}
+                {emailValid && <Button title="next" onPress={handleLoginPassword} />}
               </View>
             </View>
           )}
@@ -117,6 +148,7 @@ export function Auth() {
                 <Button title='back' onPress={() => handleStep('login-email')} />
                 {password && <Button title="login" onPress={handleLogin} />}
               </View>
+              <Button title="Forgot Password?" onPress={() => handleStep('reset-password')} />
             </View>
           )}
           {step === 'signup-email' && (
@@ -125,13 +157,16 @@ export function Auth() {
                 placeholder="Email"
                 placeholderTextColor="gray"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  isValidEmail(text);
+                }}
                 style={styles.input}
               />
               {error && <Text style={styles.error}>{error}</Text>}
               <View style={styles.buttonContainer}>
                 <Button title='back' onPress={() => handleStep('initial')} />
-                {email.includes('@') && <Button title="next" onPress={handleCheckEmail} />}
+                {emailValid && <Button title="next" onPress={handleCheckEmail} />}
               </View>
             </View>
           )}
@@ -168,6 +203,26 @@ export function Auth() {
               </View>
             </View>
           )}
+          {step === 'reset-password' && (
+              <View>
+                <TextInput
+                  placeholder="Enter your email"
+                  placeholderTextColor="gray"
+                  value={email}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    isValidEmail(text);
+                  }}
+                  style={styles.input}
+                />
+                {error && <Text style={styles.error}>{error}</Text>}
+                <View style={styles.buttonContainer}>
+                  <Button title="Back" onPress={() => handleStep('login-email')} />
+                  {emailValid && <Button title="Send Reset Email" onPress={handleResetPassword} />}
+                </View>
+              </View>
+            )}
+
         </View>
       )}
     </View>
