@@ -1,4 +1,6 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut} from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail} from 'firebase/auth';
+//@ts-ignore
+import { getReactNativePersistence } from '@firebase/auth/dist/rn/index.js'
 import { collection, getDocs } from 'firebase/firestore';
 import { addUser } from './collection';
 import { auth, db } from './firebaseConfig';
@@ -35,6 +37,17 @@ export const logout = async () => {
     console.log('User logged out');
   } catch (error) {
     console.error('Error logging out:', error.message);
+  }
+};
+// Password Reset Function
+export const resetPassword = async (email) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    console.log('Password reset email sent');
+    return true;
+  } catch (error) {
+    console.error('Error sending password reset email:', error.message);
+    return false;
   }
 };
 
