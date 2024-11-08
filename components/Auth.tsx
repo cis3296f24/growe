@@ -12,6 +12,7 @@ export function Auth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(' ');
+  const [emailValid, setEmailValid] = useState(false);
 
   const handleSignUp = async () => {
     const newUser = await signUp(email, password, username);
@@ -48,10 +49,20 @@ export function Auth() {
       setError(' ');
     }
   };
+
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    const valid = emailRegex.test(email);
+    if (!valid) {
+      setEmailValid(false);
+      return false;
+    } else {
+      setEmailValid(true);
+      setError(' ');
+      return true;
+    }
   }
+  
   const handleCheckEmail = async () => {
     const exists = await checkEmailExists(email);
     if (!isValidEmail(email)) {
@@ -70,6 +81,7 @@ export function Auth() {
     setPassword('');
     setStep('login-password');
   }
+
   const handleResetPassword = async () => {
     const success = await resetPassword(email);
     if (success) {
@@ -79,9 +91,6 @@ export function Auth() {
       setError('Error sending password reset email');
     }
   }
-  ;
-  
-  
 
   return (
     <View style={styles.container}>
@@ -107,16 +116,15 @@ export function Auth() {
                 value={email}
                 onChangeText={(text) => {
                   setEmail(text);
-                  setError(isValidEmail(text) ? ' ' : 'Please enter a valid email address');
+                  isValidEmail(text);
                 }}
                 style={styles.input}
               />
               {error && <Text style={styles.error}>{error}</Text>}
               <View style={styles.buttonContainer}>
                 <Button title='back' onPress={() => handleStep('initial')} />
-                {email.includes('@') && <Button title="next" onPress={handleLoginPassword} />}
+                {emailValid && <Button title="next" onPress={handleLoginPassword} />}
               </View>
-              
             </View>
           )}
           {step === 'login-password' && (
@@ -143,13 +151,16 @@ export function Auth() {
                 placeholder="Email"
                 placeholderTextColor="gray"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  isValidEmail(text);
+                }}
                 style={styles.input}
               />
               {error && <Text style={styles.error}>{error}</Text>}
               <View style={styles.buttonContainer}>
                 <Button title='back' onPress={() => handleStep('initial')} />
-                <Button title="next" onPress={handleCheckEmail} />
+                {emailValid && <Button title="next" onPress={handleCheckEmail} />}
               </View>
             </View>
           )}
@@ -192,13 +203,16 @@ export function Auth() {
                   placeholder="Enter your email"
                   placeholderTextColor="gray"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    isValidEmail(text);
+                  }}
                   style={styles.input}
                 />
                 {error && <Text style={styles.error}>{error}</Text>}
                 <View style={styles.buttonContainer}>
                   <Button title="Back" onPress={() => handleStep('login-email')} />
-                  {email.includes('@') && <Button title="Send Reset Email" onPress={handleResetPassword} />}
+                  {emailValid && <Button title="Send Reset Email" onPress={handleResetPassword} />}
                 </View>
               </View>
             )}
