@@ -1,51 +1,47 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import Camera from '../assets/images/Camera.png'
-import Connections from '../assets/images/Connections.png'
-import Leaves from '../assets/images/Leaves.png'
-
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import Log from '../assets/icons/log.svg';
+import Group from '../assets/icons/group.svg';
+import Garden from '../assets/icons/garden.svg';
 
 export default function Footer() {
-    const [selectedButton, setSelectedButton] = useState<number | null>(null);
-    const navigationImages = [Camera, Connections, Leaves];
+  const router = useRouter();
+  const [selected, setSelected] = useState('home');
 
+  const handlePress = (screen: string) => {
+    setSelected(screen);
+    router.push(`./${screen}`);
+  };
 
-
-    return (
-        <View style={styles.footer}>
-            {navigationImages.map((image, i) => {
-                return <TouchableOpacity key={i} onPress={() => setSelectedButton(i)} >
-                    <Image source={image} style={[
-                        styles.image,
-                        selectedButton === i && styles.selectedImage
-                    ]} />
-                </TouchableOpacity>
-            })}
-        </View>
-    );
+  return (
+    <View style={styles.footer}>
+      <TouchableOpacity onPress={() => handlePress('home')}>
+        <Garden color={selected === 'home' ? '#ECFFEB' : '#B0C5AF'} />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => handlePress('log')}>
+        <Log color={selected === 'log' ? '#ECFFEB' : '#B0C5AF'} />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => handlePress('group')}>
+        <Group color={selected === 'group' ? '#ECFFEB' : '#B0C5AF'} />
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    footer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: 60,
-        backgroundColor: '#4F584F',
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20
-    },
-    image: {
-        width: 30,
-        height: 30,
-        opacity: 0.5,
-    },
-    selectedImage: {
-        opacity: 1,
-    },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    backgroundColor: '#4F584F',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
 });
