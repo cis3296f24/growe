@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Switch } from 'react-native';
 import Logo from '../assets/icons/logo.svg';
 import Avatar from '../assets/images/Avatar.png'
+import CustomSwitch from './CustomSwitch';
 
 
 export default function Header() {
@@ -13,12 +14,13 @@ export default function Header() {
                 <Logo height={40} width={40} />
             </TouchableOpacity>
             <View style={styles.headerRightContainer}>
-                <Switch
+                {/* <Switch
                     trackColor={{ false: '#596558', true: '#596558', }} // Dark green background for both states
                     thumbColor={isEnabled ? '#FFD700' : '#FFD700'}     // Yellow toggle button for both states
                      onValueChange={toggleSwitch}
                      value={isEnabled}
-                />
+                /> */}
+                <CustomSwitch />
                 <TouchableOpacity >
                     <Image source={Avatar} style={styles.avatar} />
                 </TouchableOpacity>
