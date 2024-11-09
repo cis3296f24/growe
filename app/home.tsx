@@ -15,10 +15,8 @@ export default function Index() {
         >
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.content}>
-                    <Header />
                     <Garden />
                 </View>
-                <Footer />
             </SafeAreaView>
         </LinearGradient>
     );
