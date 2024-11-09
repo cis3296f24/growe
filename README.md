@@ -148,7 +148,7 @@ Make pledges at the beginning of the week to commit to n days that will log a ha
 </p>
 
 ## Database Collections
-![image](https://github.com/user-attachments/assets/2be00592-6da5-4fde-aa76-756979f58eab)
+![image](https://github.com/user-attachments/assets/d75d778b-dfd5-48a8-9ebf-9c1a5a25be94)
 
 # Background
 This is the life cycle of a user on this app for a three person group with the goal to workout 3 days a week:
