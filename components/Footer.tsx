@@ -7,7 +7,7 @@ import Leaves from '../assets/images/Leaves.png'
 
 export default function Footer() {
     const [selectedButton, setSelectedButton] = useState<number | null>(null);
-    const navigationImages = [Camera, Connections, Leaves];
+    const navigationImages = [Connections, Camera, Leaves];
 
 
 

@@ -14,12 +14,6 @@ export default function Header() {
                 <Logo height={40} width={40} />
             </TouchableOpacity>
             <View style={styles.headerRightContainer}>
-                {/* <Switch
-                    trackColor={{ false: '#596558', true: '#596558', }} // Dark green background for both states
-                    thumbColor={isEnabled ? '#FFD700' : '#FFD700'}     // Yellow toggle button for both states
-                     onValueChange={toggleSwitch}
-                     value={isEnabled}
-                /> */}
                 <CustomSwitch />
                 <TouchableOpacity >
                     <Image source={Avatar} style={styles.avatar} />
