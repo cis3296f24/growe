@@ -1,9 +1,9 @@
 
-import { collection, getDocs, query, where, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 // add user to collection
-export const addUser = async (user, username) => {
+export const addUser = async (user, username, displayName) => {
     // access users collection
     const usersCollection = collection(db, 'users');
 
@@ -11,6 +11,7 @@ export const addUser = async (user, username) => {
     await setDoc(doc(usersCollection, user.uid), {
         email: user.email, // set email
         username: username, // set username
+        displayName: displayName, // set display name
         createdAt: new Date(), // set current date
         profileImageUrl: null, // set default profile image
         groups: [], // reference to groups user is in

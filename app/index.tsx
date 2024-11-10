@@ -5,22 +5,15 @@ import { StyleSheet } from "react-native";
 
 export default function Index() {
   return (
-    <LinearGradient
-    colors={['#8E9F8D', '#596558']} // Gradient colors
-    style={styles.background}
-    start={[0, 0]}
-    end={[1, 1]}
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
     >
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Auth />
-      </View>
-    </LinearGradient>
+      <Auth />
+    </View>
   );
 }
 

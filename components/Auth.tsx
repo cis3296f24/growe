@@ -4,22 +4,23 @@ import { signUp, login, logout, checkUsernameExists, checkEmailExists, resetPass
 import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
 import { useRouter } from 'expo-router';
+import { useUser } from './UserContext';
 
 export function Auth() {
   const router = useRouter();
   const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password' |'reset-password'>('initial');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(' ');
   const [emailValid, setEmailValid] = useState(false);
 
   const handleSignUp = async () => {
-    const newUser = await signUp(email, password, username);
+    const newUser = await signUp(email, password, username, displayName);
     if (newUser) {
-      setUser(newUser);
       router.push('./home');
     }
   };
@@ -35,13 +36,11 @@ export function Auth() {
       setError('Invalid email or password');
       return;
     }
-    setUser(loggedInUser);
     router.push('./home');
   };
 
   const handleLogout = async () => {
     await logout();
-    setUser(null);
     setStep('initial');
   };
 
@@ -179,10 +178,17 @@ export function Auth() {
                 onChangeText={setUsername}
                 style={styles.input}
               />
+              <TextInput
+                placeholder="Display Name"
+                placeholderTextColor="gray"
+                value={displayName}
+                onChangeText={setDisplayName}
+                style={styles.input}
+              />
               {error && <Text style={styles.error}>{error}</Text>}
               <View style={styles.buttonContainer}>
                 <Button title='back' onPress={() => handleStep('signup-email')}/>
-                {username && <Button title="next" onPress={handleCheckUsername} />}
+                {(username && displayName) && <Button title="next" onPress={handleCheckUsername} />}
               </View>
             </View>
           )}
