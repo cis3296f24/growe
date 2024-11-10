@@ -92,7 +92,7 @@ export function Group() {
             {hasGroups ? (
                 <View style={styles.container}>
                 {/* Display group info here */}
-                <Text>Group</Text>
+                    <Text>Group Code: {groupCode}</Text>
                     <Text>{groupName}</Text>
                     <Text>{habit}</Text>
                     <Text>{frequency}</Text>
