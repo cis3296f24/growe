@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
-import { User } from 'firebase/auth';
-import Logo from '../assets/icons/logo.svg';
+import { View, Button, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from './UserContext';
 import { useEffect } from 'react';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 import { DocumentReference } from 'firebase/firestore';
+import { checkUserHasGroup } from '../utils/group';
 
 export function Garden() {
 
@@ -16,35 +14,35 @@ export function Garden() {
     const { user } = useUser();
 
     useEffect(() => {
-        // users collection, user document (user.uid), groups list of references to group documents
-        const checkUserGroups = async () => {
-            const db = getFirestore();
-            const q = query(collection(db, 'users'), where('uid', '==', user?.uid));
-            const querySnapshot = await getDocs(q);
-            if (querySnapshot.size === 0) {
-                console.log('No such document!');
+        const fetchGroups = async () => {
+            const groupResult = await checkUserHasGroup(user);
+            if (groupResult) {
+                setGroups(groupResult);
+                setHasGroups(true);
             } else {
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    setGroups(data.groups);
-                    setHasGroups(true);
-                });
+                setHasGroups(false);
             }
         };
-    
-        checkUserGroups();
+        fetchGroups();
     }, [user]);
 
     return (
         <View>
             {hasGroups ? (
-                <Text>Groups</Text>
+                <Text>Garden</Text>
             ) : (
-                <View>
-                    <Text>The garden is empty.</Text>
+                <View style={styles.container}>
+                    <Text>You need to be in a group to start a garden!</Text>
                     <Button title="Go to Groups" onPress={() => router.push({ pathname: '/group', params: {} })} />
                 </View>
             )}
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+});
