@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 import { useUser } from './UserContext';
-import { DocumentReference, getDoc } from 'firebase/firestore';
+import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
 import { checkUserHasGroup, joinGroup, createGroup } from '../utils/group';
 import { err } from 'react-native-svg';
 
@@ -20,30 +20,32 @@ export function Group() {
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
 
+    const fetchGroups = async () => {
+        const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
+        if (groupRefs && groupRefs.length > 0) {
+            setGroups(groupRefs);
+            setHasGroups(true);
+            const groupData = await getDoc(groupRefs[0]);
+            const users = groupData.get("users");
+            setGroupMembers(users);
+            setHabit(groupData.get("habit"));
+            setFrequency(groupData.get("frequency"));
+            setGroupName(groupData.get("name"));
+            setGroupCode(groupData.get("joinCode"));
+            const memberNames = await Promise.all(users.map(async (member: DocumentReference) => {
+                const memberDoc: DocumentSnapshot = await getDoc(member);
+                if (!memberDoc.exists()) {
+                    return 'Unknown';
+                }
+                return memberDoc.get("displayName");
+            }));
+            setGroupMemberNames(memberNames);
+        } else {
+            setHasGroups(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchGroups = async () => {
-            const groupResult = await checkUserHasGroup(user);
-            if (groupResult) {
-                setGroups([groupResult]);
-                setHasGroups(true);
-                const groupData = await groupResult.get().data();
-                setGroupMembers(groupData.members);
-                setHabit(groupData.habit);
-                setFrequency(groupData.frequency);
-                setGroupName(groupData.name);
-                setGroupCode(groupData.joinCode);
-                const memberNames = await Promise.all(groupData.members.map(async (member: DocumentReference) => {
-                    const memberDoc = await getDoc(member);
-                    if (!memberDoc.exists()) {
-                        return 'Unknown';
-                    }
-                    return memberDoc.data().displayName;
-                }));
-                setGroupMemberNames(memberNames);
-            } else {
-                setHasGroups(false);
-            }
-        };
         fetchGroups();
     }, [user]);
 
@@ -58,6 +60,7 @@ export function Group() {
 
         setGroups([newUserGroup]);
         setHasGroups(true);
+        await fetchGroups();
     };
 
     const handleJoinGroup = async () => {
@@ -71,6 +74,7 @@ export function Group() {
 
         setGroups([newUserGroup]);
         setHasGroups(true);
+        await fetchGroups();
     };
 
     const handleStep = (newStep: typeof step) => {
@@ -91,14 +95,13 @@ export function Group() {
         <View style={styles.container}>
             {hasGroups ? (
                 <View style={styles.container}>
-                {/* Display group info here */}
                     <Text>Group Code: {groupCode}</Text>
-                    <Text>{groupName}</Text>
-                    <Text>{habit}</Text>
-                    <Text>{frequency}</Text>
-                <Text>Members</Text>
-                    {groupMemberNames.map((memberName) => (
-                        <Text>{memberName}</Text>
+                    <Text>Group Name: {groupName}</Text>
+                    <Text>Habit: {habit}</Text>
+                    <Text>Frequency: {frequency}</Text>
+                <Text>Members:</Text>
+                    {groupMemberNames.map((memberName, index) => (
+                        <Text key={index}>{memberName}</Text>
                     ))}
                 </View>
             ) : (
