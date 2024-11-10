@@ -1,87 +1,167 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
-import { User } from 'firebase/auth';
-import Logo from '../assets/icons/logo.svg';
 import { useUser } from './UserContext';
-import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { DocumentReference } from 'firebase/firestore';
-import { createGroup } from '../utils/collection';
+import { DocumentReference, getDoc } from 'firebase/firestore';
+import { checkUserHasGroup, joinGroup, createGroup } from '../utils/group';
+import { err } from 'react-native-svg';
 
 export function Group() {
 
-    const [step, setStep] = useState<'initial' | 'name-group' | 'display-code' | 'enter-code'>('initial');
+    const [step, setStep] = useState<'initial' | 'name-group' | 'create-habit' | 'set-frequency' | 'display-code' | 'enter-code'>('initial');
     const [groups, setGroups] = useState<DocumentReference[]>([]);
     const [hasGroups, setHasGroups] = useState(false);
     const { user } = useUser();
-    const [groupName, setGroupName] = useState(`${user?.displayName?.replace(/\s+/g, '')}Group`);
+    const [groupName, setGroupName] = useState(`${user?.displayName}'s group`);
+    const [codeInput, setCodeInput] = useState('');
+    const [habit, setHabit] = useState('Go for a walk');
+    const [frequency, setFrequency] = useState(3);
+    const [error, setError] = useState(' ');
+    const [groupMembers, setGroupMembers] = useState<DocumentReference[]>([]);
+    const [groupCode, setGroupCode] = useState('');
+    const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
 
     useEffect(() => {
-        // users collection, user document (user.uid), groups list of references to group documents
-        const checkUserGroups = async () => {
-            const db = getFirestore();
-            const q = query(collection(db, 'users'), where('uid', '==', user?.uid));
-            const querySnapshot = await getDocs(q);
-            if (querySnapshot.size === 0) {
-                console.log('No such document!');
+        const fetchGroups = async () => {
+            const groupResult = await checkUserHasGroup(user);
+            if (groupResult) {
+                setGroups([groupResult]);
+                setHasGroups(true);
+                const groupData = await groupResult.get().data();
+                setGroupMembers(groupData.members);
+                setHabit(groupData.habit);
+                setFrequency(groupData.frequency);
+                setGroupName(groupData.name);
+                setGroupCode(groupData.joinCode);
+                const memberNames = await Promise.all(groupData.members.map(async (member: DocumentReference) => {
+                    const memberDoc = await getDoc(member);
+                    if (!memberDoc.exists()) {
+                        return 'Unknown';
+                    }
+                    return memberDoc.data().displayName;
+                }));
+                setGroupMemberNames(memberNames);
             } else {
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    setGroups(data.groups);
-                    setHasGroups(true);
-                });
+                setHasGroups(false);
             }
         };
-    
-        checkUserGroups();
+        fetchGroups();
     }, [user]);
 
     const handleCreateGroup = async () => {
-        // create a new group document in the groups collection
-        // add the group reference to the user's document in the users collection
-        // set the user's groups state to include the new group reference
-        // set the hasGroups state to true
-        // the group document should have a users[list of references to user documents] field, a name str field, an admin user ref field, a habit str field, and a habit int frequency field, a garden ref field, streak int field
 
-        const newUserGroup = await createGroup(user, groupName);
+        const newUserGroup = await createGroup(user, groupName, habit, frequency);
 
-        setGroups([...groups, newUserGroup]);
+        if (!newUserGroup) {
+            setError('Failed to create group');
+            return;
+        }
+
+        setGroups([newUserGroup]);
         setHasGroups(true);
     };
 
-    const handleJoinGroup = () => {
+    const handleJoinGroup = async () => {
 
+        const newUserGroup = await joinGroup(user, codeInput);
+
+        if (!newUserGroup) {
+            setError('Invalid group code');
+            return;
+        }
+
+        setGroups([newUserGroup]);
+        setHasGroups(true);
     };
 
+    const handleStep = (newStep: typeof step) => {
+        setStep(newStep);
+        setError(' ');
+    }
+
+    const handleFrequency = (newFrequency: number) => {
+        if (newFrequency < 1) {
+            newFrequency = 1;
+        } else if (newFrequency > 7) {
+            newFrequency = 7;
+        }
+        setFrequency(newFrequency);
+    }
+
     return (
-        <View>
+        <View style={styles.container}>
             {hasGroups ? (
-                <Text>Groups</Text>
+                <View style={styles.container}>
+                {/* Display group info here */}
+                <Text>Group</Text>
+                    <Text>{groupName}</Text>
+                    <Text>{habit}</Text>
+                    <Text>{frequency}</Text>
+                <Text>Members</Text>
+                    {groupMemberNames.map((memberName) => (
+                        <Text>{memberName}</Text>
+                    ))}
+                </View>
             ) : (
-                <View>
-                    <Text>Welcome to your garden.</Text>
-                    <Text>It's time to plant a new seed.</Text>
+                <View style={styles.container}>
                     {step === 'initial' && (
                         <View>
-                            <Button title="Create a Group" onPress={() => setStep('name-group')} />
-                            <Button title="Join a Group" onPress={() => setStep('enter-code')} />
+                            <Text>Welcome to your garden.</Text>
+                            <Text>It's time to plant a new seed.</Text>
+                            <Button title="Create a Group" onPress={() => handleStep('name-group')} />
+                            <Button title="Join a Group" onPress={() => handleStep('enter-code')} />
                         </View>
                     )}
                     {step === 'name-group' && (
                         <View>
+                            <Text>What is the group's name?</Text>
                             <TextInput
-                                placeholder={`${user?.displayName?.replace(/\s+/g, '')}Group`} 
+                                placeholder={'Group Name'}
                                 placeholderTextColor="gray"
                                 value={groupName}
                                 onChangeText={setGroupName}
+                                style={styles.input}
                             />
-                            <Button title="Create" onPress={() => handleCreateGroup()} />
+                            <Button title="Next" onPress={() => handleStep('create-habit')} />
+                            <Button title="Back" onPress={() => handleStep('initial')} />
                         </View>
                     )}
-                    {step === 'display-code' && (
+                    {step === 'create-habit' && (
                         <View>
-                            <Text>Group Code</Text>
-                            // display latest group's code
-                            <Text>{groups[groups.length - 1].id}</Text>
+                            <Text>What is the group's habit?</Text>
+                            <TextInput
+                                placeholder="Habit"
+                                placeholderTextColor="gray"
+                                value={habit}
+                                onChangeText={setHabit}
+                                style={styles.input}
+                            />
+                            <Button title="Next" onPress={() => handleStep('set-frequency')} />
+                            <Button title="Back" onPress={() => handleStep('name-group')} />
+                        </View>
+                    )}
+                    {step === 'set-frequency' && (
+                        <View>
+                            <Text>How many days a week would your group like to commit to practicing this habit?</Text>
+                            <Text>{frequency} Days a Week</Text>
+                            <Button title="+" onPress={() => handleFrequency(frequency + 1)} />
+                            <Button title="-" onPress={() => handleFrequency(frequency - 1)} />
+                            {error && <Text style={styles.error}>{error}</Text>}
+                            <Button title="Create Group" onPress={() => handleCreateGroup()} />
+                            <Button title="Back" onPress={() => handleStep('create-habit')} />
+                        </View>
+                    )}
+                    {step === 'enter-code' && (
+                        <View>
+                            <TextInput
+                                placeholder="Group Code"
+                                placeholderTextColor="gray"
+                                value={codeInput}
+                                onChangeText={setCodeInput}
+                                style={styles.input}
+                            />
+                            {error && <Text style={styles.error}>{error}</Text>}
+                            <Button title="Back" onPress={() => handleStep('initial')} />
+                            <Button title="Join" onPress={() => handleJoinGroup()} />
                         </View>
                     )}
 
@@ -90,3 +170,26 @@ export function Group() {
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    error: {
+        color: 'red',
+    },
+    input: {
+        height: 40,
+        minWidth: 300,
+        width: '100%',
+        borderColor: 'lightgray',
+        borderWidth: 1,
+        marginBottom: 12,
+        paddingHorizontal: 8,
+        color: 'black',
+        borderRadius: 10,
+    },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        padding: 16,
+        paddingBottom: 128,
+      },
+});
