@@ -1,8 +1,7 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail} from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile} from 'firebase/auth';
 //@ts-ignore
-import { getReactNativePersistence } from '@firebase/auth/dist/rn/index.js'
 import { collection, getDocs } from 'firebase/firestore';
-import { addUser } from './collection';
+import { addUser } from './user';
 import { auth, db } from './firebaseConfig';
 
 // Sign Up Function
@@ -11,7 +10,7 @@ export const signUp = async (email, password, username, displayName) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     console.log('User signed up:', userCredential.user);
     await updateProfile(userCredential.user, { displayName });
-    await addUser(userCredential.user, username);
+    await addUser(userCredential.user, username, displayName);
     return userCredential.user;
   } catch (error) {
     console.error(`Error signing up with email ${email}: ${error.message}`);
