@@ -13,7 +13,7 @@ export function Auth() {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
-  const {user, setUser} = useUser();
+  const { user } = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(' ');
   const [emailValid, setEmailValid] = useState(false);
@@ -21,7 +21,6 @@ export function Auth() {
   const handleSignUp = async () => {
     const newUser = await signUp(email, password, username, displayName);
     if (newUser) {
-      setUser(newUser);
       router.push('./home');
     }
   };
@@ -37,13 +36,11 @@ export function Auth() {
       setError('Invalid email or password');
       return;
     }
-    setUser(loggedInUser);
     router.push('./home');
   };
 
   const handleLogout = async () => {
     await logout();
-    setUser(null);
     setStep('initial');
   };
 
