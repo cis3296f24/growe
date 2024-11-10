@@ -1,15 +1,12 @@
-import { collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, QuerySnapshot, DocumentSnapshot } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 export const checkUserHasGroup = async (user) => {
-    const q = query(collection(db, 'users'), where('uid', '==', user?.uid));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.size === 0) {
-        return false;
-    }
-    const doc = querySnapshot.docs[0];
-    const data = doc.data();
-    return data.groups;
+    const userRef = doc(db, 'users', user.uid);
+    const userSnapshot = await getDoc(userRef);
+    const data = userSnapshot.data();
+    const groups = data.groups || [];
+    return groups.length > 0 ? groups : false;
 };
 
 export const createGroup = async (user, groupName, habit, frequency) => {
@@ -38,10 +35,8 @@ export const createGroup = async (user, groupName, habit, frequency) => {
     };
     const newGroupDoc = await addDoc(groupRef, groupDoc);
 
-    // Update the user's groups with the new group ID
-    await updateDoc(userRef, {
-        groups: [...groups, newGroupDoc.id]
-    });
+    const newGroups = [...groups, newGroupDoc];
+    await updateDoc(userRef, { groups: newGroups });
     return newGroupDoc;
 }
 
@@ -53,16 +48,24 @@ export const joinGroup = async (user, joinCode) => {
     if (querySnapshot.size === 0) {
         return false;
     }
-    const doc = querySnapshot.docs[0];
-    const data = doc.data();
-    const groupRef = doc.ref;
+
+    let docSnapshot = querySnapshot.docs;
+    if (docSnapshot.length === 0) {
+        return false;
+    } else {
+        docSnapshot = docSnapshot[0];
+    }
+    const groupRef = docSnapshot.ref;
+    const docSnapshotData = docSnapshot.data();
     const userRef = doc(db, 'users', user.uid);
+    const userSnapshot = await getDoc(userRef);
+    const userData = userSnapshot.data();
     const userDoc = {
-        groups: [...groups, groupRef]
+        groups: [...userData.groups, groupRef]
     };
     await updateDoc(userRef, userDoc);
     const groupDoc = {
-        users: [...data.users, user.uid]
+        users: [...docSnapshotData.users, userRef]
     };
     await updateDoc(groupRef, groupDoc);
     return groupRef;
