@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where, doc, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 export const checkUserHasGroup = async (user) => {
@@ -13,33 +13,36 @@ export const checkUserHasGroup = async (user) => {
 };
 
 export const createGroup = async (user, groupName, habit, frequency) => {
-
     const groupRef = collection(db, 'groups');
     if (!user?.uid) {
         console.error('User UID is undefined');
         return false;
     }
     const userRef = doc(db, 'users', user.uid);
+
+    // Fetch the user's existing groups
+    const userSnapshot = await getDoc(userRef);
+    const userData = userSnapshot.data();
+    const groups = userData.groups || [];
+
     const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const groupDoc = {
-        users: [user?.uid],
-        // get name from user input or user display to make a group
+        users: [userRef],
         name: groupName,
-        // set user reference as admin
         admin: userRef,
         habit: habit,
         frequency: frequency,
         garden: null,
         streak: 0,
-        // generate random phrase for join code
         joinCode: joinCode,
     };
-    const newUserGroup = await addDoc(groupRef, groupDoc);
-    const userDoc = {
-        groups: [...groups, newUserGroup]
-    };
-    await updateDoc(userRef, userDoc);
-    return newUserGroup;
+    const newGroupDoc = await addDoc(groupRef, groupDoc);
+
+    // Update the user's groups with the new group ID
+    await updateDoc(userRef, {
+        groups: [...groups, newGroupDoc.id]
+    });
+    return newGroupDoc;
 }
 
 export const joinGroup = async (user, joinCode) => {
