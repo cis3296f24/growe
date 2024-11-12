@@ -6,7 +6,9 @@ const { withNativeWind } = require("nativewind/metro");
 const dirname = __dirname;
 
 module.exports = (() => {
-  const config = getDefaultConfig(path.resolve(dirname));
+  const config = getDefaultConfig(path.resolve(dirname), {
+    isCSSEnabled: true,
+  });
 
   const { transformer, resolver } = config;
 
