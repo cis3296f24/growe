@@ -3,6 +3,7 @@ import { SafeAreaView, StyleSheet, View } from 'react-native';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { UserProvider } from '../components/UserContext';
+import "../global.css";
 
 export default function RootLayout() {
   const pathname = usePathname();
