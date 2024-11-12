@@ -5,6 +5,14 @@ import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
 import { useRouter } from 'expo-router';
 import { useUser } from './UserContext';
+import {
+  Button as ButtonGluestack,
+  ButtonText,
+  ButtonSpinner,
+  ButtonIcon,
+  ButtonGroup,
+} from '@/components/ui/button';
+import colors from 'tailwindcss/colors';
 
 export function Auth() {
   const router = useRouter();
@@ -17,6 +25,7 @@ export function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(' ');
   const [emailValid, setEmailValid] = useState(false);
+  const [isActive, setIsActive] = useState(false);
 
   const handleSignUp = async () => {
     const newUser = await signUp(email, password, username, displayName);
@@ -108,10 +117,23 @@ export function Auth() {
       ) : (
         <View>
           {step === 'initial' && (
-            <View style={styles.buttonContainer}>
-              <Button title="sign up" onPress={() => handleStep('signup-email')} />
-              <Button title="login" onPress={() => handleStep('login-email')} />
-            </View>
+            <ButtonGroup flexDirection='row'>
+              <ButtonGluestack 
+                className={`bg-primaryGreen p-2 rounded-xl w-24`}
+                size="lg" 
+                variant="solid" 
+                action="primary" 
+                data-active={isActive}
+                onPressIn={() => setIsActive(true)}
+                onPressOut={() => setIsActive(false)}
+                onPress={() => handleStep('signup-email')}
+              >
+                <ButtonText>Sign Up</ButtonText>
+              </ButtonGluestack>
+              <ButtonGluestack className="bg-primaryGreen p-2 rounded-xl w-24" size="lg" variant="solid" action="primary" onPress={() => handleStep('login-email')}>
+                <ButtonText>Login</ButtonText>
+              </ButtonGluestack>
+            </ButtonGroup>
           )}
           {step === 'login-email' && (
             <View>
@@ -241,6 +263,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginBottom: 12,
+    color: '#8F9C8F',
   },
   container: {
     flex: 1,
