@@ -1,6 +1,7 @@
 
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import { Timestamp } from 'firebase/firestore';
 
 // add user to collection
 export const addUser = async (user, username, displayName) => {
@@ -12,7 +13,7 @@ export const addUser = async (user, username, displayName) => {
         email: user.email, // set email
         username: username, // set username
         displayName: displayName, // set display name
-        createdAt: new Date(), // set current date
+        createdAt: Timestamp.now(), // set current date
         profileImageUrl: null, // set default profile image
         groups: [], // reference to groups user is in
         friends: [], // reference to friends user has
@@ -27,7 +28,7 @@ export const addUser = async (user, username, displayName) => {
         pledges: {0: false, 1: false, 2: false, 3: false, 4: false, 5: false, 6: false}, // representing days of the week user has made a pledge to check in
         logs: [], // reference to logs of user check ins
         online: true, // user online status
-        lastOnline: new Date(), // user last online
+        lastOnline: Timestamp.now(), // user last online
     });
 
     // return user
