@@ -3,7 +3,6 @@ import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 import { useUser } from './UserContext';
 import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
 import { checkUserHasGroup, joinGroup, createGroup } from '../utils/group';
-import { err } from 'react-native-svg';
 
 export function Group() {
 
