@@ -1,3 +1,30 @@
+```mermaid
+sequenceDiagram
+  participant User
+  participant Auth
+  participant Server
+  participant Database
+
+  User ->> Auth : Enter Email
+  Auth ->> Server : Store Email
+  Server --> Database : Check Email Exists
+  Database -->> Server : Validate Email
+  Server -->> Auth : Validate Step
+  User ->> Auth : Enter Username and Display Name
+  Auth ->> Server : Store Username
+  Server --> Database : Check Username Exists
+  Database -->> Server : Validate Username
+  Server -->> Auth : Validate Step
+  User ->> Auth : Enter Password
+  User ->> Auth : Request Sign Up
+  Auth ->> Server : Handle Sign Up
+  Server --> Database : Add User
+  Database -->> Server : Return User
+  Server -->> Auth : Return User
+  Auth -->> User : Serve Home Screen
+  
+```
+
 [![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=16892524)
 <div align="center">
 
