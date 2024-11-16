@@ -166,7 +166,7 @@ cssInterop(UIInput.Input, {
 //@ts-ignore
 cssInterop(UIInput.Icon, {
   className: {
-    target: 'style',
+    target: true,
     nativeStyleToProp: {
       height: true,
       width: true,
