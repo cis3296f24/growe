@@ -1,20 +1,20 @@
 import React, { useState, useRef } from 'react';
-import { View, Button, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, Button, StyleSheet, Text, TouchableOpacity, Alert, Image } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { storage, db } from "../utils/firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import uuid from 'react-native-uuid';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useUser } from './UserContext';
-import { Timestamp } from 'firebase/firestore';
-import { addDoc, collection, doc } from 'firebase/firestore';
-import { User } from 'firebase/auth';
+import { Timestamp, addDoc, collection, doc } from 'firebase/firestore';
 
 export default function Camera() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const { user } = useUser();
   const cameraRef = useRef<CameraView>(null);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [isPreviewVisible, setIsPreviewVisible] = useState<boolean>(false);
 
   if (!permission) {
     return <View />;
@@ -33,47 +33,69 @@ export default function Camera() {
     setFacing(current => (current === 'back' ? 'front' : 'back'));
   };
 
-  const takePictureAndUpload = async () => {
-
+  const takePictureAndShowPreview = async () => {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync();
 
         if (!photo) {
-          alert('Failed to take photo');
+          Alert.alert('Failed to take photo');
           return;
         }
 
-        const manipResult = await ImageManipulator.manipulateAsync(
-          photo.uri,
-          [],
-          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-        );
-
-        const response = await fetch(manipResult.uri);
-        const blob = await response.blob();
-
-        const filename = `${uuid.v4()}.jpg`;
-        const storageRef = ref(storage, `logs/${user?.uid}/${filename}`);
-
-        await uploadBytes(storageRef, blob);
-
-        const downloadURL = await getDownloadURL(storageRef);
-
-        await createLogEntry(downloadURL);
-
-        alert('Photo uploaded and log entry created!');
+        setPhotoUri(photo.uri); 
+        setIsPreviewVisible(true); // show the preview
       } catch (error) {
-        console.error('Error uploading photo: ', error);
-        alert('Failed to upload photo');
+        console.error('Error taking photo: ', error);
+        Alert.alert( 'Failed to take photo');
       }
     }
+  };
+
+  const uploadPicture = async () => {
+    if (!photoUri) {
+      Alert.alert('Error', 'No photo to upload');
+      return;
+    }
+
+    try {
+      const manipResult = await ImageManipulator.manipulateAsync(
+        photoUri,
+        [],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
+      const response = await fetch(manipResult.uri);
+      const blob = await response.blob();
+
+      const filename = `${uuid.v4()}.jpg`;
+      const storageRefPath = `logs/${user?.uid}/${filename}`;
+      const storageRef = ref(storage, storageRefPath);
+
+      await uploadBytes(storageRef, blob);
+
+      const downloadURL = await getDownloadURL(storageRef);
+
+      await createLogEntry(downloadURL);
+
+      Alert.alert('Photo uploaded and log entry created!');
+      setIsPreviewVisible(false); 
+      setPhotoUri(null); // reset photo URI
+    } catch (error) {
+      console.error('Error uploading photo: ', error);
+      Alert.alert( 'Failed to upload photo');
+    }
+  };
+
+  const retakePicture = () => {
+    setIsPreviewVisible(false); 
+    setPhotoUri(null); 
   };
 
   const createLogEntry = async (imageUrl: string) => {
     try {
       if (!user) {
-        alert('User not found');
+        Alert.alert('Error', 'User not found');
         return;
       }
 
@@ -89,29 +111,43 @@ export default function Camera() {
       });
     } catch (error) {
       console.error('Error creating log entry: ', error);
-      alert('Failed to create log entry');
+      Alert.alert('Error', 'Failed to create log entry');
     }
   };
 
   return (
     <View style={styles.container}>
-      <CameraView
-        style={styles.camera}
-        facing={facing}
-        ref={cameraRef}
-      >
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-            <Text style={styles.text}>Flip Camera</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={takePictureAndUpload}>
-            <Text style={styles.text}>Take Photo</Text>
-          </TouchableOpacity>
+      {isPreviewVisible && photoUri ? (
+        <View style={styles.previewContainer}>
+          <Image source={{ uri: photoUri }} style={styles.previewImage} />
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.button} onPress={retakePicture}>
+              <Text style={styles.text}>Retake</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={uploadPicture}>
+              <Text style={styles.text}>Keep</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </CameraView>
+      ) : (
+        <CameraView
+          style={styles.camera}
+          facing={facing}
+          ref={cameraRef}
+        >
+          <View style={styles.bottomButtonContainer}>
+            <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
+              <Text style={styles.text}>Flip Camera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={takePictureAndShowPreview}>
+              <Text style={styles.text}>Take Photo</Text>
+            </TouchableOpacity>
+          </View>
+        </CameraView>
+      )}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -125,16 +161,36 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-  buttonContainer: {
+  previewContainer: {
     flex: 1,
+    backgroundColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewImage: {
+    width: '100%',
+    height: '80%',
+    resizeMode: 'contain',
+  },
+  buttonContainer: {
     flexDirection: 'row',
     backgroundColor: 'transparent',
-    margin: 64,
+    margin: 20,
+  },
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 30,
+    flexDirection: 'row',
+    backgroundColor: 'transparent',
+    justifyContent: 'space-evenly',
+    width: '100%',
   },
   button: {
-    flex: 1,
-    alignSelf: 'flex-end',
     alignItems: 'center',
+    backgroundColor: '#00000080',
+    padding: 10,
+    marginHorizontal: 10,
+    borderRadius: 5,
   },
   text: {
     fontSize: 18,
