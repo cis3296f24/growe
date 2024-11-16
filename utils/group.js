@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, QuerySnapshot, DocumentSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, QuerySnapshot, DocumentSnapshot, DocumentReference, documentId } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 export const checkUserHasGroup = async (user) => {
@@ -69,4 +69,20 @@ export const joinGroup = async (user, joinCode) => {
     };
     await updateDoc(groupRef, groupDoc);
     return groupRef;
+}
+
+export const progresscheck = async (documentId) => {
+    try{
+    const DocumentReference = doc(db, 'groups', documentId)
+    const docSnapshot = await getDoc(DocumentReference)
+    if (docSnapshot.exists()){
+        const frequency = docSnapshot.data().frequency;
+        return frequency;
+    }
+    else{
+        return null;
+    }
+} catch (error){
+        throw error;
+    }
 }
