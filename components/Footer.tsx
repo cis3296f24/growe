@@ -8,12 +8,12 @@ import { usePathname } from 'expo-router';
 
 export default function Footer() {
   const router = useRouter();
-  const [selected, setSelected] = useState('/home');
+  const [selected, setSelected] = useState('home');
   const pathname = usePathname();
 
   useEffect(() => {
     console.log(pathname);
-    setSelected(pathname);
+    setSelected(pathname.replace('/', ''));
   }, [pathname]);
 
   const handlePress = (screen: string) => {
@@ -23,14 +23,14 @@ export default function Footer() {
 
   return (
     <View style={styles.footer}>
-      <TouchableOpacity onPress={() => handlePress('/home')}>
-        <Garden color={selected === '/home' ? '#ECFFEB' : '#B0C5AF'} />
+      <TouchableOpacity onPress={() => handlePress('home')} disabled={selected === 'home'}>
+        <Garden color={selected === 'home' ? '#ECFFEB' : '#B0C5AF'} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => handlePress('/log')}>
-        <Log color={selected === '/log' ? '#ECFFEB' : '#B0C5AF'} />
+      <TouchableOpacity onPress={() => handlePress('log')} disabled={selected === 'log'}>
+        <Log color={selected === 'log' ? '#ECFFEB' : '#B0C5AF'} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => handlePress('/group')}>
-        <Group color={selected === '/group' ? '#ECFFEB' : '#B0C5AF'} />
+      <TouchableOpacity onPress={() => handlePress('group')} disabled={selected === 'group'}>
+        <Group color={selected === 'group' ? '#ECFFEB' : '#B0C5AF'} />
       </TouchableOpacity>
     </View>
   );
