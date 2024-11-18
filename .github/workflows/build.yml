@@ -33,5 +33,11 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Clear NativeWind cache
+        run: rm -rf node_modules/.cache/nativewind
+
+      - name: Build Tailwind cache
+        run: npx tailwindcss build -i ./global.css -o ./node_modules/.cache/nativewind/global.css
+
       - name: Build for iOS and Android
         run: npx expo export --platform all
