@@ -170,9 +170,7 @@ cssInterop(UIInput.Icon, {
     nativeStyleToProp: {
       height: true,
       width: true,
-      fill: true,
       color: 'classNameColor',
-      stroke: true,
     },
   },
 });
