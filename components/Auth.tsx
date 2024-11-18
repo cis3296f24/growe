@@ -149,7 +149,7 @@ export function Auth() {
             <View>
               <Input
                 variant="outline"
-                size="md"
+                size="xl"
                 isDisabled={false}
                 isInvalid={false}
                 isReadOnly={false}
@@ -167,30 +167,17 @@ export function Auth() {
               </Input>
               {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
               <View className='pl-1 pt-2 flex-row'>
-                <GlueText className="font-regular text-neutral-500">
-                  Don't have an account?{' '}
+                <GlueText className="font-regular text-neutral-500" size='xl'>
+                  Don't have an account?
                 </GlueText>
-                <ButtonGluestack variant="link" onPress={() => handleStep('signup-email')} className='h-auto min-h-0'>
+                <ButtonGluestack size='xl' variant="link" onPress={() => handleStep('signup-email')} className='pl-1 h-auto min-h-0'>
                   <ButtonText className="font-regular text-primaryGreen">Sign Up</ButtonText>
                 </ButtonGluestack>
               </View>
               <View className='flex-row justify-between pt-2'>
-                <ButtonGluestack 
-                  className={`bg-primaryGreen p-2 rounded-2xl w-14`}
-                  size="sm" 
-                  variant="solid" 
-                  action="primary" 
-                  data-active={isActive}
-                  onPressIn={() => setIsActive(true)}
-                  onPressOut={() => setIsActive(false)}
-                  onPress={() => handleStep('login-email')}
-                >
-                  <ButtonText className='font-regular'>Back</ButtonText>
+                <ButtonGluestack isDisabled={!emailValid} className="bg-primaryGreen p-2 rounded-2xl w-72" size="xl" variant="solid" action="primary" onPress={handleLoginPassword}>
+                  <ButtonText className='font-bold'>Continue</ButtonText>
                 </ButtonGluestack>
-                {emailValid && 
-                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-14" size="sm" variant="solid" action="primary" onPress={handleLoginPassword}>
-                  <ButtonText className='font-regular'>Next</ButtonText>
-                </ButtonGluestack>}
               </View>
             </View>
           )}
@@ -198,7 +185,7 @@ export function Auth() {
             <View>
               <Input
                 variant="outline"
-                size="md"
+                size="xl"
                 isDisabled={false}
                 isInvalid={false}
                 isReadOnly={false}
@@ -217,7 +204,7 @@ export function Auth() {
               <View className='pt-2'>
                 <ButtonGluestack 
                   className={`pl-1 h-auto min-h-0 self-start`}
-                  size="md" 
+                  size="xl" 
                   variant="link" 
                   action="primary" 
                   data-active={isActive}
@@ -230,8 +217,8 @@ export function Auth() {
               </View>
               <View className='flex-row justify-between pt-2'>
                 <ButtonGluestack 
-                  className={`bg-primaryGreen p-2 rounded-2xl w-14`}
-                  size="sm" 
+                  className={`bg-primaryGreen p-2 rounded-2xl w-16`}
+                  size="xl" 
                   variant="solid" 
                   action="primary" 
                   data-active={isActive}
@@ -239,11 +226,11 @@ export function Auth() {
                   onPressOut={() => setIsActive(false)}
                   onPress={() => handleStep('login-email')}
                 >
-                  <ButtonText className='font-regular'>Back</ButtonText>
+                  <ButtonText className='font-bold'>Back</ButtonText>
                 </ButtonGluestack>
                 {emailValid && 
-                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-14" size="sm" variant="solid" action="primary" onPress={handleLogin}>
-                  <ButtonText className='font-regular'>Login</ButtonText>
+                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-20" size="xl" variant="solid" action="primary" onPress={handleLogin}>
+                  <ButtonText className='font-bold'>Login</ButtonText>
                 </ButtonGluestack>}
               </View>
             </View>
@@ -252,7 +239,7 @@ export function Auth() {
             <View>
               <Input
                 variant="outline"
-                size="md"
+                size="xl"
                 isDisabled={false}
                 isInvalid={false}
                 isReadOnly={false}
@@ -270,17 +257,17 @@ export function Auth() {
               </Input>
               {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
               <View className='pl-1 pt-2 flex-row'>
-                <GlueText className="font-regular text-neutral-500">
-                  Already have an account?{' '}
+                <GlueText size='xl' className="font-regular text-neutral-500">
+                  Already have an account?
                 </GlueText>
-                <ButtonGluestack variant="link" onPress={() => handleStep('login-email')} className='h-auto min-h-0'>
-                  <ButtonText className="font-regular text-primaryGreen">Login</ButtonText>
+                <ButtonGluestack size='xl' variant="link" onPress={() => handleStep('login-email')} className='pl-1 h-auto min-h-0'>
+                  <ButtonText className="font-bold text-primaryGreen">Login</ButtonText>
                 </ButtonGluestack>
               </View>
               <View className='flex-row justify-between pt-2'>
                 <ButtonGluestack 
-                  className={`bg-primaryGreen p-2 rounded-2xl w-14`}
-                  size="sm" 
+                  className={`bg-primaryGreen p-2 rounded-2xl w-16`}
+                  size="xl" 
                   variant="solid" 
                   action="primary" 
                   data-active={isActive}
@@ -288,20 +275,20 @@ export function Auth() {
                   onPressOut={() => setIsActive(false)}
                   onPress={() => handleStep('login-email')}
                 >
-                  <ButtonText className='font-regular'>Back</ButtonText>
+                  <ButtonText className='font-bold'>Back</ButtonText>
                 </ButtonGluestack>
                 {emailValid && 
-                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-14" size="sm" variant="solid" action="primary" onPress={handleCheckEmail}>
-                  <ButtonText className='font-regular'>Next</ButtonText>
+                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-16" size="xl" variant="solid" action="primary" onPress={handleCheckEmail}>
+                  <ButtonText className='font-bold'>Next</ButtonText>
                 </ButtonGluestack>}
               </View>
             </View>
           )}
           {step === 'signup-username' && (
-            <View className='flex-col space-y-3'>
+            <View className='flex-col'>
               <Input
                 variant="outline"
-                size="md"
+                size="xl"
                 isDisabled={false}
                 isInvalid={false}
                 isReadOnly={false}
@@ -314,9 +301,10 @@ export function Auth() {
                   onChangeText={setUsername}
                 />
               </Input>
+              <View className='pt-3'>
               <Input
                 variant="outline"
-                size="md"
+                size="xl"
                 isDisabled={false}
                 isInvalid={false}
                 isReadOnly={false}
@@ -329,11 +317,12 @@ export function Auth() {
                   onChangeText={setDisplayName}
                 />
               </Input>
+              </View>
               {error && <Text className='color-red-400 font-regular pl-1'>{error}</Text>}
-              <View className='flex-row justify-between'>
+              <View className='flex-row justify-between pt-3'>
                 <ButtonGluestack 
-                  className={`bg-primaryGreen p-2 rounded-2xl w-14`}
-                  size="sm" 
+                  className={`bg-primaryGreen p-2 rounded-2xl w-16`}
+                  size="xl" 
                   variant="solid" 
                   action="primary" 
                   data-active={isActive}
@@ -341,20 +330,20 @@ export function Auth() {
                   onPressOut={() => setIsActive(false)}
                   onPress={() => handleStep('signup-email')}
                 >
-                  <ButtonText className='font-regular'>Back</ButtonText>
+                  <ButtonText className='font-bold'>Back</ButtonText>
                 </ButtonGluestack>
                 {(username && displayName) && 
-                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-14" size="sm" variant="solid" action="primary" onPress={handleCheckUsername}>
-                  <ButtonText className='font-regular'>Next</ButtonText>
+                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-16" size="xl" variant="solid" action="primary" onPress={handleCheckUsername}>
+                  <ButtonText className='font-bold'>Next</ButtonText>
                 </ButtonGluestack>}
               </View>
             </View>
           )}
           {step === 'signup-password' && (
-            <View className='flex-col space-y-3'>
+            <View className='flex-col'>
               <Input
                 variant="outline"
-                size="md"
+                size="xl"
                 isDisabled={false}
                 isInvalid={false}
                 isReadOnly={false}
@@ -369,10 +358,10 @@ export function Auth() {
                 />
               </Input>
               {error && <Text className='color-red-400 font-regular pl-1'>{error}</Text>}
-              <View className='flex-row justify-between'>
+              <View className='flex-row justify-between pt-3'>
                 <ButtonGluestack 
-                  className={`bg-primaryGreen p-2 rounded-2xl w-14`}
-                  size="sm" 
+                  className={`bg-primaryGreen p-2 rounded-2xl w-16`}
+                  size="xl" 
                   variant="solid" 
                   action="primary" 
                   data-active={isActive}
@@ -380,20 +369,20 @@ export function Auth() {
                   onPressOut={() => setIsActive(false)}
                   onPress={() => handleStep('signup-username')}
                 >
-                  <ButtonText className='font-regular'>Back</ButtonText>
+                  <ButtonText className='font-bold'>Back</ButtonText>
                 </ButtonGluestack>
                 {password.length >= 6 && 
-                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-[4.5rem]" size="sm" variant="solid" action="primary" onPress={handleSignUp}>
-                  <ButtonText className='font-regular'>Sign Up</ButtonText>
+                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-24" size="xl" variant="solid" action="primary" onPress={handleSignUp}>
+                  <ButtonText className='font-bold'>Sign Up</ButtonText>
                 </ButtonGluestack>}
               </View>
             </View>
           )}
           {step === 'reset-password' && (
-              <View className='flex-col space-y-3'>
+              <View className='flex-col'>
                 <Input
                   variant="outline"
-                  size="md"
+                  size="xl"
                   isDisabled={false}
                   isInvalid={false}
                   isReadOnly={false}
@@ -410,10 +399,10 @@ export function Auth() {
                   />
                 </Input>
                 {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
-                <View className='flex-row justify-between'>
+                <View className='flex-row justify-between pt-3'>
                   <ButtonGluestack 
-                    className={`bg-primaryGreen p-2 rounded-2xl w-14`}
-                    size="sm" 
+                    className={`bg-primaryGreen p-2 rounded-2xl w-16`}
+                    size="xl" 
                     variant="solid" 
                     action="primary" 
                     data-active={isActive}
@@ -421,11 +410,11 @@ export function Auth() {
                     onPressOut={() => setIsActive(false)}
                     onPress={() => handleStep('login-email')}
                   >
-                    <ButtonText className='font-regular'>Back</ButtonText>
+                    <ButtonText className='font-bold'>Back</ButtonText>
                   </ButtonGluestack>
                   {emailValid && 
-                  <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-24" size="sm" variant="solid" action="primary" onPress={handleResetPassword}>
-                    <ButtonText className='font-regular'>Send Email</ButtonText>
+                  <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-32" size="xl" variant="solid" action="primary" onPress={handleResetPassword}>
+                    <ButtonText className='font-bold'>Send Email</ButtonText>
                   </ButtonGluestack>}
                 </View>
               </View>
