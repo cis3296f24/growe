@@ -182,6 +182,7 @@ module.exports = {
         body: undefined,
         mono: undefined,
         roboto: ['Roboto', 'sans-serif'],
+        regular: "SF-Pro-Rounded-Regular",
       },
       fontWeight: {
         extrablack: '950',
