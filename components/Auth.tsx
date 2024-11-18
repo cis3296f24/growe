@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 import { signUp, login, logout, checkUsernameExists, checkEmailExists, resetPassword } from '../utils/authenticate';
 import { User } from 'firebase/auth';
@@ -13,6 +13,8 @@ import {
   ButtonGroup,
 } from '@/components/ui/button';
 import colors from 'tailwindcss/colors';
+import { Input, InputField } from '@/components/ui/input';
+import { useFonts } from 'expo-font';
 
 export function Auth() {
   const router = useRouter();
@@ -23,44 +25,66 @@ export function Auth() {
   const [password, setPassword] = useState('');
   const { user } = useUser();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(' ');
+  const [error, setError] = useState('');
   const [emailValid, setEmailValid] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const [fontsLoaded] = useFonts({
+    "SF-Pro-Rounded-Regular": require("../assets/fonts/SF-Pro-Rounded-Regular.ttf"),
+  });
 
   const handleSignUp = async () => {
-    const newUser = await signUp(email, password, username, displayName);
-    if (newUser) {
-      router.push('./home');
+    try {
+      const newUser = await signUp(email, password, username, displayName);
+      if (newUser) {
+        router.push('./home');
+      }
+    } catch (e) {
+      setError('Error signing up: ' + e);
     }
+    return;
   };
 
   const handleStep = (newStep: typeof step) => {
     setStep(newStep);
-    setError(' ');
+    setError('');
   };
 
   const handleLogin = async () => {
-    const loggedInUser = await login(email, password);
-    if (!loggedInUser) {
-      setError('Invalid email or password');
+    try {
+      const loggedInUser = await login(email, password);
+      if (!loggedInUser) {
+        setError('Invalid email or password');
+        return;
+      }
+    } catch (e) {
+      setError('Error logging in: ' + e);
       return;
     }
     router.push('./home');
+    return;
   };
 
   const handleLogout = async () => {
-    await logout();
-    setStep('initial');
+    try {
+      await logout();
+      setStep('initial');
+    } catch (e) {
+      setError('Error logging out: ' + e);
+    }
   };
 
   const handleCheckUsername = async () => {
-    const exists = await checkUsernameExists(username);
-    if (exists) {
-      setError('That username is already taken. Try another one.');
-    } else {
-      setPassword('');
-      setStep('signup-password');
-      setError(' ');
+    try {
+      const exists = await checkUsernameExists(username);
+      if (exists) {
+        setError('That username is already taken. Try another one.');
+      } else {
+        setPassword('');
+        setStep('signup-password');
+        setError('');
+      }
+    } catch (e) {
+      setError('Error checking username: ' + e);
     }
   };
 
@@ -72,23 +96,27 @@ export function Auth() {
       return false;
     } else {
       setEmailValid(true);
-      setError(' ');
+      setError('');
       return true;
     }
   }
   
   const handleCheckEmail = async () => {
-    const exists = await checkEmailExists(email);
-    if (!isValidEmail(email)) {
+    try {
+      const exists = await checkEmailExists(email);
+      if (!isValidEmail(email)) {
       setError('Please enter a valid email address');
       return;
-    }
-    if (exists) {
-      setError('That email is already in use. Log in instead.');
-    } else {
-      setStep('signup-username');
-      setError(' ');
-    }
+      }
+      if (exists) {
+        setError('That email is already in use. Log in instead.');
+      } else {
+        setStep('signup-username');
+        setError('');
+      }
+    } catch (e) {
+      setError('Error checking email: ' + e);
+  }
   }
 
   const handleLoginPassword = () => {
@@ -119,7 +147,7 @@ export function Auth() {
           {step === 'initial' && (
             <ButtonGroup flexDirection='row'>
               <ButtonGluestack 
-                className={`bg-primaryGreen p-2 rounded-xl w-24`}
+                className={`bg-primaryGreen p-2 rounded-2xl w-24`}
                 size="lg" 
                 variant="solid" 
                 action="primary" 
@@ -128,86 +156,182 @@ export function Auth() {
                 onPressOut={() => setIsActive(false)}
                 onPress={() => handleStep('signup-email')}
               >
-                <ButtonText>Sign Up</ButtonText>
+                <ButtonText className='font-regular'>Sign Up</ButtonText>
               </ButtonGluestack>
-              <ButtonGluestack className="bg-primaryGreen p-2 rounded-xl w-24" size="lg" variant="solid" action="primary" onPress={() => handleStep('login-email')}>
-                <ButtonText>Login</ButtonText>
+              <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-24" size="lg" variant="solid" action="primary" onPress={() => handleStep('login-email')}>
+                <ButtonText className='font-regular'>Login</ButtonText>
               </ButtonGluestack>
             </ButtonGroup>
           )}
           {step === 'login-email' && (
             <View>
-              <TextInput
-                placeholder="Email"
-                placeholderTextColor="gray"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  isValidEmail(text);
-                }}
-                style={styles.input}
-              />
-              {error && <Text style={styles.error}>{error}</Text>}
-              <View style={styles.buttonContainer}>
-                <Button title='back' onPress={() => handleStep('initial')} />
-                {emailValid && <Button title="next" onPress={handleLoginPassword} />}
+              <Input
+                variant="outline"
+                size="md"
+                isDisabled={false}
+                isInvalid={false}
+                isReadOnly={false}
+                className='rounded-2xl min-w-72'
+              >
+                <InputField 
+                  className='font-regular' 
+                  placeholder="Email" 
+                  value={email}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    isValidEmail(text);
+                  }}
+                />
+              </Input>
+              {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
+              <View className='flex-row justify-between pt-3'>
+                <ButtonGluestack 
+                  className={`bg-primaryGreen p-2 rounded-2xl w-14`}
+                  size="sm" 
+                  variant="solid" 
+                  action="primary" 
+                  data-active={isActive}
+                  onPressIn={() => setIsActive(true)}
+                  onPressOut={() => setIsActive(false)}
+                  onPress={() => handleStep('initial')}
+                >
+                  <ButtonText className='font-regular'>Back</ButtonText>
+                </ButtonGluestack>
+                {emailValid && 
+                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-14" size="sm" variant="solid" action="primary" onPress={handleLoginPassword}>
+                  <ButtonText className='font-regular'>Next</ButtonText>
+                </ButtonGluestack>}
               </View>
             </View>
           )}
           {step === 'login-password' && (
             <View>
-              <TextInput
-                placeholder="Password"
-                placeholderTextColor="gray"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                style={styles.input}
-              />
-              {error && <Text style={styles.error}>{error}</Text>}
-              <View style={styles.buttonContainer}>
-                <Button title='back' onPress={() => handleStep('login-email')} />
-                {password && <Button title="login" onPress={handleLogin} />}
+              <Input
+                variant="outline"
+                size="md"
+                isDisabled={false}
+                isInvalid={false}
+                isReadOnly={false}
+                className='rounded-2xl min-w-72'
+              >
+                <InputField 
+                  className='font-regular' 
+                  placeholder="Password" 
+                  placeholderTextColor="gray"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </Input>
+              {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
+              <View className='pt-1'>
+                <ButtonGluestack 
+                  className={`pl-1 h-auto min-h-0 self-start`}
+                  size="sm" 
+                  variant="link" 
+                  action="primary" 
+                  data-active={isActive}
+                  onPressIn={() => setIsActive(true)}
+                  onPressOut={() => setIsActive(false)}
+                  onPress={() => handleStep('reset-password')}
+                >
+                  <ButtonText className='font-regular text-neutral-500 pt-1'>Forgot Password?</ButtonText>
+                </ButtonGluestack>
               </View>
-              <Button title="Forgot Password?" onPress={() => handleStep('reset-password')} />
+              <View className='flex-row justify-between pt-3'>
+                <ButtonGluestack 
+                  className={`bg-primaryGreen p-2 rounded-2xl w-14`}
+                  size="sm" 
+                  variant="solid" 
+                  action="primary" 
+                  data-active={isActive}
+                  onPressIn={() => setIsActive(true)}
+                  onPressOut={() => setIsActive(false)}
+                  onPress={() => handleStep('login-email')}
+                >
+                  <ButtonText className='font-regular'>Back</ButtonText>
+                </ButtonGluestack>
+                {emailValid && 
+                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-14" size="sm" variant="solid" action="primary" onPress={handleLogin}>
+                  <ButtonText className='font-regular'>Login</ButtonText>
+                </ButtonGluestack>}
+              </View>
             </View>
           )}
           {step === 'signup-email' && (
             <View>
-              <TextInput
-                placeholder="Email"
-                placeholderTextColor="gray"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  isValidEmail(text);
-                }}
-                style={styles.input}
-              />
-              {error && <Text style={styles.error}>{error}</Text>}
-              <View style={styles.buttonContainer}>
-                <Button title='back' onPress={() => handleStep('initial')} />
-                {emailValid && <Button title="next" onPress={handleCheckEmail} />}
+              <Input
+                variant="outline"
+                size="md"
+                isDisabled={false}
+                isInvalid={false}
+                isReadOnly={false}
+                className='rounded-2xl min-w-72'
+              >
+                <InputField 
+                  className='font-regular' 
+                  placeholder="Email" 
+                  value={email}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    isValidEmail(text);
+                  }}
+                />
+              </Input>
+              {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
+              <View className='flex-row justify-between pt-3'>
+                <ButtonGluestack 
+                  className={`bg-primaryGreen p-2 rounded-2xl w-14`}
+                  size="sm" 
+                  variant="solid" 
+                  action="primary" 
+                  data-active={isActive}
+                  onPressIn={() => setIsActive(true)}
+                  onPressOut={() => setIsActive(false)}
+                  onPress={() => handleStep('initial')}
+                >
+                  <ButtonText className='font-regular'>Back</ButtonText>
+                </ButtonGluestack>
+                {emailValid && 
+                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-14" size="sm" variant="solid" action="primary" onPress={handleCheckEmail}>
+                  <ButtonText className='font-regular'>Next</ButtonText>
+                </ButtonGluestack>}
               </View>
             </View>
           )}
           {step === 'signup-username' && (
             <View>
-              <TextInput
-                placeholder="Username"
-                placeholderTextColor="gray"
-                value={username}
-                onChangeText={setUsername}
-                style={styles.input}
-              />
-              <TextInput
-                placeholder="Display Name"
-                placeholderTextColor="gray"
-                value={displayName}
-                onChangeText={setDisplayName}
-                style={styles.input}
-              />
-              {error && <Text style={styles.error}>{error}</Text>}
+              <Input
+                variant="outline"
+                size="md"
+                isDisabled={false}
+                isInvalid={false}
+                isReadOnly={false}
+                className='rounded-2xl min-w-72'
+              >
+                <InputField 
+                  className='font-regular' 
+                  placeholder="Username" 
+                  value={username}
+                  onChangeText={setUsername}
+                />
+              </Input>
+              <Input
+                variant="outline"
+                size="md"
+                isDisabled={false}
+                isInvalid={false}
+                isReadOnly={false}
+                className='rounded-2xl min-w-72'
+              >
+                <InputField 
+                  className='font-regular' 
+                  placeholder="Display Name" 
+                  value={displayName}
+                  onChangeText={setDisplayName}
+                />
+              </Input>
+              {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
               <View style={styles.buttonContainer}>
                 <Button title='back' onPress={() => handleStep('signup-email')}/>
                 {(username && displayName) && <Button title="next" onPress={handleCheckUsername} />}
@@ -224,7 +348,7 @@ export function Auth() {
                 secureTextEntry
                 style={styles.input}
               />
-              {error && <Text style={styles.error}>{error}</Text>}
+              {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
               <View style={styles.buttonContainer}>
                 <Button title='back' onPress={() => handleStep('signup-username')} />
                 {password.length >= 6 && <Button title="sign up" onPress={handleSignUp} />}
@@ -243,7 +367,7 @@ export function Auth() {
                   }}
                   style={styles.input}
                 />
-                {error && <Text style={styles.error}>{error}</Text>}
+                {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
                 <View style={styles.buttonContainer}>
                   <Button title="Back" onPress={() => handleStep('login-email')} />
                   {emailValid && <Button title="Send Reset Email" onPress={handleResetPassword} />}
@@ -277,7 +401,6 @@ const styles = StyleSheet.create({
     width: '100%',
     borderColor: 'lightgray',
     borderWidth: 1,
-    marginBottom: 12,
     paddingHorizontal: 8,
     color: 'black',
     borderRadius: 10,
