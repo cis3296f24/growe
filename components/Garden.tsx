@@ -15,13 +15,15 @@ export function Garden() {
 
     useEffect(() => {
         const fetchGroups = async () => {
-            const groupResult = await checkUserHasGroup(user);
-            if (groupResult) {
-                setGroups(groupResult);
-                setHasGroups(true);
-            } else {
+            if (!user) {
+                console.error('User not found in Garden component');
                 setHasGroups(false);
+                return;
             }
+            const groupResult = await checkUserHasGroup(user);
+            if (!groupResult) setHasGroups(false);
+            setGroups(groupResult);
+            setHasGroups(true);
         };
         fetchGroups();
     }, [user]);
