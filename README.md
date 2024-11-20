@@ -22,10 +22,9 @@ sequenceDiagram
   Database -->> Server : Return User
   Server -->> Auth : Return User
   Auth -->> User : Serve Home Screen
-  
 ```
-```mermaind
 
+```mermaid
 sequenceDiagram
     participant User
     participant Frontend
@@ -38,12 +37,11 @@ sequenceDiagram
     Backend->>Backend: Update user document with new group (updateDoc)
     Backend-->>Frontend: Return new group document
     Frontend-->>User: Confirm group creation
-
 ```
-```mermaind
+
+```mermaid
 
 sequenceDiagram
-   sequenceDiagram
     participant User
     participant Frontend
     participant Backend
@@ -53,15 +51,14 @@ sequenceDiagram
     Backend-->>Frontend: Return matching group or false
     alt Group Found
         Frontend->>Backend: Retrieve user document (getDoc)
-        Backend-->>Frontend: Return user data
-        Frontend->>Backend: Update user document with new group (updateDoc)
-        Frontend->>Backend: Update group document with new user (updateDoc)
+        Backend-->>Backend: Return user data
+        Backend->>Backend: Update user document with new group (updateDoc)
+        Backend->>Backend: Update group document with new user (updateDoc)
         Backend-->>Frontend: Return updated group data
         Frontend-->>User: Group joined successfully
     else No Group Found
         Frontend-->>User: Display error message: Invalid join code
     end
-
 ```
 
 [![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=16892524)
