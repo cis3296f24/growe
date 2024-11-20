@@ -3,6 +3,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, se
 import { collection, getDocs } from 'firebase/firestore';
 import { addUser } from './user';
 import { auth, db } from './firebaseConfig';
+import { checkPendingVotes } from './user';
 
 // Sign Up Function
 export const signUp = async (email, password, username, displayName) => {
@@ -23,6 +24,14 @@ export const login = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     console.log('User logged in:', userCredential.user);
+
+    // add pending votes check 
+    const { hasPendingVotes, pendingVotes } = await checkPendingVotes(userCredential.user);
+    if(hasPendingVotes){
+      alert('you have ${pendingVotes.length} pending pendingVotes, please complete useThemeColor');
+  } else {
+    console.log('No pending votes')
+  }
     return userCredential.user;
   } catch (error) {
     console.error('Error logging in:', error.message);

@@ -1,8 +1,55 @@
 
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import { Timestamp } from 'firebase/firestore';
 
+
+
+
+export const checkPendingVotes = async (user) => {
+    if (!user?.uid){
+        console.error("User UID is undefined");
+        return { hasPendingVotes: false, pendingVotes: []};
+    }
+
+    try {
+        const userRef = doc(db, 'users', user.uid)
+// Fetch the user's gropus
+        const userSnapshot = await getDoc(userRef);
+        const userData = userSnapshot.data();
+        const gropus = userData.groups || [];
+
+        const pendingVotes = [];
+
+        // Loop through each group 
+        for (const groupRef of gropus) {
+            const activitiesQuery = query(collection(db, 'activities'), where('groupId', '==', groupRef));
+            const activitiesSnapshot = await getDocs(activitiesQuery);
+
+            // check if the user has voted on all activities
+            activitiesSnapshot.forEach((activitiesDoc) =>{
+                const activitiyData = activitiesDoc.data();
+                if (!activitiesData.voters.includes(userRef)){
+                    // add to pending votes if the user hasn't voted
+                    pendingVotes.push({
+                        activityId: activitiesDoc.id,
+                        ...activitiesData,
+                    });
+                }
+            });
+        }
+        // return results
+        return{
+            hasPendingVotes: pendingVotes.length > 0,
+            pendingVotes,
+        };
+
+
+    } catch (error){
+        console.error('Error checking pending votes: ', error);
+        return { hasPendingVotes: false, pendingVotes: []};
+    }
+};
 // add user to collection
 export const addUser = async (user, username, displayName) => {
     // access users collection
