@@ -7,6 +7,8 @@ import uuid from 'react-native-uuid';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useUser } from './UserContext';
 import { Timestamp, addDoc, collection, doc } from 'firebase/firestore';
+import { updateDoc, arrayUnion } from 'firebase/firestore';
+
 
 export default function Camera() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -101,13 +103,15 @@ export default function Camera() {
 
       const userRef = doc(db, 'users', user.uid);
 
-      await addDoc(collection(db, 'logs'), {
+      const logRef = await addDoc(collection(db, 'logs'), {
         author: userRef,
         voteUnsure: [],
         voteApprove: [],
         voteDeny: [],
         logImageUrl: imageUrl,
         loggedAt: Timestamp.now(),
+      });
+      await updateDoc(userRef, {logs: arrayUnion(logRef.id), 
       });
     } catch (error) {
       console.error('Error creating log entry: ', error);
