@@ -7,6 +7,8 @@ export async function generateImage(prompt) {
   const payload = {
     prompt: prompt,
     output_format: 'png',
+    seed: 227468720,
+    cfg_scale: 3.5,
   };
 
   const apiKey = process.env.EXPO_PUBLIC_STABILITY_AI_API_KEY;

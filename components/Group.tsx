@@ -13,6 +13,8 @@ import UserProgress from './smaller_components/UserProgress';
 import { getPlant } from '@/utils/group';
 import { G } from 'react-native-svg';
 import { Box } from '@/components/ui/box';
+import { generateImage, uploadImageToFirebase} from '@/utils/diffusion';
+import uuid from 'react-native-uuid';
 
 const { width, height } = Dimensions.get('window');
 
@@ -31,7 +33,8 @@ export function Group() {
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
     const [plant, setPlant] = useState(null);
-    const [plantChoices, setPlantChoices] = useState<DocumentReference[]>([]);
+    const [plantImageChoices, setPlantImageChoices] = useState<string[] | null>(null);
+    const [plantNameChoices, setPlantNameChoices] = useState<string[]>([]);
     // const [vote, setVote] = useState(false)
 
     const fetchGroups = async () => {
@@ -72,7 +75,8 @@ export function Group() {
             setPlant(plant);
         } else {
             setPlant(null);
-            handleGeneratePlantChoices();
+            await handleGeneratePlantNames();
+            await handleGeneratePlantChoices();
         }
     };
 
@@ -119,12 +123,24 @@ export function Group() {
             
     }
 
-    const handleGeneratePlantChoices = () => {
-            
+    const handleGeneratePlantNames = async () => {
+        const plantNames = ['Aloe Vera', 'Yucca', 'Succulent', 'Sunflower'];
+        setPlantNameChoices(plantNames);
     }
 
-    const checkPendingLogs = () => {
+    const handleGeneratePlantChoices = async () => {
 
+        const plantChoicesPromises = plantNameChoices.map(async (plantName) => {
+            const image = await generateImage(`isolated ${plantName} plant at the fruiting growth stage, white background, isometric perspective, 8-bit pixel art style`);
+            const downloadURL = await uploadImageToFirebase(
+                image,
+                `plants/${uuid.v4()}-${plantName}-${Date.now()}.png`
+            );
+            return downloadURL; // Adjust this line if you need a DocumentReference
+        });
+
+        const plantChoices = await Promise.all(plantChoicesPromises);
+        setPlantImageChoices(plantChoices);
     }
 
     return (
@@ -136,14 +152,14 @@ export function Group() {
                         <View className='p-2'>
                             <TouchableOpacity onPress={() => console.log('pressed')}>
                                 <Box className='h-40 w-40 bg-primary-300'>
-                                    <Text>Plant A</Text>
+                                    {plantImageChoices ? <Image source={{ uri: plantImageChoices[0] }} style={styles.image} /> : <Text>Plant A</Text>}
                                 </Box>
                             </TouchableOpacity>
                         </View>
                         <View className='p-2'>
                             <TouchableOpacity onPress={() => console.log('pressed')}>
                                 <Box className='h-40 w-40 bg-primary-300'>
-                                    <Text>Plant B</Text>
+                                    {plantImageChoices ? <Image source={{ uri: plantImageChoices[1] }} style={styles.image} /> : <Text>Plant B</Text>}
                                 </Box>
                             </TouchableOpacity>
                         </View>
@@ -152,19 +168,23 @@ export function Group() {
                         <View className='p-2'>
                             <TouchableOpacity onPress={() => console.log('pressed')}>
                                 <Box className='h-40 w-40 bg-primary-300'>
-                                    <Text>Plant C</Text>
+                                    {plantImageChoices ? <Image source={{ uri: plantImageChoices[2] }} style={styles.image} /> : <Text>Plant C</Text>}
                                 </Box>
                             </TouchableOpacity>
                         </View>
                         <View className='p-2'>
                             <TouchableOpacity onPress={() => console.log('pressed')}>
                                 <Box className='h-40 w-40 bg-primary-300'>
-                                    <Text>Plant D</Text>
+                                    {plantImageChoices ? <Image source={{ uri: plantImageChoices[3] }} style={styles.image} /> : <Text>Plant D</Text>}
                                 </Box>
                             </TouchableOpacity>
                         </View>
                     </View>
-                    <Button title="Refresh Plants" onPress={() => console.log("refreshed plants")} />
+                    <Button title="Refresh Plants" onPress={
+                        () => {
+                            handleGeneratePlantNames();
+                            handleGeneratePlantChoices();
+                    }}/>
                 </View>
             ) : hasGroups ? (
                 <View style={styles.inner_container}>

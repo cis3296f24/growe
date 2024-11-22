@@ -1,8 +1,6 @@
-import { collection, query, where, getDocs, getDoc, doc, setDoc, updateDoc, arrayUnion, getDocs, getDoc, query, where } from "firebase/firestore";
+import { collection, query, where, getDocs, getDoc, doc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { Timestamp } from "firebase/firestore";
-
-
 
 export const checkPendingVotes = async (user) => {
   if (!user?.uid) {

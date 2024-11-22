@@ -85,3 +85,13 @@ export const getPlant = async (user) => {
     const groupData = groupSnapshot.data();
     return groupData.plant;
 }
+
+export const setPlant = async (groupRef, plantRef) => {
+    const groupSnapshot = await getDoc(groupRef);
+    const groupData = groupSnapshot.data();
+    const groupDoc = {
+        plant: plantRef
+    };
+    await updateDoc(groupRef, groupDoc);
+    return groupRef;
+}
