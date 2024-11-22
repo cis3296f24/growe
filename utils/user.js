@@ -55,23 +55,22 @@ export const checkPendingVotes = async (user) => {
   }
 };
 
-export const updateUserVote = async (logId, userId, voteType) => {
+export const updateUserVote = async (logRef, userRef, voteType) => {
     try {
         if (!['approve', 'deny', 'unsure'].includes(voteType)) {
             throw new Error('Invalid vote type. Must be "approve", "deny", or "unsure".');
         }
 
         const voteField = `vote${voteType.charAt(0).toUpperCase() + voteType.slice(1)}`; // Dynamically determine field
-        const logRef = doc(db, 'logs', logId);
-
         await updateDoc(logRef, {
-            [voteField]: arrayUnion(userId), // Add user ID to the appropriate vote array
+            [voteField]: arrayUnion(userRef), // Add user ID to the appropriate vote array
         });
 
-        console.log(`User ${userId} has voted ${voteType} for log ${logId}.`);
+        console.log(`User ${userRef} has voted ${voteType} for log ${logRef}.`);
+        return true;
     } catch (error) {
         console.error('Error updating user vote:', error);
-        throw error;
+        return false;
     }
 };
 
