@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 interface VerificationProgressProps {
@@ -7,10 +7,15 @@ interface VerificationProgressProps {
   approvedLogs: number; // Approved logs
 }
 
-  const VerificationProgress: React.FC<VerificationProgressProps> = ({ frequency, totalUsers, approvedLogs }) => {
+const VerificationProgress: React.FC<VerificationProgressProps> = ({ frequency, totalUsers, approvedLogs }) => {
   const totalCells = frequency * totalUsers; // Total number of cells
-  const cappedApprovedCells = approvedLogs; // Ensure approved cells do not exceed total cells
+  const cappedApprovedCells = Math.min(approvedLogs, totalCells); // Cap approved cells to the max
 
+  // Optional: Run side effects when approvedLogs changes
+  // useEffect(() => {
+  //   console.log(`Approved Logs updated: ${approvedLogs}`);
+  // }, [approvedLogs]); // Dependency: Rerun this effect whenever approvedLogs changes
+  
   return (
     <View style={styles.container}>
       <View style={styles.tube}>

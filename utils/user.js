@@ -61,9 +61,10 @@ export const checkPendingVotes = async (user) => {
     // Loop through each group
     for (const groupRef of gropus) {
       const useractivitiesQuery = query(
-        collection(db, "users"),
-        where("groups", "==", groupRef)
+        collection(db, "logs"),
+        where("group", "==", groupRef)
       );
+
       const activitiesSnapshot = await getDocs(useractivitiesQuery);
 
       // check if the user has voted on all activities

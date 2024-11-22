@@ -13,6 +13,7 @@ import UserProgress from './smaller_components/UserProgress';
 
 const { width, height } = Dimensions.get('window');
 
+
 export function Group() {
 
     const [step, setStep] = useState<'initial' | 'name-group' | 'create-habit' | 'set-frequency' | 'display-code' | 'enter-code'>('initial');
@@ -27,7 +28,15 @@ export function Group() {
     const [groupMembers, setGroupMembers] = useState<DocumentReference[]>([]);
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
-    // const [vote, setVote] = useState(false)
+    const [approvals, setApprovals] = useState(0)
+
+    const votesArray = groupMembers.map(() => Math.floor(Math.random() * (frequency + 5)));
+
+    useEffect(() => {
+        // Calculate total approvals
+        const totalApprovals = votesArray.reduce((total, votes) => total + votes, 0);
+        setApprovals(totalApprovals);
+    }, [votesArray]); // Update when votesArray changes
 
     const fetchGroups = async () => {
         const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
@@ -97,9 +106,6 @@ export function Group() {
         setFrequency(newFrequency);
     }
 
-    const checkPendingLogs = () => {
-
-    }
 
     return (
         <LinearGradient
@@ -112,19 +118,22 @@ export function Group() {
                 {hasGroups ? (
 
                     <View style={styles.inner_container}>
-                        <TouchableOpacity><Text>Button</Text></TouchableOpacity>
+                        <TouchableOpacity onPress={() => {
+                            checkPendingVotes(user)
+                        }}><Text>Button</Text></TouchableOpacity>
                         {/* <TouchableOpacity onPress={() => console.log(user)}>click! </TouchableOpacity> */}
                         <View>
                             <Text style={styles.header}>{habit}</Text>
                             <FrequencyBar />
-                            <DaysOfTheWeek selectedDays={['m', 't','w']} />
+                            <DaysOfTheWeek selectedDays={['m', 't', 'w']} />
                         </View>
                         <View style={styles.image_container}>
-                            {/* { <Image source={Plant} style={styles.image} /> } */}
+                            { <Image source={Plant} style={styles.image} /> }
                         </View>
-                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={1}/>
-                        {groupMembers.map((i) => {
-                            return <UserProgress frequency={frequency} totalVotes={1} />
+                        <Text>{approvals}</Text>
+                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvals} />
+                        {groupMembers.map((member, index) => {
+                            return <UserProgress frequency={frequency} totalVotes={votesArray[index]} />
                         })}
 
                     </View>
@@ -223,15 +232,10 @@ const styles = StyleSheet.create({
 
     },
     inner_container: {
-        flex: 1,
         justifyContent: 'flex-start',
         paddingTop: "10%",
         width: "100%",
         alignItems: "center",
-        height: "100%",
-        borderWidth: 2
-
-
     },
     image_container: {
         height: height * .3,

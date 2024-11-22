@@ -8,9 +8,7 @@ interface UserProgressProps {
 }
 
 const UserProgress: React.FC<UserProgressProps> = ({ frequency, totalVotes }) => {
-  // Calculate the number of filled cells
-  const totalCells = frequency; // Fixed number of cells in the tube for visual clarity
-  const filledCells = totalVotes
+  const totalCells = Math.max(frequency, totalVotes); // Expand tube for overflow votes
 
   return (
     <View style={styles.container}>
@@ -27,7 +25,8 @@ const UserProgress: React.FC<UserProgressProps> = ({ frequency, totalVotes }) =>
               key={index}
               style={[
                 styles.cell,
-                index < filledCells && styles.filledCell, // Highlight filled cells
+                index < totalVotes && index < frequency && styles.filledCell, // Normal filled cells
+                index < totalVotes && index >= frequency && styles.overflowCell, // Overflow cells in gold
               ]}
             />
           ))}
@@ -67,13 +66,16 @@ const styles = StyleSheet.create({
   },
   cell: {
     flex: 1, // Ensures cells evenly distribute space
-    height: "100%",
+    height: '100%',
     backgroundColor: '#92A491', // Default unfilled cell color
     borderRadius: 10,
     marginHorizontal: 1, // Reduced space between cells
   },
   filledCell: {
-    backgroundColor: '#BED3BD', // Color for filled cells
+    backgroundColor: '#BED3BD', // Normal filled cell color (brighter green)
+  },
+  overflowCell: {
+    backgroundColor: '#FFF8AA', // Gold for overflow cells
   },
 });
 
