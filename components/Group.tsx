@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
+import { Image, View, TextInput, Button, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useUser } from './UserContext';
 import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
 import { checkUserHasGroup, joinGroup, createGroup } from '../utils/group';
+import { checkPendingVotes } from '../utils/user';
+import { LinearGradient } from 'expo-linear-gradient';
+import VerificationBar from './smaller_components/VerificationBar';
+import FrequencyBar from './smaller_components/FrequencyBar';
+import DaysOfTheWeek from './smaller_components/DaysOfTheWeek';
+import Plant from '../assets/images/Plant.png';
+import UserProgress from './smaller_components/UserProgress';
+
+const { width, height } = Dimensions.get('window');
 
 export function Group() {
 
@@ -18,6 +27,7 @@ export function Group() {
     const [groupMembers, setGroupMembers] = useState<DocumentReference[]>([]);
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
+    // const [vote, setVote] = useState(false)
 
     const fetchGroups = async () => {
         const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
@@ -63,14 +73,11 @@ export function Group() {
     };
 
     const handleJoinGroup = async () => {
-
         const newUserGroup = await joinGroup(user, codeInput);
-
         if (!newUserGroup) {
             setError('Invalid group code');
             return;
         }
-
         setGroups([newUserGroup]);
         setHasGroups(true);
         await fetchGroups();
@@ -90,86 +97,105 @@ export function Group() {
         setFrequency(newFrequency);
     }
 
-    return (
-        <View style={styles.container}>
-            {hasGroups ? (
-                <View style={styles.container}>
-                    <Text>Group Code: {groupCode}</Text>
-                    <Text>Group Name: {groupName}</Text>
-                    <Text>Habit: {habit}</Text>
-                    <Text>Frequency: {frequency}</Text>
-                <Text>Members:</Text>
-                    {groupMemberNames.map((memberName, index) => (
-                        <Text key={index}>{memberName}</Text>
-                    ))}
-                </View>
-            ) : (
-                <View style={styles.container}>
-                    {step === 'initial' && (
-                        <View>
-                            <Text>Welcome to your garden.</Text>
-                            <Text>It's time to plant a new seed.</Text>
-                            <Button title="Create a Group" onPress={() => handleStep('name-group')} />
-                            <Button title="Join a Group" onPress={() => handleStep('enter-code')} />
-                        </View>
-                    )}
-                    {step === 'name-group' && (
-                        <View>
-                            <Text>What is the group's name?</Text>
-                            <TextInput
-                                placeholder={'Group Name'}
-                                placeholderTextColor="gray"
-                                value={groupName}
-                                onChangeText={setGroupName}
-                                style={styles.input}
-                            />
-                            <Button title="Next" onPress={() => handleStep('create-habit')} />
-                            <Button title="Back" onPress={() => handleStep('initial')} />
-                        </View>
-                    )}
-                    {step === 'create-habit' && (
-                        <View>
-                            <Text>What is the group's habit?</Text>
-                            <TextInput
-                                placeholder="Habit"
-                                placeholderTextColor="gray"
-                                value={habit}
-                                onChangeText={setHabit}
-                                style={styles.input}
-                            />
-                            <Button title="Next" onPress={() => handleStep('set-frequency')} />
-                            <Button title="Back" onPress={() => handleStep('name-group')} />
-                        </View>
-                    )}
-                    {step === 'set-frequency' && (
-                        <View>
-                            <Text>How many days a week would your group like to commit to practicing this habit?</Text>
-                            <Text>{frequency} Days a Week</Text>
-                            <Button title="+" onPress={() => handleFrequency(frequency + 1)} />
-                            <Button title="-" onPress={() => handleFrequency(frequency - 1)} />
-                            {error && <Text style={styles.error}>{error}</Text>}
-                            <Button title="Create Group" onPress={() => handleCreateGroup()} />
-                            <Button title="Back" onPress={() => handleStep('create-habit')} />
-                        </View>
-                    )}
-                    {step === 'enter-code' && (
-                        <View>
-                            <TextInput
-                                placeholder="Group Code"
-                                placeholderTextColor="gray"
-                                value={codeInput}
-                                onChangeText={setCodeInput}
-                                style={styles.input}
-                            />
-                            {error && <Text style={styles.error}>{error}</Text>}
-                            <Button title="Back" onPress={() => handleStep('initial')} />
-                            <Button title="Join" onPress={() => handleJoinGroup()} />
-                        </View>
-                    )}
+    const checkPendingLogs = () => {
 
-                </View>
-            )}
-        </View>
+    }
+
+    return (
+        <LinearGradient
+            colors={['#8E9F8D', '#596558']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={{ width: "100%", height: "100%" }}
+        >
+            <View style={styles.container}>
+                {hasGroups ? (
+
+                    <View style={styles.inner_container}>
+                        <TouchableOpacity><Text>Button</Text></TouchableOpacity>
+                        {/* <TouchableOpacity onPress={() => console.log(user)}>click! </TouchableOpacity> */}
+                        <View>
+                            <Text style={styles.header}>{habit}</Text>
+                            <FrequencyBar />
+                            <DaysOfTheWeek selectedDays={['m', 't','w']} />
+                        </View>
+                        <View style={styles.image_container}>
+                            {/* { <Image source={Plant} style={styles.image} /> } */}
+                        </View>
+                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={1}/>
+                        {groupMembers.map((i) => {
+                            return <UserProgress frequency={frequency} totalVotes={1} />
+                        })}
+
+                    </View>
+                ) : (
+                    <View style={styles.container}>
+                        {step === 'initial' && (
+                            <View>
+                                <Text>Welcome to your garden.</Text>
+                                <Text>It's time to plant a new seed.</Text>
+                                <Button title="Create a Group" onPress={() => handleStep('name-group')} />
+                                <Button title="Join a Group" onPress={() => handleStep('enter-code')} />
+                            </View>
+                        )}
+                        {step === 'name-group' && (
+                            <View>
+                                <Text>What is the group's name?</Text>
+                                <TextInput
+                                    placeholder={'Group Name'}
+                                    placeholderTextColor="gray"
+                                    value={groupName}
+                                    onChangeText={setGroupName}
+                                    style={styles.input}
+                                />
+                                <Button title="Next" onPress={() => handleStep('create-habit')} />
+                                <Button title="Back" onPress={() => handleStep('initial')} />
+                            </View>
+                        )}
+                        {step === 'create-habit' && (
+                            <View>
+                                <Text>What is the group's habit?</Text>
+                                <TextInput
+                                    placeholder="Habit"
+                                    placeholderTextColor="gray"
+                                    value={habit}
+                                    onChangeText={setHabit}
+                                    style={styles.input}
+                                />
+                                <Button title="Next" onPress={() => handleStep('set-frequency')} />
+                                <Button title="Back" onPress={() => handleStep('name-group')} />
+                            </View>
+                        )}
+                        {step === 'set-frequency' && (
+                            <View>
+                                <Text>How many days a week would your group like to commit to practicing this habit?</Text>
+                                <Text>{frequency} Days a Week</Text>
+                                <Button title="+" onPress={() => handleFrequency(frequency + 1)} />
+                                <Button title="-" onPress={() => handleFrequency(frequency - 1)} />
+                                {error && <Text style={styles.error}>{error}</Text>}
+                                <Button title="Create Group" onPress={() => handleCreateGroup()} />
+                                <Button title="Back" onPress={() => handleStep('create-habit')} />
+                            </View>
+                        )}
+                        {step === 'enter-code' && (
+                            <View>
+                                <TextInput
+                                    placeholder="Group Code"
+                                    placeholderTextColor="gray"
+                                    value={codeInput}
+                                    onChangeText={setCodeInput}
+                                    style={styles.input}
+                                />
+                                {error && <Text style={styles.error}>{error}</Text>}
+                                <Button title="Back" onPress={() => handleStep('initial')} />
+                                <Button title="Join" onPress={() => handleJoinGroup()} />
+                            </View>
+                        )}
+                    </View>
+                )
+                }
+            </View >
+        </LinearGradient>
     );
 }
 
@@ -182,7 +208,6 @@ const styles = StyleSheet.create({
         minWidth: 300,
         width: '100%',
         borderColor: 'lightgray',
-        borderWidth: 1,
         marginBottom: 12,
         paddingHorizontal: 8,
         color: 'black',
@@ -190,8 +215,37 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         padding: 16,
-        paddingBottom: 128,
-      },
+        width: "100%",
+        alignItems: "center",
+        height: "100%",
+
+    },
+    inner_container: {
+        flex: 1,
+        justifyContent: 'flex-start',
+        paddingTop: "10%",
+        width: "100%",
+        alignItems: "center",
+        height: "100%",
+        borderWidth: 2
+
+
+    },
+    image_container: {
+        height: height * .3,
+        width: width * .5,
+    },
+    image: {
+        width: "100%",
+        height: "100%",
+    },
+    header: {
+        fontSize: 20,
+        lineHeight: 23.87,
+        textAlign: "center",
+        color: "white",
+        marginBottom: 20
+    }
 });
