@@ -11,6 +11,7 @@ import DaysOfTheWeek from './smaller_components/DaysOfTheWeek';
 import Plant from '../assets/images/Plant.png';
 import UserProgress from './smaller_components/UserProgress';
 
+
 const { width, height } = Dimensions.get('window');
 
 export function Group() {
@@ -97,8 +98,19 @@ export function Group() {
         setFrequency(newFrequency);
     }
 
-    const checkPendingLogs = () => {
+    const ProgressImage = ( VerificationProgress : number ) => {
+        const [imageUrl, setImageUrl] = useState(null);
+        const [loading, setLoading] = useState(true);
 
+        const getProgressImage = (VerificationProgress: number) => {
+            if (VerificationProgress < 0.25) return 'plants/test/plant1.png';
+            if (VerificationProgress< 0.5) return 'plants/test/plant2.png';
+            if (VerificationProgress < 0.75) return 'plants/test/plant3.png';
+            if (VerificationProgress < 1) return 'plants/test/plant4.png';
+
+                
+        
+    }
     }
 
     return (
@@ -112,17 +124,19 @@ export function Group() {
                 {hasGroups ? (
 
                     <View style={styles.inner_container}>
-                        <TouchableOpacity><Text>Button</Text></TouchableOpacity>
+                        <TouchableOpacity onPress={() => {
+                            checkPendingVotes(user)
+                        }}><Text>Button</Text></TouchableOpacity>
                         {/* <TouchableOpacity onPress={() => console.log(user)}>click! </TouchableOpacity> */}
                         <View>
                             <Text style={styles.header}>{habit}</Text>
                             <FrequencyBar />
-                            <DaysOfTheWeek selectedDays={['m', 't','w']} />
+                            <DaysOfTheWeek selectedDays={['m', 't', 'w']} />
                         </View>
                         <View style={styles.image_container}>
                             {/* { <Image source={Plant} style={styles.image} /> } */}
                         </View>
-                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={1}/>
+                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={1}  /> //changing approvedLogs to 1 for testing purposes
                         {groupMembers.map((i) => {
                             return <UserProgress frequency={frequency} totalVotes={1} />
                         })}

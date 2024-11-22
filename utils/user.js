@@ -1,4 +1,12 @@
-import { collection, doc, setDoc, getDocs, getDoc, query, where } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  setDoc,
+  getDocs,
+  getDoc,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { Timestamp } from "firebase/firestore";
 
@@ -60,29 +68,26 @@ export const checkPendingVotes = async (user) => {
 
     // Loop through each group
     for (const groupRef of gropus) {
-      const useractivitiesQuery = query(
-        collection(db, "users"),
-        where("groups", "==", groupRef)
-      );
-      const activitiesSnapshot = await getDocs(useractivitiesQuery);
+      // Validate groupRef before proceeding
+      if (!groupRef || typeof groupRef !== "string") {
+        console.warn(`Skipping invalid groupRef: ${groupRef}`);
+        continue; // Skip to the next group
+      }
 
-      // check if the user has voted on all activities
-      activitiesSnapshot.forEach((activitiesDoc) => {
-        const activityData = activitiesDoc.data();
-        if (!activityData.voters.includes(userRef)) {
-          // add to pending votes if the user hasn't voted
-          pendingVotes.push({
-            activityId: activitiesDoc.id,
-            ...activityData,
-          });
-        }
-      });
+      try {
+        const useractivitiesQuery = query(
+          collection(db, "users"),
+          where("groups", "==", groupRef)
+        );
+        // const activitiesSnapshot = await getDocs(useractivitiesQuery);
+
+        // Check if the user has voted on all activities
+        return useractivitiesQuery;
+      } catch (error) {
+        console.error(`Error querying groupRef: ${groupRef}`, error);
+        continue; // Skip to the next group if an error occurs
+      }
     }
-    // return results
-    return {
-      hasPendingVotes: pendingVotes.length > 0,
-      pendingVotes,
-    };
   } catch (error) {
     console.error("Error checking pending votes: ", error);
     return { hasPendingVotes: false, pendingVotes: [] };

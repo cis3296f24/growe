@@ -32,6 +32,7 @@
     "@gluestack-ui/pressable": "^0.1.17",
     "@gluestack-ui/toast": "^1.0.8",
     "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-firebase/storage": "^21.6.0",
     "axios": "^1.7.7",
     "babel-plugin-module-resolver": "^5.0.2",
     "expo": "^52.0.7",
