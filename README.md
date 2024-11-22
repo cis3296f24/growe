@@ -22,7 +22,43 @@ sequenceDiagram
   Database -->> Server : Return User
   Server -->> Auth : Return User
   Auth -->> User : Serve Home Screen
-  
+```
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+
+    User->>Frontend: Submit group creation request
+    Frontend->>Backend: Retrieve user document (getDoc)
+    Backend->>Backend: Generate join code
+    Backend->>Backend: Create group document (addDoc)
+    Backend->>Backend: Update user document with new group (updateDoc)
+    Backend-->>Frontend: Return new group document
+    Frontend-->>User: Confirm group creation
+```
+
+```mermaid
+
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+
+    User->>Frontend: Submit join code
+    Frontend->>Backend: Query groups collection with join code (where)
+    Backend-->>Frontend: Return matching group or false
+    alt Group Found
+        Frontend->>Backend: Retrieve user document (getDoc)
+        Backend-->>Backend: Return user data
+        Backend->>Backend: Update user document with new group (updateDoc)
+        Backend->>Backend: Update group document with new user (updateDoc)
+        Backend-->>Frontend: Return updated group data
+        Frontend-->>User: Group joined successfully
+    else No Group Found
+        Frontend-->>User: Display error message: Invalid join code
+    end
 ```
 ```mermaid
 sequenceDiagram
