@@ -4,6 +4,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { addUser } from './user';
 import { auth, db } from './firebaseConfig';
 
+
 // Sign Up Function
 export const signUp = async (email, password, username, displayName) => {
   try {
@@ -29,6 +30,7 @@ export const login = async (email, password) => {
     return null;
   }
 };
+
 
 // Logout Function
 export const logout = async () => {
