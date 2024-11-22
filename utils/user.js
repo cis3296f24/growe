@@ -5,51 +5,68 @@ import { Timestamp } from 'firebase/firestore';
 
 
 
-
 export const checkPendingVotes = async (user) => {
-    if (!user?.uid){
-        console.error("User UID is undefined");
-        return { hasPendingVotes: false, pendingVotes: []};
-    }
+  if (!user?.uid) {
+    console.error('User UID is undefined');
+    return { hasPendingVotes: false, pendingVotes: [] };
+  }
 
-    try {
-        const userRef = doc(db, 'users', user.uid)
-// Fetch the user's gropus
-        const userSnapshot = await getDoc(userRef);
-        const userData = userSnapshot.data();
-        const gropus = userData.groups || [];
+  try {
+    const userRef = doc(db, 'users', user.uid);
 
-        const pendingVotes = [];
+    // Fetch the user's groups
+    const userSnapshot = await getDoc(userRef);
+    const userData = userSnapshot.data();
+    const groups = userData.groups || []; // Array of group references
 
-        // Loop through each group 
-        for (const groupRef of gropus) {
-            const activitiesQuery = query(collection(db, 'activities'), where('groupId', '==', groupRef));
-            const activitiesSnapshot = await getDocs(activitiesQuery);
+    const pendingVotes = [];
 
-            // check if the user has voted on all activities
-            activitiesSnapshot.forEach((activitiesDoc) =>{
-                const activitiyData = activitiesDoc.data();
-                if (!activitiesData.voters.includes(userRef)){
-                    // add to pending votes if the user hasn't voted
-                    pendingVotes.push({
-                        activityId: activitiesDoc.id,
-                        ...activitiesData,
-                    });
-                }
-            });
+    // Loop through each group
+    for (const groupRef of groups) {
+      const logsQuery = query(
+        collection(db, 'logs'),
+        where('group', '==', groupRef) // Match logs belonging to the group
+      );
+      const logsSnapshot = await getDocs(logsQuery);
+
+      // Check if the user has voted on all logs
+      logsSnapshot.forEach((logDoc) => {
+        const logData = logDoc.data();
+
+        // Check if the user has not voted (not in voteApprove, voteDeny, or voteUnsure)
+        const hasVoted =
+          logData.voteApprove?.includes(userRef.path) ||
+          logData.voteDeny?.includes(userRef.path) ||
+          logData.voteUnsure?.includes(userRef.path);
+
+        if (!hasVoted) {
+          // Add to pending votes if the user hasn't voted
+          pendingVotes.push({
+            logId: logDoc.id,
+            author: logData.author?.path || '',
+            voteApprove: logData.voteApprove || [],
+            voteDeny: logData.voteDeny || [],
+            voteUnsure: logData.voteUnsure || [],
+            logImageUrl: logData.logImageUrl || '',
+            loggedAt: logData.loggedAt?.toDate ? logData.loggedAt.toDate() : new Date(), // Ensure loggedAt is a Date
+            group: logData.group?.path || '',
+          });
         }
-        // return results
-        return{
-            hasPendingVotes: pendingVotes.length > 0,
-            pendingVotes,
-        };
-
-
-    } catch (error){
-        console.error('Error checking pending votes: ', error);
-        return { hasPendingVotes: false, pendingVotes: []};
+      });
     }
+
+    // Return results
+    return {
+      hasPendingVotes: pendingVotes.length > 0,
+      pendingVotes,
+    };
+  } catch (error) {
+    console.error('Error checking pending votes: ', error);
+    return { hasPendingVotes: false, pendingVotes: [] };
+  }
 };
+
+
 // add user to collection
 export const addUser = async (user, username, displayName) => {
     // access users collection

@@ -25,19 +25,22 @@ export const login = async (email, password) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     console.log('User logged in:', userCredential.user);
 
-    // add pending votes check 
+    // Add pending votes check
     const { hasPendingVotes, pendingVotes } = await checkPendingVotes(userCredential.user);
-    if(hasPendingVotes){
-      alert('you have ${pendingVotes.length} pending pendingVotes, please complete useThemeColor');
-  } else {
-    console.log('No pending votes')
-  }
+
+    if (hasPendingVotes) {
+      alert(`You have ${pendingVotes.length} pending votes. Please complete them!`);
+    } else {
+      alert('you have no pending votes. Enjoy using the app!')
+    }
+
     return userCredential.user;
   } catch (error) {
     console.error('Error logging in:', error.message);
     return null;
   }
 };
+
 
 // Logout Function
 export const logout = async () => {

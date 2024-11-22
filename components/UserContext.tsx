@@ -2,30 +2,39 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User } from 'firebase/auth';
 import { auth } from '../utils/firebaseConfig'; // Adjust the import path as needed
 import { onAuthStateChanged } from 'firebase/auth';
-import { checkPendingVotes } from '@/utils/user'; // Import the pending votes checker function
+import { checkPendingVotes } from '../utils/user'; // Adjust the import path
 
-interface UserContextType {
-  user: User | null;
-  pendingVotes: any[]; // Array to store pending votes
-  refreshPendingVotes: () => void; // Function to manually refresh pending votes
+// Define the type for a pending vote
+interface PendingVote {
+  logId: string;
+  author: string;
+  voteApprove: string[]; // Updated to match array type
+  voteDeny: string[]; // Updated to match array type
+  voteUnsure: string[]; // Updated to match array type
+  logImageUrl: string;
+  loggedAt: Date; // Ensure conversion from Timestamp to Date
+  group: string;
 }
 
+// Define the context type
+interface UserContextType {
+  user: User | null;
+  pendingVotes: PendingVote[];
+  refreshPendingVotes: () => void;
+}
+
+// Create the context
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [pendingVotes, setPendingVotes] = useState<any[]>([]);
+  const [pendingVotes, setPendingVotes] = useState<PendingVote[]>([]); // Updated to `pendingVotes`
 
   // Fetch pending votes for the authenticated user
   const fetchPendingVotes = async (firebaseUser: User | null) => {
     if (firebaseUser) {
       const { hasPendingVotes, pendingVotes } = await checkPendingVotes(firebaseUser);
-      if (hasPendingVotes) {
-        setPendingVotes(pendingVotes);
-        console.log('Pending votes:', pendingVotes);
-      } else {
-        setPendingVotes([]);
-      }
+      setPendingVotes(pendingVotes); // Updated to match state variable
     } else {
       setPendingVotes([]);
     }
