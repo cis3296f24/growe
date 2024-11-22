@@ -1,3 +1,4 @@
+Use Case: Signing Up
 ```mermaid
 sequenceDiagram
   participant User
@@ -23,7 +24,7 @@ sequenceDiagram
   Server -->> Auth : Return User
   Auth -->> User : Serve Home Screen
 ```
-
+Use Case: Creating Group
 ```mermaid
 sequenceDiagram
     participant User
@@ -38,7 +39,7 @@ sequenceDiagram
     Backend-->>Frontend: Return new group document
     Frontend-->>User: Confirm group creation
 ```
-
+Use Case: Join Group
 ```mermaid
 
 sequenceDiagram
@@ -60,6 +61,7 @@ sequenceDiagram
         Frontend-->>User: Display error message: Invalid join code
     end
 ```
+Use Case: Logging in
 ```mermaid
 sequenceDiagram
   participant User
