@@ -8,7 +8,9 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { useUser } from './UserContext';
 import { Timestamp, addDoc, collection, doc } from 'firebase/firestore';
 import { updateDoc, arrayUnion } from 'firebase/firestore';
-
+import { Group } from './Group';
+import group from '@/app/group';
+import { checkUserHasGroup } from '@/utils/group';
 
 export default function Camera() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -102,6 +104,7 @@ export default function Camera() {
       }
 
       const userRef = doc(db, 'users', user.uid);
+      const groupRefs  = await checkUserHasGroup(user);
 
       const logRef = await addDoc(collection(db, 'logs'), {
         author: userRef,
@@ -110,6 +113,7 @@ export default function Camera() {
         voteDeny: [],
         logImageUrl: imageUrl,
         loggedAt: Timestamp.now(),
+        group: groupRefs.at(-1),
       });
       await updateDoc(userRef, {logs: arrayUnion(logRef.id), 
       });
