@@ -10,6 +10,9 @@ import FrequencyBar from './smaller_components/FrequencyBar';
 import DaysOfTheWeek from './smaller_components/DaysOfTheWeek';
 import Plant from '../assets/images/Plant.png';
 import UserProgress from './smaller_components/UserProgress';
+import { getPlant } from '@/utils/group';
+import { G } from 'react-native-svg';
+import { Box } from '@/components/ui/box';
 
 const { width, height } = Dimensions.get('window');
 
@@ -27,6 +30,8 @@ export function Group() {
     const [groupMembers, setGroupMembers] = useState<DocumentReference[]>([]);
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
+    const [plant, setPlant] = useState(null);
+    const [plantChoices, setPlantChoices] = useState<DocumentReference[]>([]);
     // const [vote, setVote] = useState(false)
 
     const fetchGroups = async () => {
@@ -56,7 +61,20 @@ export function Group() {
 
     useEffect(() => {
         fetchGroups();
+        console.log('fetching groups');
+        checkPlant();
+        console.log('fetching plant');
     }, [user]);
+
+    const checkPlant = async () => {
+        const plant = await getPlant(user);
+        if (plant != null) {
+            setPlant(plant);
+        } else {
+            setPlant(null);
+            handleGeneratePlantChoices();
+        }
+    };
 
     const handleCreateGroup = async () => {
 
@@ -97,105 +115,141 @@ export function Group() {
         setFrequency(newFrequency);
     }
 
+    const handleChoosePlant = () => {
+            
+    }
+
+    const handleGeneratePlantChoices = () => {
+            
+    }
+
     const checkPendingLogs = () => {
 
     }
 
     return (
-        <LinearGradient
-            colors={['#8E9F8D', '#596558']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={{ width: "100%", height: "100%" }}
-        >
-            <View style={styles.container}>
-                {hasGroups ? (
-
-                    <View style={styles.inner_container}>
-                        <TouchableOpacity><Text>Button</Text></TouchableOpacity>
-                        {/* <TouchableOpacity onPress={() => console.log(user)}>click! </TouchableOpacity> */}
+        <View style={styles.container}>
+            {!plant && hasGroups ? (
+                <View className='p-5'>
+                    <Text>Choose a plant to get started.</Text>
+                    <View className='flex-row'>
+                        <View className='p-2'>
+                            <TouchableOpacity onPress={() => console.log('pressed')}>
+                                <Box className='h-40 w-40 bg-primary-300'>
+                                    <Text>Plant A</Text>
+                                </Box>
+                            </TouchableOpacity>
+                        </View>
+                        <View className='p-2'>
+                            <TouchableOpacity onPress={() => console.log('pressed')}>
+                                <Box className='h-40 w-40 bg-primary-300'>
+                                    <Text>Plant B</Text>
+                                </Box>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <View className='flex-row'>
+                        <View className='p-2'>
+                            <TouchableOpacity onPress={() => console.log('pressed')}>
+                                <Box className='h-40 w-40 bg-primary-300'>
+                                    <Text>Plant C</Text>
+                                </Box>
+                            </TouchableOpacity>
+                        </View>
+                        <View className='p-2'>
+                            <TouchableOpacity onPress={() => console.log('pressed')}>
+                                <Box className='h-40 w-40 bg-primary-300'>
+                                    <Text>Plant D</Text>
+                                </Box>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <Button title="Refresh Plants" onPress={() => console.log("refreshed plants")} />
+                </View>
+            ) : hasGroups ? (
+                <View style={styles.inner_container}>
+                    <TouchableOpacity><Text>Button</Text></TouchableOpacity>
+                    {/* <TouchableOpacity onPress={() => console.log(user)}>click! </TouchableOpacity> */}
+                    <View>
+                        <Text style={styles.header}>{habit}</Text>
+                        <FrequencyBar />
+                        <DaysOfTheWeek selectedDays={['m', 't','w']} />
+                    </View>
+                    <View style={styles.image_container}>
+                        {/* { <Image source={Plant} style={styles.image} /> } */}
+                        
+                    </View>
+                    <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={1}/>
+                    {groupMembers.map((i) => {
+                        return <UserProgress frequency={frequency} totalVotes={1} />
+                    })}
+                </View>
+            ) : (
+                <View style={styles.container}>
+                    {step === 'initial' && (
                         <View>
-                            <Text style={styles.header}>{habit}</Text>
-                            <FrequencyBar />
-                            <DaysOfTheWeek selectedDays={['m', 't','w']} />
+                            <Text>Welcome to your garden.</Text>
+                            <Text>It's time to plant a new seed.</Text>
+                            <Button title="Create a Group" onPress={() => handleStep('name-group')} />
+                            <Button title="Join a Group" onPress={() => handleStep('enter-code')} />
                         </View>
-                        <View style={styles.image_container}>
-                            {/* { <Image source={Plant} style={styles.image} /> } */}
+                    )}
+                    {step === 'name-group' && (
+                        <View>
+                            <Text>What is the group's name?</Text>
+                            <TextInput
+                                placeholder={'Group Name'}
+                                placeholderTextColor="gray"
+                                value={groupName}
+                                onChangeText={setGroupName}
+                                style={styles.input}
+                            />
+                            <Button title="Next" onPress={() => handleStep('create-habit')} />
+                            <Button title="Back" onPress={() => handleStep('initial')} />
                         </View>
-                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={1}/>
-                        {groupMembers.map((i) => {
-                            return <UserProgress frequency={frequency} totalVotes={1} />
-                        })}
-
-                    </View>
-                ) : (
-                    <View style={styles.container}>
-                        {step === 'initial' && (
-                            <View>
-                                <Text>Welcome to your garden.</Text>
-                                <Text>It's time to plant a new seed.</Text>
-                                <Button title="Create a Group" onPress={() => handleStep('name-group')} />
-                                <Button title="Join a Group" onPress={() => handleStep('enter-code')} />
-                            </View>
-                        )}
-                        {step === 'name-group' && (
-                            <View>
-                                <Text>What is the group's name?</Text>
-                                <TextInput
-                                    placeholder={'Group Name'}
-                                    placeholderTextColor="gray"
-                                    value={groupName}
-                                    onChangeText={setGroupName}
-                                    style={styles.input}
-                                />
-                                <Button title="Next" onPress={() => handleStep('create-habit')} />
-                                <Button title="Back" onPress={() => handleStep('initial')} />
-                            </View>
-                        )}
-                        {step === 'create-habit' && (
-                            <View>
-                                <Text>What is the group's habit?</Text>
-                                <TextInput
-                                    placeholder="Habit"
-                                    placeholderTextColor="gray"
-                                    value={habit}
-                                    onChangeText={setHabit}
-                                    style={styles.input}
-                                />
-                                <Button title="Next" onPress={() => handleStep('set-frequency')} />
-                                <Button title="Back" onPress={() => handleStep('name-group')} />
-                            </View>
-                        )}
-                        {step === 'set-frequency' && (
-                            <View>
-                                <Text>How many days a week would your group like to commit to practicing this habit?</Text>
-                                <Text>{frequency} Days a Week</Text>
-                                <Button title="+" onPress={() => handleFrequency(frequency + 1)} />
-                                <Button title="-" onPress={() => handleFrequency(frequency - 1)} />
-                                {error && <Text style={styles.error}>{error}</Text>}
-                                <Button title="Create Group" onPress={() => handleCreateGroup()} />
-                                <Button title="Back" onPress={() => handleStep('create-habit')} />
-                            </View>
-                        )}
-                        {step === 'enter-code' && (
-                            <View>
-                                <TextInput
-                                    placeholder="Group Code"
-                                    placeholderTextColor="gray"
-                                    value={codeInput}
-                                    onChangeText={setCodeInput}
-                                    style={styles.input}
-                                />
-                                {error && <Text style={styles.error}>{error}</Text>}
-                                <Button title="Back" onPress={() => handleStep('initial')} />
-                                <Button title="Join" onPress={() => handleJoinGroup()} />
-                            </View>
-                        )}
-                    </View>
-                )
-                }
-            </View >
-        </LinearGradient>
+                    )}
+                    {step === 'create-habit' && (
+                        <View>
+                            <Text>What is the group's habit?</Text>
+                            <TextInput
+                                placeholder="Habit"
+                                placeholderTextColor="gray"
+                                value={habit}
+                                onChangeText={setHabit}
+                                style={styles.input}
+                            />
+                            <Button title="Next" onPress={() => handleStep('set-frequency')} />
+                            <Button title="Back" onPress={() => handleStep('name-group')} />
+                        </View>
+                    )}
+                    {step === 'set-frequency' && (
+                        <View>
+                            <Text>How many days a week would your group like to commit to practicing this habit?</Text>
+                            <Text>{frequency} Days a Week</Text>
+                            <Button title="+" onPress={() => handleFrequency(frequency + 1)} />
+                            <Button title="-" onPress={() => handleFrequency(frequency - 1)} />
+                            {error && <Text style={styles.error}>{error}</Text>}
+                            <Button title="Create Group" onPress={() => handleCreateGroup()} />
+                            <Button title="Back" onPress={() => handleStep('create-habit')} />
+                        </View>
+                    )}
+                    {step === 'enter-code' && (
+                        <View>
+                            <TextInput
+                                placeholder="Group Code"
+                                placeholderTextColor="gray"
+                                value={codeInput}
+                                onChangeText={setCodeInput}
+                                style={styles.input}
+                            />
+                            {error && <Text style={styles.error}>{error}</Text>}
+                            <Button title="Back" onPress={() => handleStep('initial')} />
+                            <Button title="Join" onPress={() => handleJoinGroup()} />
+                        </View>
+                    )}
+                </View>
+            )}
+        </View >
     );
 }
 
