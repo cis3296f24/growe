@@ -6,7 +6,7 @@
       }
     }
   },
-  "name": "growe",
+  "name": "growe-app",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -42,7 +42,7 @@
     "expo-linear-gradient": "~14.0.1",
     "expo-linking": "~7.0.3",
     "expo-module-scripts": "^4.0.2",
-    "expo-router": "~4.0.7",
+    "expo-router": "~4.0.8",
     "expo-splash-screen": "~0.29.11",
     "expo-status-bar": "~2.0.0",
     "expo-system-ui": "~4.0.3",
