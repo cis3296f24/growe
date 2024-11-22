@@ -1,5 +1,5 @@
 
-import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDoc, doc, setDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import { Timestamp } from 'firebase/firestore';
 
@@ -8,7 +8,7 @@ import { Timestamp } from 'firebase/firestore';
 export const checkPendingVotes = async (user) => {
   if (!user?.uid) {
     console.error('User UID is undefined');
-    return { hasPendingVotes: false, pendingVotes: [] };
+    return false; 
   }
 
   try {
@@ -41,25 +41,14 @@ export const checkPendingVotes = async (user) => {
 
         if (!hasVoted) {
           // Add to pending votes if the user hasn't voted
-          pendingVotes.push({
-            logId: logDoc.id,
-            author: logData.author?.path || '',
-            voteApprove: logData.voteApprove || [],
-            voteDeny: logData.voteDeny || [],
-            voteUnsure: logData.voteUnsure || [],
-            logImageUrl: logData.logImageUrl || '',
-            loggedAt: logData.loggedAt?.toDate ? logData.loggedAt.toDate() : new Date(), // Ensure loggedAt is a Date
-            group: logData.group?.path || '',
-          });
+          pendingVotes.push(logDoc.ref);
         }
       });
     }
 
     // Return results
-    return {
-      hasPendingVotes: pendingVotes.length > 0,
-      pendingVotes,
-    };
+    return pendingVotes.length > 0 ? pendingVotes : false;
+    
   } catch (error) {
     console.error('Error checking pending votes: ', error);
     return { hasPendingVotes: false, pendingVotes: [] };
