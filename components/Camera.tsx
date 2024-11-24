@@ -1,16 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { View, Button, StyleSheet, Text, TouchableOpacity, Alert, Image } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { storage, db } from "../utils/firebaseConfig";
+import { storage } from "../utils/firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import uuid from 'react-native-uuid';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useUser } from './UserContext';
-import { Timestamp, addDoc, collection, doc } from 'firebase/firestore';
-import { updateDoc, arrayUnion } from 'firebase/firestore';
-import { Group } from './Group';
-import group from '@/app/group';
-import { checkUserHasGroup } from '@/utils/group';
+import { createLogEntry } from '../utils/log'; 
+
 
 export default function Camera() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -80,7 +77,7 @@ export default function Camera() {
 
       const downloadURL = await getDownloadURL(storageRef);
 
-      await createLogEntry(downloadURL);
+      await createLogEntry(user,downloadURL);
 
       Alert.alert('Photo uploaded and log entry created!');
       setIsPreviewVisible(false); 
@@ -96,32 +93,7 @@ export default function Camera() {
     setPhotoUri(null); 
   };
 
-  const createLogEntry = async (imageUrl: string) => {
-    try {
-      if (!user) {
-        Alert.alert('Error', 'User not found');
-        return;
-      }
-
-      const userRef = doc(db, 'users', user.uid);
-      const groupRefs  = await checkUserHasGroup(user);
-
-      const logRef = await addDoc(collection(db, 'logs'), {
-        author: userRef,
-        voteUnsure: [],
-        voteApprove: [],
-        voteDeny: [],
-        logImageUrl: imageUrl,
-        loggedAt: Timestamp.now(),
-        group: groupRefs.at(-1),
-      });
-      await updateDoc(userRef, {logs: arrayUnion(logRef.id), 
-      });
-    } catch (error) {
-      console.error('Error creating log entry: ', error);
-      Alert.alert('Error', 'Failed to create log entry');
-    }
-  };
+  
 
   return (
     <View style={styles.container}>
