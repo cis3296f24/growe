@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, QuerySnapshot, DocumentSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, QuerySnapshot, DocumentSnapshot, DocumentReference } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 export const checkUserHasGroup = async (user) => {
@@ -66,6 +66,31 @@ export const joinGroup = async (user, joinCode) => {
     await updateDoc(userRef, userDoc);
     const groupDoc = {
         users: [...docSnapshotData.users, userRef]
+    };
+    await updateDoc(groupRef, groupDoc);
+    return groupRef;
+}
+
+// get plant attribute with plant doc ref from group doc associated with user
+export const getPlant = async (user) => {
+    const userRef = doc(db, 'users', user.uid);
+    const userSnapshot = await getDoc(userRef);
+    const userData = userSnapshot.data();
+    const groups = userData.groups || [];
+    if (groups.length === 0) {
+        return false;
+    }
+    const groupRef = groups.at(-1);
+    const groupSnapshot = await getDoc(groupRef);
+    const groupData = groupSnapshot.data();
+    return groupData.plant;
+}
+
+export const setPlant = async (groupRef, plantRef) => {
+    const groupSnapshot = await getDoc(groupRef);
+    const groupData = groupSnapshot.data();
+    const groupDoc = {
+        plant: plantRef
     };
     await updateDoc(groupRef, groupDoc);
     return groupRef;

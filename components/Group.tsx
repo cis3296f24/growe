@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
+import { Image, View, TextInput, Button, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useUser } from './UserContext';
 import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
 import { checkUserHasGroup, joinGroup, createGroup } from '../utils/group';
+import { checkPendingVotes } from '../utils/user';
+import { LinearGradient } from 'expo-linear-gradient';
+import VerificationBar from './extra/VerificationBar';
+import FrequencyBar from './extra/FrequencyBar';
+import DaysOfTheWeek from './extra/DaysOfTheWeek';
+import Plant from '../assets/images/Plant.png';
+import UserProgress from './extra/UserProgress';
+import { getPlant } from '@/utils/group';
+import { G } from 'react-native-svg';
+import { Box } from '@/components/ui/box';
+import { generateAndUploadImage} from '@/utils/diffusion';
+import uuid from 'react-native-uuid';
+import { Spinner } from '@/components/ui/spinner';
+import colors from 'tailwindcss/colors';
+import { createPlant, getDecayDate } from '@/utils/plant';
+
+const { width, height } = Dimensions.get('window');
 
 export function Group() {
 
@@ -18,6 +35,11 @@ export function Group() {
     const [groupMembers, setGroupMembers] = useState<DocumentReference[]>([]);
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
+    const [plant, setPlant] = useState<DocumentReference | null>(null);
+    const [plantImageChoices, setPlantImageChoices] = useState<string[] | null>(null);
+    const [plantNameChoices, setPlantNameChoices] = useState<string[]>([]);
+    const [plantLatinNames, setPlantLatinNames] = useState<string[]>([]);
+    // const [vote, setVote] = useState(false)
 
     const fetchGroups = async () => {
         const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
@@ -46,7 +68,31 @@ export function Group() {
 
     useEffect(() => {
         fetchGroups();
+        console.log('fetching groups');
+        checkPlant();
+        console.log('fetching plant');
     }, [user]);
+
+    useEffect(() => {
+        if (plantNameChoices.length > 0) {
+          handleGeneratePlantChoices();
+          console.log('generating plant choices');
+        }
+    }, [plantNameChoices]);
+
+    const checkPlant = async () => {
+        const plant = await getPlant(user);
+        if (plant != null) {
+          console.log('plant');
+          setPlant(plant);
+        } else {
+          console.log('no plant');
+          setPlant(null);
+          console.log('generating plant names');
+          await handleGeneratePlantNames();
+        }
+      };
+      
 
     const handleCreateGroup = async () => {
 
@@ -63,14 +109,11 @@ export function Group() {
     };
 
     const handleJoinGroup = async () => {
-
         const newUserGroup = await joinGroup(user, codeInput);
-
         if (!newUserGroup) {
             setError('Invalid group code');
             return;
         }
-
         setGroups([newUserGroup]);
         setHasGroups(true);
         await fetchGroups();
@@ -90,18 +133,115 @@ export function Group() {
         setFrequency(newFrequency);
     }
 
+    const handleChoosePlant = async (plantChoiceIndex: number) => {
+
+        const plantStages = ['sprouting', 'seedling', 'vegetating', 'budding', 'flowering'];
+
+        const plantStagesPromises = plantStages.map(async (stage) => {
+            const downloadURL = await generateAndUploadImage(
+                `isolated ${plantNameChoices[plantChoiceIndex]} plant at the ${stage} growth stage, white background, isometric perspective, 8-bit pixel art style`,
+                `plants/${uuid.v4()}-${plantNameChoices[plantChoiceIndex]}-${stage}-${Date.now()}.png`
+            );
+            return downloadURL;
+        });
+
+        const plantStageImages = await Promise.all(plantStagesPromises);
+        const currentDate = new Date();
+
+        if (plantImageChoices && plantImageChoices.length >= 4) {
+            const plantDocRef: DocumentReference = await createPlant(
+                0,
+                [...plantStageImages, plantImageChoices[plantChoiceIndex]],
+                plantNameChoices[plantChoiceIndex],
+                plantLatinNames[plantChoiceIndex],
+                getDecayDate(currentDate),
+                true,
+            );
+            setPlant(plantDocRef);
+        } else {
+            console.error('Plant image choices not found');
+        }
+    }
+
+    const handleGeneratePlantNames = async () => {
+        const plantNames = ['Aloe Vera', 'Yucca', 'Succulent', 'Sunflower'];
+        setPlantNameChoices(plantNames);
+    }
+
+    const handleGeneratePlantChoices = async () => {
+        if (plantNameChoices.length === 0) return; // Ensure there are plant names
+        const plantChoicesPromises = plantNameChoices.map(async (plantName) => {
+          const downloadURL = await generateAndUploadImage(
+            `isolated ${plantName} plant at the fruiting growth stage, white background, isometric perspective, 8-bit pixel art style`,
+            `plants/${uuid.v4()}-${plantName}-${'fruiting'}-${Date.now()}.png`
+          );
+          return downloadURL;
+        });
+      
+        const plantChoices = await Promise.all(plantChoicesPromises);
+        setPlantImageChoices(plantChoices);
+        console.log('Plant Image Choices:', plantChoices);
+    };
+
     return (
         <View style={styles.container}>
-            {hasGroups ? (
-                <View style={styles.container}>
-                    <Text>Group Code: {groupCode}</Text>
-                    <Text>Group Name: {groupName}</Text>
-                    <Text>Habit: {habit}</Text>
-                    <Text>Frequency: {frequency}</Text>
-                <Text>Members:</Text>
-                    {groupMemberNames.map((memberName, index) => (
-                        <Text key={index}>{memberName}</Text>
-                    ))}
+            {!plant && hasGroups ? (
+                <View className='p-5'>
+                    <Text>Choose a plant to get started.</Text>
+                    <View className='flex-row'>
+                        <View className='p-2'>
+                            <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                <Box className='h-40 w-40'>
+                                    {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[0] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                </Box>
+                            </TouchableOpacity>
+                        </View>
+                        <View className='p-2'>
+                            <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                <Box className='h-40 w-40'>
+                                    {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[1] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                </Box>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <View className='flex-row'>
+                        <View className='p-2'>
+                            <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                <Box className='h-40 w-40'>
+                                    {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[2] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                </Box>
+                            </TouchableOpacity>
+                        </View>
+                        <View className='p-2'>
+                            <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                <Box className='h-40 w-40'>
+                                    {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[3] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                </Box>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <Button title="Refresh Plants" onPress={() => {
+                        handleGeneratePlantNames();
+                        setPlant(null);
+                        }}/>
+                </View>
+            ) : hasGroups ? (
+                <View style={styles.inner_container}>
+                    <TouchableOpacity><Text>Button</Text></TouchableOpacity>
+                    {/* <TouchableOpacity onPress={() => console.log(user)}>click! </TouchableOpacity> */}
+                    <View>
+                        <Text style={styles.header}>{habit}</Text>
+                        <FrequencyBar />
+                        <DaysOfTheWeek selectedDays={['m', 't','w']} />
+                    </View>
+                    <View style={styles.image_container}>
+                        {/* { <Image source={Plant} style={styles.image} /> } */}
+                        
+                    </View>
+                    <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={1}/>
+                    {groupMembers.map((i) => {
+                        return <UserProgress frequency={frequency} totalVotes={1} />
+                    })}
                 </View>
             ) : (
                 <View style={styles.container}>
@@ -166,10 +306,9 @@ export function Group() {
                             <Button title="Join" onPress={() => handleJoinGroup()} />
                         </View>
                     )}
-
                 </View>
             )}
-        </View>
+        </View >
     );
 }
 
@@ -182,7 +321,6 @@ const styles = StyleSheet.create({
         minWidth: 300,
         width: '100%',
         borderColor: 'lightgray',
-        borderWidth: 1,
         marginBottom: 12,
         paddingHorizontal: 8,
         color: 'black',
@@ -190,8 +328,37 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         padding: 16,
-        paddingBottom: 128,
-      },
+        width: "100%",
+        alignItems: "center",
+        height: "100%",
+
+    },
+    inner_container: {
+        flex: 1,
+        justifyContent: 'flex-start',
+        paddingTop: "10%",
+        width: "100%",
+        alignItems: "center",
+        height: "100%",
+        borderWidth: 2
+
+
+    },
+    image_container: {
+        height: height * .3,
+        width: width * .5,
+    },
+    image: {
+        width: "100%",
+        height: "100%",
+    },
+    header: {
+        fontSize: 20,
+        lineHeight: 23.87,
+        textAlign: "center",
+        color: "white",
+        marginBottom: 20
+    }
 });
