@@ -13,8 +13,11 @@ import UserProgress from './extra/UserProgress';
 import { getPlant } from '@/utils/group';
 import { G } from 'react-native-svg';
 import { Box } from '@/components/ui/box';
-import { generateImage, uploadImageToFirebase, removeBg} from '@/utils/diffusion';
+import { generateAndUploadImage} from '@/utils/diffusion';
 import uuid from 'react-native-uuid';
+import { Spinner } from '@/components/ui/spinner';
+import colors from 'tailwindcss/colors';
+import { createPlant, getDecayDate } from '@/utils/plant';
 
 const { width, height } = Dimensions.get('window');
 
@@ -32,9 +35,10 @@ export function Group() {
     const [groupMembers, setGroupMembers] = useState<DocumentReference[]>([]);
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
-    const [plant, setPlant] = useState(null);
+    const [plant, setPlant] = useState<DocumentReference | null>(null);
     const [plantImageChoices, setPlantImageChoices] = useState<string[] | null>(null);
     const [plantNameChoices, setPlantNameChoices] = useState<string[]>([]);
+    const [plantLatinNames, setPlantLatinNames] = useState<string[]>([]);
     // const [vote, setVote] = useState(false)
 
     const fetchGroups = async () => {
@@ -67,18 +71,28 @@ export function Group() {
         console.log('fetching groups');
         checkPlant();
         console.log('fetching plant');
-    }, [user, plantImageChoices]);
+    }, [user]);
+
+    useEffect(() => {
+        if (plantNameChoices.length > 0) {
+          handleGeneratePlantChoices();
+          console.log('generating plant choices');
+        }
+    }, [plantNameChoices]);
 
     const checkPlant = async () => {
         const plant = await getPlant(user);
         if (plant != null) {
-            setPlant(plant);
+          console.log('plant');
+          setPlant(plant);
         } else {
-            setPlant(null);
-            await handleGeneratePlantNames();
-            await handleGeneratePlantChoices();
+          console.log('no plant');
+          setPlant(null);
+          console.log('generating plant names');
+          await handleGeneratePlantNames();
         }
-    };
+      };
+      
 
     const handleCreateGroup = async () => {
 
@@ -119,31 +133,55 @@ export function Group() {
         setFrequency(newFrequency);
     }
 
-    const handleChoosePlant = () => {
-            
-    }
+    const handleChoosePlant = async (plantChoiceIndex: number) => {
 
-    const handleGeneratePlantNames = async () => {
-        // const plantNames = ['Aloe Vera', 'Yucca', 'Succulent', 'Sunflower'];
-        const plantNames = ['Aloe Vera'];
-        setPlantNameChoices(plantNames);
-    }
+        const plantStages = ['sprouting', 'seedling', 'vegetating', 'budding', 'flowering'];
 
-    const handleGeneratePlantChoices = async () => {
-
-        const plantChoicesPromises = plantNameChoices.map(async (plantName) => {
-            const baseImage = await generateImage(`isolated ${plantName} plant at the fruiting growth stage, white background, isometric perspective, 8-bit pixel art style`);
-            const image = await removeBg(baseImage);
-            const downloadURL = await uploadImageToFirebase(
-                image,
-                `plants/${uuid.v4()}-${plantName}-${Date.now()}.png`
+        const plantStagesPromises = plantStages.map(async (stage) => {
+            const downloadURL = await generateAndUploadImage(
+                `isolated ${plantNameChoices[plantChoiceIndex]} plant at the ${stage} growth stage, white background, isometric perspective, 8-bit pixel art style`,
+                `plants/${uuid.v4()}-${plantNameChoices[plantChoiceIndex]}-${stage}-${Date.now()}.png`
             );
             return downloadURL;
         });
 
+        const plantStageImages = await Promise.all(plantStagesPromises);
+        const currentDate = new Date();
+
+        if (plantImageChoices && plantImageChoices.length >= 4) {
+            const plantDocRef: DocumentReference = await createPlant(
+                0,
+                [...plantStageImages, plantImageChoices[plantChoiceIndex]],
+                plantNameChoices[plantChoiceIndex],
+                plantLatinNames[plantChoiceIndex],
+                getDecayDate(currentDate),
+                true,
+            );
+            setPlant(plantDocRef);
+        } else {
+            console.error('Plant image choices not found');
+        }
+    }
+
+    const handleGeneratePlantNames = async () => {
+        const plantNames = ['Aloe Vera', 'Yucca', 'Succulent', 'Sunflower'];
+        setPlantNameChoices(plantNames);
+    }
+
+    const handleGeneratePlantChoices = async () => {
+        if (plantNameChoices.length === 0) return; // Ensure there are plant names
+        const plantChoicesPromises = plantNameChoices.map(async (plantName) => {
+          const downloadURL = await generateAndUploadImage(
+            `isolated ${plantName} plant at the fruiting growth stage, white background, isometric perspective, 8-bit pixel art style`,
+            `plants/${uuid.v4()}-${plantName}-${'fruiting'}-${Date.now()}.png`
+          );
+          return downloadURL;
+        });
+      
         const plantChoices = await Promise.all(plantChoicesPromises);
         setPlantImageChoices(plantChoices);
-    }
+        console.log('Plant Image Choices:', plantChoices);
+    };
 
     return (
         <View style={styles.container}>
@@ -152,41 +190,40 @@ export function Group() {
                     <Text>Choose a plant to get started.</Text>
                     <View className='flex-row'>
                         <View className='p-2'>
-                            <TouchableOpacity onPress={() => console.log('pressed')}>
-                                <Box className='h-40 w-40 bg-primary-300'>
-                                    {plantImageChoices ? <Image source={{ uri: plantImageChoices[0] }} style={styles.image} /> : <Text>Plant A</Text>}
+                            <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                <Box className='h-40 w-40'>
+                                    {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[0] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
                                 </Box>
                             </TouchableOpacity>
                         </View>
                         <View className='p-2'>
-                            <TouchableOpacity onPress={() => console.log('pressed')}>
-                                <Box className='h-40 w-40 bg-primary-300'>
-                                    {plantImageChoices ? <Image source={{ uri: plantImageChoices[1] }} style={styles.image} /> : <Text>Plant B</Text>}
+                            <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                <Box className='h-40 w-40'>
+                                    {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[1] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
                                 </Box>
                             </TouchableOpacity>
                         </View>
                     </View>
                     <View className='flex-row'>
                         <View className='p-2'>
-                            <TouchableOpacity onPress={() => console.log('pressed')}>
-                                <Box className='h-40 w-40 bg-primary-300'>
-                                    {plantImageChoices ? <Image source={{ uri: plantImageChoices[2] }} style={styles.image} /> : <Text>Plant C</Text>}
+                            <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                <Box className='h-40 w-40'>
+                                    {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[2] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
                                 </Box>
                             </TouchableOpacity>
                         </View>
                         <View className='p-2'>
-                            <TouchableOpacity onPress={() => console.log('pressed')}>
-                                <Box className='h-40 w-40 bg-primary-300'>
-                                    {plantImageChoices ? <Image source={{ uri: plantImageChoices[3] }} style={styles.image} /> : <Text>Plant D</Text>}
+                            <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                <Box className='h-40 w-40'>
+                                    {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[3] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
                                 </Box>
                             </TouchableOpacity>
                         </View>
                     </View>
-                    <Button title="Refresh Plants" onPress={
-                        () => {
-                            handleGeneratePlantNames();
-                            handleGeneratePlantChoices();
-                    }}/>
+                    <Button title="Refresh Plants" onPress={() => {
+                        handleGeneratePlantNames();
+                        setPlant(null);
+                        }}/>
                 </View>
             ) : hasGroups ? (
                 <View style={styles.inner_container}>
