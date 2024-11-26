@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Switch } from 'react-native';
 import Logo from '../assets/icons/logo.svg';
 import Avatar from '../assets/images/Avatar.png'
-import CustomSwitch from './CustomSwitch';
+import CustomSwitch from './extra/CustomSwitch';
 
 
 export default function Header() {

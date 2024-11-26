@@ -5,11 +5,11 @@ import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore'
 import { checkUserHasGroup, joinGroup, createGroup } from '../utils/group';
 import { checkPendingVotes } from '../utils/user';
 import { LinearGradient } from 'expo-linear-gradient';
-import VerificationBar from './smaller_components/VerificationBar';
-import FrequencyBar from './smaller_components/FrequencyBar';
-import DaysOfTheWeek from './smaller_components/DaysOfTheWeek';
+import VerificationBar from './extra/VerificationBar';
+import FrequencyBar from './extra/FrequencyBar';
+import DaysOfTheWeek from './extra/DaysOfTheWeek';
 import Plant from '../assets/images/Plant.png';
-import UserProgress from './smaller_components/UserProgress';
+import UserProgress from './extra/UserProgress';
 import { getPlant } from '@/utils/group';
 import { G } from 'react-native-svg';
 import { Box } from '@/components/ui/box';
