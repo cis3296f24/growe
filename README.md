@@ -1,3 +1,4 @@
+Use Case: Signing Up
 ```mermaid
 sequenceDiagram
   participant User
@@ -23,7 +24,7 @@ sequenceDiagram
   Server -->> Auth : Return User
   Auth -->> User : Serve Home Screen
 ```
-
+Use Case: Creating Group
 ```mermaid
 sequenceDiagram
     participant User
@@ -38,7 +39,7 @@ sequenceDiagram
     Backend-->>Frontend: Return new group document
     Frontend-->>User: Confirm group creation
 ```
-
+Use Case: Join Group
 ```mermaid
 
 sequenceDiagram
@@ -59,6 +60,36 @@ sequenceDiagram
     else No Group Found
         Frontend-->>User: Display error message: Invalid join code
     end
+```
+Use Case: Logging in
+```mermaid
+sequenceDiagram
+  participant User
+  participant Auth
+  participant Server
+  participant Database
+
+  User ->> Auth : Enter Email
+  Auth ->> Server : Store Email
+  
+  
+  Server -->> Auth : Validate Step
+  User ->> Auth : Enter Password
+  Auth ->> Server : Store Password
+  Server--> Database: Check if Password is correct
+  Server --> Database : Check Email Exists
+  
+  alt Password is correct and email Exists
+  Database -->> Server : Validate Email
+  Database-->> Server : Validate Password
+ Server -->> Auth : Handle Sign in
+Auth -->> User : Server Home Screen
+else Password Incorrect or email DNE
+Database -->> Server : Email or Password dne
+Server -->> Auth : Handle Incorrect sign in
+Auth -->> User : Incorrect Password or email message
+
+end
 ```
 
 [![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=16892524)
