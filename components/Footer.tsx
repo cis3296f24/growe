@@ -22,15 +22,27 @@ export default function Footer() {
   };
 
   return (
-    <View style={styles.footer}>
-      <TouchableOpacity onPress={() => handlePress('home')} disabled={selected === 'home'}>
-        <Garden color={selected === 'home' ? '#ECFFEB' : '#B0C5AF'} />
+    <View style={styles.footer} testID="footer">
+      <TouchableOpacity
+        onPress={() => handlePress('home')}
+        disabled={selected === 'home'}
+        testID="home-button"
+      >
+        <Garden color={selected === 'home' ? '#ECFFEB' : '#B0C5AF'} testID="home-icon" />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => handlePress('log')} disabled={selected === 'log'}>
-        <Log color={selected === 'log' ? '#ECFFEB' : '#B0C5AF'} />
+      <TouchableOpacity
+        onPress={() => handlePress('log')}
+        disabled={selected === 'log'}
+        testID="log-button"
+      >
+        <Log color={selected === 'log' ? '#ECFFEB' : '#B0C5AF'} testID="log-icon" />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => handlePress('group')} disabled={selected === 'group'}>
-        <Group color={selected === 'group' ? '#ECFFEB' : '#B0C5AF'} />
+      <TouchableOpacity
+        onPress={() => handlePress('group')}
+        disabled={selected === 'group'}
+        testID="group-button"
+      >
+        <Group color={selected === 'group' ? '#ECFFEB' : '#B0C5AF'} testID="group-icon" />
       </TouchableOpacity>
     </View>
   );

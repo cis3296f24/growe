@@ -3,8 +3,6 @@ import { collection, query, where, getDocs, getDoc, doc, setDoc, updateDoc, arra
 import { db } from './firebaseConfig';
 import { Timestamp } from 'firebase/firestore';
 
-
-
 export const checkPendingVotes = async (user) => {
   if (!user?.uid) {
     console.error('User UID is undefined');
@@ -73,8 +71,6 @@ export const updateUserVote = async (logRef, userRef, voteType) => {
         return false;
     }
 };
-
-
 
 // add user to collection
 export const addUser = async (user, username, displayName) => {
