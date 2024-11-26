@@ -3,6 +3,36 @@ import FormData from "form-data";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from './firebaseConfig';
 
+export async function removeBg(base64Image) {
+  try {
+    if (base64Image.startsWith('data:')) {
+      base64Image = base64Image.split(',')[1];
+    }
+
+    // Convert the base64 image into a blob for API upload
+    const formData = new FormData();
+    formData.append("image_file_b64", base64Image);
+    formData.append("size", "auto");
+
+    const response = await fetch("https://api.remove.bg/v1.0/removebg", {
+      method: "POST",
+      headers: { "X-Api-Key": process.env.EXPO_PUBLIC_REMOVE_BG_API_KEY },
+      body: formData,
+    });
+
+    if (response.ok) {
+      console.log("Background removed successfully");
+      const removedBgImage = response.arrayBuffer();
+      return removedBgImage;
+    } else {
+      const errorText = await response.text();
+      console.error(`${response.status}: ${errorText}`);
+    }
+  } catch (errors) {
+    console.error("Failed to remove background", errors);
+  }
+}
+
 export async function generateImage(prompt) {
   const payload = {
     prompt: prompt,
@@ -14,6 +44,7 @@ export async function generateImage(prompt) {
   const apiKey = process.env.EXPO_PUBLIC_STABILITY_AI_API_KEY;
 
   try {
+    console.log('Generating image...');
     const response = await axios.postForm(
       'https://api.stability.ai/v2beta/stable-image/generate/sd3',
       axios.toFormData(payload, new FormData()),
@@ -29,9 +60,7 @@ export async function generateImage(prompt) {
 
     if (response.status === 200) {
       const base64Image = response.data.image; // Adjust the key based on your API response
-      console.log('Image generated:', base64Image);
-      // log the type
-      console.log('Type:', typeof base64Image);
+      console.log('Image generated successfully');
       return base64Image;
     } else {
       throw new Error(`${response.status}: ${response.statusText}`);

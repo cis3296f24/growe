@@ -13,7 +13,7 @@ import UserProgress from './smaller_components/UserProgress';
 import { getPlant } from '@/utils/group';
 import { G } from 'react-native-svg';
 import { Box } from '@/components/ui/box';
-import { generateImage, uploadImageToFirebase} from '@/utils/diffusion';
+import { generateImage, uploadImageToFirebase, removeBg} from '@/utils/diffusion';
 import uuid from 'react-native-uuid';
 
 const { width, height } = Dimensions.get('window');
@@ -67,7 +67,7 @@ export function Group() {
         console.log('fetching groups');
         checkPlant();
         console.log('fetching plant');
-    }, [user]);
+    }, [user, plantImageChoices]);
 
     const checkPlant = async () => {
         const plant = await getPlant(user);
@@ -124,19 +124,21 @@ export function Group() {
     }
 
     const handleGeneratePlantNames = async () => {
-        const plantNames = ['Aloe Vera', 'Yucca', 'Succulent', 'Sunflower'];
+        // const plantNames = ['Aloe Vera', 'Yucca', 'Succulent', 'Sunflower'];
+        const plantNames = ['Aloe Vera'];
         setPlantNameChoices(plantNames);
     }
 
     const handleGeneratePlantChoices = async () => {
 
         const plantChoicesPromises = plantNameChoices.map(async (plantName) => {
-            const image = await generateImage(`isolated ${plantName} plant at the fruiting growth stage, white background, isometric perspective, 8-bit pixel art style`);
+            const baseImage = await generateImage(`isolated ${plantName} plant at the fruiting growth stage, white background, isometric perspective, 8-bit pixel art style`);
+            const image = await removeBg(baseImage);
             const downloadURL = await uploadImageToFirebase(
                 image,
                 `plants/${uuid.v4()}-${plantName}-${Date.now()}.png`
             );
-            return downloadURL; // Adjust this line if you need a DocumentReference
+            return downloadURL;
         });
 
         const plantChoices = await Promise.all(plantChoicesPromises);
