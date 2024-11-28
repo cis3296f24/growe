@@ -9,6 +9,9 @@ import DaysOfTheWeek from './smaller_components/DaysOfTheWeek';
 import FrequencyBar from './smaller_components/FrequencyBar';
 import UserProgress from './smaller_components/UserProgress';
 import VerificationBar from './smaller_components/VerificationBar';
+import Avatar from '../assets/images/Avatar.png'
+import LogExample from '../assets/images/LogExample.png'
+import VotingModal from '../components/VotingModal'
 import { useUser } from './UserContext';
 
 const { width, height } = Dimensions.get('window');
@@ -30,6 +33,7 @@ export function Group() {
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
     const [approvals, setApprovals] = useState(0)
     const [newVotes, setNewVotes] = useState<DocumentReference[]>([])
+    const [modalVisible, setModalVisible] = useState(false);
 
 
 
@@ -138,11 +142,18 @@ export function Group() {
                     <View style={styles.inner_container}>
 
                         <TouchableOpacity onPress={async () => {
-                            console.log(checkPendingVotes(user));
+                            setModalVisible(true);
 
 
                         }}><Text>Button</Text></TouchableOpacity>
                         <View>
+                            <VotingModal
+                                visible={modalVisible}
+                                onClose={() => setModalVisible(false)}
+                                profilePic={Avatar}
+                                mainImage={LogExample}
+                                question="Did Ethan study at the library?"
+                            />
                             <Text style={styles.header}>{habit}</Text>
                             <FrequencyBar />
                             <DaysOfTheWeek selectedDays={['m', 't', 'w']} />
