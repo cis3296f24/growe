@@ -21,5 +21,3 @@ expo-env.d.ts
 
 .env*.local
 .env
-package-lock.json
-package.json

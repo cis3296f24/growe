@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Image, View, TextInput, Button, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import { useUser } from './UserContext';
-import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
-import { checkUserHasGroup, joinGroup, createGroup } from '../utils/group';
-import { checkPendingVotes } from '../utils/user';
 import { LinearGradient } from 'expo-linear-gradient';
-import VerificationBar from './smaller_components/VerificationBar';
-import FrequencyBar from './smaller_components/FrequencyBar';
-import DaysOfTheWeek from './smaller_components/DaysOfTheWeek';
+import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { Button, Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Plant from '../assets/images/Plant.png';
+import { checkUserHasGroup, createGroup, joinGroup } from '../utils/group';
+import { checkPendingVotes } from '../utils/user';
+import DaysOfTheWeek from './smaller_components/DaysOfTheWeek';
+import FrequencyBar from './smaller_components/FrequencyBar';
 import UserProgress from './smaller_components/UserProgress';
+import VerificationBar from './smaller_components/VerificationBar';
+import { useUser } from './UserContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,14 +29,32 @@ export function Group() {
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
     const [approvals, setApprovals] = useState(0)
+    const [newVotes, setNewVotes] = useState<DocumentReference[]>([])
+
+
 
     const votesArray = groupMembers.map(() => Math.floor(Math.random() * (frequency + 5)));
+
+
+
+    // your functiont to scan for new votes
 
     useEffect(() => {
         // Calculate total approvals
         const totalApprovals = votesArray.reduce((total, votes) => total + votes, 0);
         setApprovals(totalApprovals);
+
     }, [votesArray]); // Update when votesArray changes
+
+    const getVotes = async () => {
+        let data = await checkPendingVotes(user)
+        console.log(data);
+    }
+
+    useEffect(() => {
+        getVotes()
+    }, [])
+
 
     const fetchGroups = async () => {
         const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
@@ -118,17 +136,19 @@ export function Group() {
                 {hasGroups ? (
 
                     <View style={styles.inner_container}>
-                        <TouchableOpacity onPress={() => {
-                            checkPendingVotes(user)
+
+                        <TouchableOpacity onPress={async () => {
+                            console.log(checkPendingVotes(user));
+
+
                         }}><Text>Button</Text></TouchableOpacity>
-                        {/* <TouchableOpacity onPress={() => console.log(user)}>click! </TouchableOpacity> */}
                         <View>
                             <Text style={styles.header}>{habit}</Text>
                             <FrequencyBar />
                             <DaysOfTheWeek selectedDays={['m', 't', 'w']} />
                         </View>
                         <View style={styles.image_container}>
-                            { <Image source={Plant} style={styles.image} /> }
+                            {<Image source={Plant} style={styles.image} />}
                         </View>
                         <Text>{approvals}</Text>
                         <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvals} />

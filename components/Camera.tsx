@@ -6,7 +6,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import uuid from 'react-native-uuid';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useUser } from './UserContext';
-import { Timestamp, addDoc, collection, doc } from 'firebase/firestore';
+import { Timestamp, addDoc, collection, doc, getDoc } from 'firebase/firestore';
 
 export default function Camera() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -43,11 +43,11 @@ export default function Camera() {
           return;
         }
 
-        setPhotoUri(photo.uri); 
+        setPhotoUri(photo.uri);
         setIsPreviewVisible(true); // show the preview
       } catch (error) {
         console.error('Error taking photo: ', error);
-        Alert.alert( 'Failed to take photo');
+        Alert.alert('Failed to take photo');
       }
     }
   };
@@ -79,17 +79,17 @@ export default function Camera() {
       await createLogEntry(downloadURL);
 
       Alert.alert('Photo uploaded and log entry created!');
-      setIsPreviewVisible(false); 
+      setIsPreviewVisible(false);
       setPhotoUri(null); // reset photo URI
     } catch (error) {
       console.error('Error uploading photo: ', error);
-      Alert.alert( 'Failed to upload photo');
+      Alert.alert('Failed to upload photo');
     }
   };
 
   const retakePicture = () => {
-    setIsPreviewVisible(false); 
-    setPhotoUri(null); 
+    setIsPreviewVisible(false);
+    setPhotoUri(null);
   };
 
   const createLogEntry = async (imageUrl: string) => {
@@ -101,6 +101,17 @@ export default function Camera() {
 
       const userRef = doc(db, 'users', user.uid);
 
+      let groups
+      try {
+        const userSnapshot = await getDoc(userRef);
+        const userData = userSnapshot.data();
+        groups = userData?.groups;
+
+      } catch (error) {
+        console.log("fuck firebase");
+
+      }
+
       await addDoc(collection(db, 'logs'), {
         author: userRef,
         voteUnsure: [],
@@ -108,6 +119,7 @@ export default function Camera() {
         voteDeny: [],
         logImageUrl: imageUrl,
         loggedAt: Timestamp.now(),
+        groups: groups
       });
     } catch (error) {
       console.error('Error creating log entry: ', error);
