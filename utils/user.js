@@ -15,6 +15,7 @@ export const checkPendingVotes = async (user) => {
     const userSnapshot = await getDoc(userRef);
     const userData = userSnapshot.data();
     const groups = userData.groups || []; // Array of group references
+    
 
     const pendingVotes = [];
 
@@ -29,6 +30,8 @@ export const checkPendingVotes = async (user) => {
       // Check if the user has voted on all logs
       logsSnapshot.forEach((logDoc) => {
         const logData = logDoc.data();
+        console.log(logData);
+        
 
         // Check if the user has not voted (not in voteApprove, voteDeny, or voteUnsure)
         const hasVoted =
