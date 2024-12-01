@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Modal,
     View,
@@ -12,28 +12,63 @@ import ThumbsDown from '../assets/icons/ThumbsDown.png';
 import ThumbsUp from '../assets/icons/ThumbsUp.png';
 import Unsure from '../assets/icons/Unsure.png';
 import { LinearGradient } from 'expo-linear-gradient';
-import { updateDoc, arrayUnion, DocumentReference, DocumentData } from 'firebase/firestore';
+import { updateDoc, arrayUnion, getDoc, DocumentReference, DocumentData, query, where, } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+
 
 interface ModalComponentProps {
     visible: boolean;
     onClose: (response: string) => void; // Callback for button responses
     profilePic: ImageSourcePropType; // URL or local path for the profile picture
-    mainImage: ImageSourcePropType; // URL or local path for the main image
     question: string; // Question text to display in the header
-    logRef: DocumentReference<DocumentData>; // Firestore document reference for the log
+    logRef?: DocumentReference<DocumentData, DocumentData> | null;
 }
+
 
 const VotingModal: React.FC<ModalComponentProps> = ({
     visible,
     onClose,
     profilePic,
-    mainImage,
     question,
     logRef,
 }) => {
     const auth = getAuth();
     const currentUser = auth.currentUser;
+    const [image, setImage] = useState(null)
+
+
+    const getImageFromLogRef = async () => {
+        if (!logRef) {
+            console.error('logRef is null or undefined');
+            return null;
+        }
+
+        try {
+            // Fetch the document
+            const docSnapshot = await getDoc(logRef);
+
+            if (docSnapshot.exists()) {
+                const logData = docSnapshot.data();
+                console.log('Document data:', logData);
+
+                // Access the imageUrl field
+                if (logData.logImageUrl) {
+                    console.log('Image URL:', logData.logImageUrl);
+                    setImage(logData.logImageUrl) // Return the image URL
+                } else {
+                    console.warn('No imageUrl found in the document');
+                    return null;
+                }
+            } else {
+                console.warn('No such document exists');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error fetching document:', error);
+            return null;
+        }
+    };
+    getImageFromLogRef()
 
     const handleUpvote = async () => {
         if (!logRef || !currentUser) {
@@ -71,6 +106,7 @@ const VotingModal: React.FC<ModalComponentProps> = ({
         }
     };
 
+
     return (
         <Modal
             animationType="slide"
@@ -87,7 +123,10 @@ const VotingModal: React.FC<ModalComponentProps> = ({
                     <Text style={styles.question}>{question}</Text>
 
                     {/* Main Image */}
-                    <Image source={mainImage} style={styles.mainImage} />
+                    <Image   source={image ? { uri: image } : undefined} style={styles.mainImage} />
+
+
+
 
                     {/* Buttons */}
                     <View style={styles.buttonContainer}>
@@ -145,6 +184,7 @@ const styles = StyleSheet.create({
         height: 200,
         borderRadius: 15,
         marginBottom: 20,
+        objectFit: "contain"
     },
     buttonContainer: {
         flexDirection: 'row',

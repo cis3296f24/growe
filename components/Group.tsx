@@ -19,7 +19,6 @@ import { Spinner } from '@/components/ui/spinner';
 import colors, { current } from 'tailwindcss/colors';
 import { createPlant, getDecayDate } from '@/utils/plant';
 import VotingModal from './VotingModal'
-import MainImage from '../assets/images/LogExample.png'
 import ProfilePic from '../assets/images/Avatar.png'
 
 
@@ -97,19 +96,19 @@ export function Group() {
     useEffect(() => {
         if (plantNameChoices.length > 0) {
             handleGeneratePlantChoices();
-            console.log('generating plant choices');
+            // console.log('generating plant choices');
         }
     }, [plantNameChoices]);
 
     const checkPlant = async () => {
         const plant = await getPlant(user);
         if (plant != null) {
-            console.log('plant');
+            // console.log('plant');
             setPlant(plant);
         } else {
-            console.log('no plant');
+            // console.log('no plant');
             setPlant(null);
-            console.log('generating plant names');
+            // console.log('generating plant names');
             await handleGeneratePlantNames();
         }
     };
@@ -120,9 +119,15 @@ export function Group() {
             return;
         }
 
-        console.log('Group Members:', groupMembers); // Log group members for debugging
+        // console.log('Group Members:', groupMembers); // Log group members for debugging
 
         let pendingVotes = await checkPendingVotes(user);
+        // console.log("THese are the votes");
+        
+        console.log(pendingVotes);
+        console.log("after the votes");
+        
+        
 
         if (pendingVotes && Array.isArray(pendingVotes)) {
             for (const docRef of pendingVotes) {
@@ -135,8 +140,8 @@ export function Group() {
                     const totalMembers = groupMembers.length; // Use groupMembers directly
 
                     // @ts-ignore
-                    console.log('Document data:', docData.voteApprove);
-                    console.log('Total Members:', totalMembers);
+                    // console.log('Document data:', docData.voteApprove);
+                    // console.log('Total Members:', totalMembers);
 
                     if (totalMembers === 0) {
                         console.warn('Total members are 0. Cannot calculate approval percentage.');
@@ -145,13 +150,16 @@ export function Group() {
 
                     const approvalPercentage = (voteApprove / totalMembers) * 100;
 
-                    console.log('Approval Percentage:', approvalPercentage);
+                    // console.log('Approval Percentage:', approvalPercentage);
 
                     // Show modal only if not already shown
                     if (approvalPercentage < 50 && !hasShownModal) {
                         setCurrentLogRef(docRef)
                         setModalVisible(true); // Show the VotingModal
                         setHasShownModal(true); // Mark modal as shown
+                    } else {
+                        console.log();
+                        
                     }
                 }
             }
@@ -254,6 +262,7 @@ export function Group() {
     const handleModalClose = (userResponse: string) => {
         setModalVisible(false);
         setResponse(userResponse);
+        grabVotes()
     };
 
     return (
@@ -327,7 +336,6 @@ export function Group() {
                             visible={modalVisible}
                             onClose={handleModalClose}
                             profilePic={ProfilePic}
-                            mainImage={MainImage}
                             question="Do you like this image?"
                             logRef={currentLogRef} // Pass the Firestore document reference
                         />

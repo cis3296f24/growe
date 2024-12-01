@@ -35,11 +35,14 @@ export const checkPendingVotes = async (user) => {
 
         // Check if the user has not voted (not in voteApprove, voteDeny, or voteUnsure)
         const hasVoted =
-          logData.voteApprove?.includes(userRef.path) ||
-          logData.voteDeny?.includes(userRef.path) ||
-          logData.voteUnsure?.includes(userRef.path);
+          logData.voteApprove?.includes(user.uid) ||
+          logData.voteDeny?.includes(user.uid) ||
+          logData.voteUnsure?.includes(user.uid);
+
 
         if (!hasVoted) {
+          // console.log("user has not voted");
+          
           // Add to pending votes if the user hasn't voted
           pendingVotes.push(logDoc.ref);
         }
@@ -54,6 +57,7 @@ export const checkPendingVotes = async (user) => {
     return { hasPendingVotes: false, pendingVotes: [] };
   }
 };
+
 
 export const updateUserVote = async (logRef, userRef, voteType) => {
     try {

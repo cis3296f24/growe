@@ -142,6 +142,7 @@ export function Auth() {
         <View style={styles.userContainer}>
           <Text style={styles.welcomeText}>welcome {username ?? 'user'}.</Text>
           <Button title="logout" onPress={handleLogout} />
+          <Button title="go to groups" onPress={() => router.push(`./group`)} />
         </View>
       ) : (
         <View>
