@@ -123,11 +123,11 @@ export function Group() {
 
         let pendingVotes = await checkPendingVotes(user);
         // console.log("THese are the votes");
-        
+
         console.log(pendingVotes);
         console.log("after the votes");
-        
-        
+
+
 
         if (pendingVotes && Array.isArray(pendingVotes)) {
             for (const docRef of pendingVotes) {
@@ -159,7 +159,7 @@ export function Group() {
                         setHasShownModal(true); // Mark modal as shown
                     } else {
                         console.log();
-                        
+
                     }
                 }
             }
@@ -319,13 +319,14 @@ export function Group() {
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}><Text>Button</Text></TouchableOpacity> */}
                         <TouchableOpacity onPress={() => grabVotes()}><Text>Button</Text></TouchableOpacity>
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>click! </TouchableOpacity> */}
+                        <Text>{groupCode}</Text>
                         <View>
                             <Text style={styles.header}>{habit}</Text>
                             <FrequencyBar />
                             <DaysOfTheWeek selectedDays={['m', 't', 'w']} />
                         </View>
                         <View style={styles.image_container}>
-                            {/* { <Image source={Plant} style={styles.image} /> } */}
+                            {<Image source={Plant} style={styles.image} />}
 
                         </View>
                         <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={1} />
