@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { db } from "../utils/firebaseConfig";
 import {
     Modal,
     View,
@@ -12,8 +13,9 @@ import ThumbsDown from '../assets/icons/ThumbsDown.png';
 import ThumbsUp from '../assets/icons/ThumbsUp.png';
 import Unsure from '../assets/icons/Unsure.png';
 import { LinearGradient } from 'expo-linear-gradient';
-import { updateDoc, arrayUnion, getDoc, DocumentReference, DocumentData, query, where, } from 'firebase/firestore';
+import { updateDoc, arrayUnion, getDoc, DocumentReference, DocumentData, query, where, increment, doc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { useUser } from './UserContext';
 
 
 interface ModalComponentProps {
@@ -22,6 +24,7 @@ interface ModalComponentProps {
     profilePic: ImageSourcePropType; // URL or local path for the profile picture
     question: string; // Question text to display in the header
     logRef?: DocumentReference<DocumentData, DocumentData> | null;
+    totalMembers: number
 }
 
 
@@ -31,11 +34,22 @@ const VotingModal: React.FC<ModalComponentProps> = ({
     profilePic,
     question,
     logRef,
+    totalMembers
 }) => {
     const auth = getAuth();
     const currentUser = auth.currentUser;
     const [image, setImage] = useState(null)
+    const { user } = useUser();
+    let votesNeeded = divideAndRoundDown(totalMembers)
 
+    function divideAndRoundDown(num: number) {
+        if (num % 2 !== 0) {
+            // If the number is odd, subtract 1 before dividing
+            return Math.floor(num / 2);
+        }
+        // If the number is even, divide normally
+        return num / 2;
+    }
 
     const getImageFromLogRef = async () => {
         if (!logRef) {
@@ -75,18 +89,84 @@ const VotingModal: React.FC<ModalComponentProps> = ({
             console.warn('Missing logRef or current user.');
             return;
         }
+        // @ts-ignore
+        const userRef = doc(db, 'users', user.uid);
 
         try {
             // Update the Firestore document by adding the user's ID to voteApprove
             await updateDoc(logRef, {
-                voteApprove: arrayUnion(currentUser.uid),
+                voteApprove: arrayUnion(userRef),
             });
+
             console.log(`User ${currentUser.uid} added to voteApprove.`);
+
+            // Fetch the updated document to check the total votes
+            const updatedDoc = await getDoc(logRef);
+
+            if (updatedDoc.exists()) {
+                const data = updatedDoc.data();
+
+                const voteApprove = Array.isArray(data.voteApprove) ? data.voteApprove : [];
+                const groupRef = data.group;
+                const authorRef = data.author; // Author reference from the log document
+
+                if (!groupRef) {
+                    console.warn('No group reference found in the log document.');
+                    return;
+                }
+
+                if (!authorRef) {
+                    console.warn('No author reference found in the log document.');
+                    return;
+                }
+
+                // Calculate the required majority
+                const requiredMajority = Math.floor(totalMembers / 2);
+                console.log(`Required majority: ${requiredMajority}`);
+                console.log(`Current voteApprove count: ${voteApprove.length}`);
+
+                // Check if the total votes meet or exceed the majority
+                if (voteApprove.length >= requiredMajority) {
+                    console.log('Majority has been reached for voteApprove!');
+
+                    try {
+                        // Fetch the group document
+                        const groupSnapshot = await getDoc(groupRef);
+                        if (groupSnapshot.exists()) {
+                            const groupData = groupSnapshot.data();
+                            // @ts-ignore
+                            const currentApprovedLogs = groupData.approvedLogs || [];
+
+                            // Allow duplicates by appending the new reference
+                            const updatedApprovedLogs = [...currentApprovedLogs, logRef];
+
+                            // Update the group document
+                            await updateDoc(groupRef, {
+                                approvedLogs: updatedApprovedLogs, // Overwrite the array with duplicates allowed
+                            });
+
+                            console.log('Streak incremented and author added to approvedLogs in the group (duplicates allowed).');
+                        } else {
+                            console.error('Group document does not exist.');
+                        }
+                    } catch (error) {
+                        //@ts-ignore
+                        console.error('Error updating streak or approvedLogs in group:', error.message, error.code);
+                    }
+                } else {
+                    console.log('Majority has not been reached yet.');
+                }
+            } else {
+                console.warn('Log document does not exist.');
+            }
+
             onClose('yes'); // Notify parent of successful upvote
         } catch (error) {
-            console.error('Error adding upvote:', error);
+            //@ts-ignore
+            console.error('Error adding upvote or checking majority:', error.message, error.code);
         }
     };
+
 
     const handleDownvote = async () => {
         if (!logRef || !currentUser) {
@@ -94,10 +174,12 @@ const VotingModal: React.FC<ModalComponentProps> = ({
             return;
         }
 
+        // @ts-ignore
+        const userRef = doc(db, 'users', user.uid);
         try {
             // Update the Firestore document by adding the user's ID to voteDeny
             await updateDoc(logRef, {
-                voteDeny: arrayUnion(currentUser.uid),
+                voteDeny: arrayUnion(userRef),
             });
             console.log(`User ${currentUser.uid} added to voteDeny.`);
             onClose('no'); // Notify parent of successful downvote
@@ -123,7 +205,7 @@ const VotingModal: React.FC<ModalComponentProps> = ({
                     <Text style={styles.question}>{question}</Text>
 
                     {/* Main Image */}
-                    <Image   source={image ? { uri: image } : undefined} style={styles.mainImage} />
+                    <Image source={image ? { uri: image } : undefined} style={styles.mainImage} />
 
 
 
@@ -137,6 +219,7 @@ const VotingModal: React.FC<ModalComponentProps> = ({
                             <Image style={styles.buttons} source={Unsure} />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleUpvote}>
+                            {/* <TouchableOpacity onPress={() => console.log(votesNeeded)}> */}
                             <Image style={styles.buttons} source={ThumbsUp} />
                         </TouchableOpacity>
                     </View>

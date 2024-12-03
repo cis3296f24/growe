@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Image, View, TextInput, Button, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useUser } from './UserContext';
+import { fetchApprovedLogs } from '../utils/log'
 import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
 import { checkUserHasGroup, joinGroup, createGroup } from '../utils/group';
 import { checkPendingVotes } from '../utils/user';
@@ -20,6 +21,7 @@ import colors, { current } from 'tailwindcss/colors';
 import { createPlant, getDecayDate } from '@/utils/plant';
 import VotingModal from './VotingModal'
 import ProfilePic from '../assets/images/Avatar.png'
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 const { width, height } = Dimensions.get('window');
@@ -42,11 +44,13 @@ export function Group() {
     const [plantImageChoices, setPlantImageChoices] = useState<string[] | null>(null);
     const [plantNameChoices, setPlantNameChoices] = useState<string[]>([]);
     const [plantLatinNames, setPlantLatinNames] = useState<string[]>([]);
-    const [votes, setVotes] = useState([])
+    const [approvedLogs, setApprovedLogs] = useState([])
     const [modalVisible, setModalVisible] = useState(false);
     const [response, setResponse] = useState<string | null>(null);
     const [hasShownModal, setHasShownModal] = useState(false);
     const [currentLogRef, setCurrentLogRef] = useState<DocumentReference | null>(null);
+    const [streak, setStreak] = useState(0)
+
 
     const fetchGroups = async () => {
         const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
@@ -56,10 +60,12 @@ export function Group() {
             const groupData = await getDoc(groupRefs[0]);
             const users = groupData.get("users");
             setGroupMembers(users);
+            setStreak(groupData.get("streak"))
             setHabit(groupData.get("habit"));
             setFrequency(groupData.get("frequency"));
             setGroupName(groupData.get("name"));
             setGroupCode(groupData.get("joinCode"));
+            setApprovedLogs(groupData.get("approvedLogs"))
             const memberNames = await Promise.all(users.map(async (member: DocumentReference) => {
                 const memberDoc: DocumentSnapshot = await getDoc(member);
                 if (!memberDoc.exists()) {
@@ -99,6 +105,13 @@ export function Group() {
             // console.log('generating plant choices');
         }
     }, [plantNameChoices]);
+    const fetchGroupData = async () => {
+        try {
+            console.log("Resolved Approved Logs:", approvedLogs); // Logs the actual array, not the Promise
+        } catch (error) {
+            console.error("Error fetching approved logs:", error);
+        }
+    };
 
     const checkPlant = async () => {
         const plant = await getPlant(user);
@@ -266,6 +279,7 @@ export function Group() {
     };
 
     return (
+
         <LinearGradient
             colors={['#8E9F8D', '#596558']}
             start={{ x: 0, y: 0 }}
@@ -317,7 +331,7 @@ export function Group() {
                 ) : hasGroups ? (
                     <View style={styles.inner_container}>
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}><Text>Button</Text></TouchableOpacity> */}
-                        <TouchableOpacity onPress={() => grabVotes()}><Text>Button</Text></TouchableOpacity>
+                        <TouchableOpacity onPress={() => console.log(approvedLogs.length)}><Text>Test Button</Text></TouchableOpacity>
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>click! </TouchableOpacity> */}
                         <Text>{groupCode}</Text>
                         <View>
@@ -329,9 +343,19 @@ export function Group() {
                             {<Image source={Plant} style={styles.image} />}
 
                         </View>
-                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={1} />
-                        {groupMembers.map((i) => {
-                            return <UserProgress frequency={frequency} totalVotes={1} />
+                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={streak} />
+                        {groupMembers.map((member, i) => {
+                            // Initialize a variable to count the total approved logs for this member
+                            let memberApprovedLogs = 0;
+
+
+                            return (
+                                <UserProgress
+                                    key={member.id} // Unique key for each member
+                                    frequency={frequency}
+                                    totalVotes={memberApprovedLogs} // Pass the total votes count
+                                />
+                            );
                         })}
                         <VotingModal
                             visible={modalVisible}
@@ -339,6 +363,7 @@ export function Group() {
                             profilePic={ProfilePic}
                             question="Do you like this image?"
                             logRef={currentLogRef} // Pass the Firestore document reference
+                            totalMembers={groupMembers.length}
                         />
                     </View>
                 ) : (

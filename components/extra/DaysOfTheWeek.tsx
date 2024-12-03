@@ -6,7 +6,7 @@ interface DaysSelectorProps {
 }
 
 const DaysSelector: React.FC<DaysSelectorProps> = ({ selectedDays }) => {
-  const days = ['s', 'm', 't', 'w', 't', 'f', 's']; // Days of the week
+  const days = ['s', 'm', 't', 'w', 'th', 'f', 's']; // Days of the week
 
   return (
     <View style={styles.container}>
