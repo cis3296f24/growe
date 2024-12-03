@@ -52,3 +52,4 @@ export const fetchApprovedLogs = async (groupRef) => {
     return [];
   }
 };
+//issuue not fully sync

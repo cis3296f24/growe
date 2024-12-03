@@ -30,6 +30,7 @@ export function Group() {
 
     const [step, setStep] = useState<'initial' | 'name-group' | 'create-habit' | 'set-frequency' | 'display-code' | 'enter-code'>('initial');
     const [groups, setGroups] = useState<DocumentReference[]>([]);
+    const [groupRef, setGroupRef] = useState<DocumentReference[]>([]);
     const [hasGroups, setHasGroups] = useState(false);
     const { user } = useUser();
     const [groupName, setGroupName] = useState(`${user?.displayName}'s group`);
@@ -58,6 +59,8 @@ export function Group() {
             setGroups(groupRefs);
             setHasGroups(true);
             const groupData = await getDoc(groupRefs[0]);
+            setGroupRef(groupRefs[0]);
+            //issue here----------------------------------------------------------------------------------------------------------------
             const users = groupData.get("users");
             setGroupMembers(users);
             setStreak(groupData.get("streak"))
@@ -105,13 +108,17 @@ export function Group() {
             // console.log('generating plant choices');
         }
     }, [plantNameChoices]);
+
+    // USE THIS AND TRY TO GET THE DATA ---------------------------------------------------------------------------------------------------------------------------------------
     const fetchGroupData = async () => {
         try {
-            console.log("Resolved Approved Logs:", approvedLogs); // Logs the actual array, not the Promise
+          const approvedLogs = await fetchApprovedLogs(groupRefs[0]); // Await the Promise
+          console.log("Resolved Approved Logs:", approvedLogs); // Logs the actual array, not the Promise
         } catch (error) {
-            console.error("Error fetching approved logs:", error);
+          console.error("Error fetching approved logs:", error);
         }
-    };
+      };
+    
 
     const checkPlant = async () => {
         const plant = await getPlant(user);
