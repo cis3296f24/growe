@@ -63,7 +63,7 @@ const VotingModal: React.FC<ModalComponentProps> = ({
 
             if (docSnapshot.exists()) {
                 const logData = docSnapshot.data();
-                console.log('Document data:', logData);
+                // console.log('Document data:', logData);
 
                 // Access the imageUrl field
                 if (logData.logImageUrl) {
@@ -143,6 +143,7 @@ const VotingModal: React.FC<ModalComponentProps> = ({
                             // Update the group document
                             await updateDoc(groupRef, {
                                 approvedLogs: updatedApprovedLogs, // Overwrite the array with duplicates allowed
+                                streak: increment(1), // Increment the streak by 1
                             });
 
                             console.log('Streak incremented and author added to approvedLogs in the group (duplicates allowed).');

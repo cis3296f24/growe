@@ -4,79 +4,74 @@ import { Timestamp } from "firebase/firestore";
 
 export const checkPendingVotes = async (user) => {
   if (!user?.uid) {
-    console.error('User UID is undefined');
-    return false; 
+    console.error("User UID is undefined");
+    return false;
   }
 
   try {
-    const userRef = doc(db, 'users', user.uid);
-
-    // Fetch the user's groups
+    const userRef = doc(db, "users", user.uid); // Reference to the user document
     const userSnapshot = await getDoc(userRef);
+
+    if (!userSnapshot.exists()) {
+      console.error("User document does not exist");
+      return false;
+    }
+
     const userData = userSnapshot.data();
     const groups = userData.groups || []; // Array of group references
-    
 
     const pendingVotes = [];
 
-    // Loop through each group
+    // Loop through each group reference
     for (const groupRef of groups) {
       const logsQuery = query(
-        collection(db, 'logs'),
-        where('group', '==', groupRef) // Match logs belonging to the group
+        collection(db, "logs"),
+        where("group", "==", groupRef) // Match logs belonging to the group
       );
       const logsSnapshot = await getDocs(logsQuery);
 
-      // Check if the user has voted on all logs
       logsSnapshot.forEach((logDoc) => {
         const logData = logDoc.data();
-        console.log(logData);
-        
 
-        // Check if the user has not voted (not in voteApprove, voteDeny, or voteUnsure)
+        // Check if the user has voted (not in voteApprove, voteDeny, or voteUnsure)
         const hasVoted =
-          logData.voteApprove?.includes(user.uid) ||
-          logData.voteDeny?.includes(user.uid) ||
-          logData.voteUnsure?.includes(user.uid);
-
+          logData.voteApprove?.some((ref) => ref.id === userRef.id) ||
+          logData.voteDeny?.some((ref) => ref.id === userRef.id) ||
+          logData.voteUnsure?.some((ref) => ref.id === userRef.id);
 
         if (!hasVoted) {
-          // console.log("user has not voted");
-          
-          // Add to pending votes if the user hasn't voted
-          pendingVotes.push(logDoc.ref);
+          pendingVotes.push(logDoc.ref); // Add log reference if user hasn't voted
         }
       });
     }
 
-    // Return results
     return pendingVotes.length > 0 ? pendingVotes : false;
-    
   } catch (error) {
-    console.error('Error checking pending votes: ', error);
+    console.error("Error checking pending votes: ", error);
     return { hasPendingVotes: false, pendingVotes: [] };
   }
 };
 
-
 export const updateUserVote = async (logRef, userRef, voteType) => {
-    try {
-        if (!['approve', 'deny', 'unsure'].includes(voteType)) {
-            throw new Error('Invalid vote type. Must be "approve", "deny", or "unsure".');
-        }
-
-        const voteField = `vote${voteType.charAt(0).toUpperCase() + voteType.slice(1)}`; // Dynamically determine field
-        await updateDoc(logRef, {
-            [voteField]: arrayUnion(userRef), // Add user ID to the appropriate vote array
-        });
-
-        console.log(`User ${userRef} has voted ${voteType} for log ${logRef}.`);
-        return true;
-    } catch (error) {
-        console.error('Error updating user vote:', error);
-        return false;
+  try {
+    if (!["approve", "deny", "unsure"].includes(voteType)) {
+      throw new Error('Invalid vote type. Must be "approve", "deny", or "unsure".');
     }
+
+    const voteField = `vote${voteType.charAt(0).toUpperCase() + voteType.slice(1)}`; // Dynamically determine field
+
+    await updateDoc(logRef, {
+      [voteField]: arrayUnion(userRef), // Add user reference to the appropriate vote array
+    });
+
+    console.log(`User ${userRef.id} has voted ${voteType} for log ${logRef.id}.`);
+    return true;
+  } catch (error) {
+    console.error("Error updating user vote:", error);
+    return false;
+  }
 };
+
 
 
 

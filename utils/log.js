@@ -35,21 +35,50 @@ export const createLogEntry = async (user, imageUrl) => {
 
 export const fetchApprovedLogs = async (groupRef) => {
   try {
-    // Fetch the document
+    if (!groupRef) {
+      throw new Error("Group reference is null or undefined.");
+    }
+
+    // Fetch the document from Firestore
     const groupDoc = await getDoc(groupRef);
 
-    // Check if the document exists and retrieve the approvedLogs field
-    if (groupDoc.exists()) {
-      const approvedLogs = groupDoc.data().approvedLogs;
-      console.log("Approved Logs:", approvedLogs);
-      return approvedLogs;
-    } else {
-      console.log("No such document!");
+    // Check if the document exists
+    if (!groupDoc.exists()) {
+      console.error("Group document does not exist.");
       return [];
     }
+
+    // Retrieve the `approvedLogs` field
+    const groupData = groupDoc.data();
+    const approvedLogs = groupData?.approvedLogs;
+
+    // Validate that `approvedLogs` is an array
+    if (!Array.isArray(approvedLogs)) {
+      console.error("Approved logs field is not an array:", approvedLogs);
+      return [];
+    }
+
+    console.log("Approved Logs:", approvedLogs);
+
+    // Fetch details of each log reference
+    const logDetails = [];
+    for (const logRef of approvedLogs) {
+      if (logRef instanceof Object && typeof logRef.path === "string") {
+        const logDoc = await getDoc(logRef); // Fetch individual log
+        if (logDoc.exists()) {
+          logDetails.push(logDoc.data());
+        } else {
+          console.warn("Log document does not exist:", logRef.path);
+        }
+      } else {
+        console.error("Invalid log reference:", logRef);
+      }
+    }
+
+    return logDetails; // Return detailed log data
   } catch (error) {
     console.error("Error fetching approved logs:", error);
     return [];
   }
 };
-//issuue not fully sync
+//issuue not fully sync 

@@ -50,7 +50,8 @@ export function Group() {
     const [response, setResponse] = useState<string | null>(null);
     const [hasShownModal, setHasShownModal] = useState(false);
     const [currentLogRef, setCurrentLogRef] = useState<DocumentReference | null>(null);
-    const [streak, setStreak] = useState(0)
+    const [streak, setStreak] = useState(0);
+    const [userProgress, setUserProgress] = useState<{ userId: string, approvedLogs: number }[]>([]);
 
 
     const fetchGroups = async () => {
@@ -59,7 +60,7 @@ export function Group() {
             setGroups(groupRefs);
             setHasGroups(true);
             const groupData = await getDoc(groupRefs[0]);
-            setGroupRef(groupRefs[0]);
+            setGroupRef(groupRefs);
             //issue here----------------------------------------------------------------------------------------------------------------
             const users = groupData.get("users");
             setGroupMembers(users);
@@ -86,18 +87,18 @@ export function Group() {
 
     useEffect(() => {
         fetchGroups();
-        console.log('fetching groups');
+        // console.log('fetching groups');
         checkPlant();
-        console.log('fetching plant');
+        // console.log('fetching plant');
     }, [user]);
 
     useEffect(() => {
         // Only call grabVotes if groupMembers is populated
         if (groupMembers.length > 0) {
-            console.log('groupMembers updated:', groupMembers);
+            // console.log('groupMembers updated:', groupMembers);
             grabVotes();
         } else {
-            console.log('groupMembers is empty. Skipping grabVotes.');
+            // console.log('groupMembers is empty. Skipping grabVotes.');
         }
     }, [groupMembers]); // 
 
@@ -112,12 +113,70 @@ export function Group() {
     // USE THIS AND TRY TO GET THE DATA ---------------------------------------------------------------------------------------------------------------------------------------
     const fetchGroupData = async () => {
         try {
-          const approvedLogs = await fetchApprovedLogs(groupRefs[0]); // Await the Promise
-          console.log("Resolved Approved Logs:", approvedLogs); // Logs the actual array, not the Promise
+            if (groupRef.length === 0 || !groupRef[0]) {
+                console.error("Group reference is not available.");
+                return;
+            }
+    
+            const groupDocSnapshot = await getDoc(groupRef[0]);
+            if (!groupDocSnapshot.exists()) {
+                console.error("Group document does not exist.");
+                return;
+            }
+    
+            // Fetch approved logs and group members
+            const approvedLogs = groupDocSnapshot.get("approvedLogs") || [];
+            if (!Array.isArray(approvedLogs)) {
+                console.error("Approved logs field is not an array.");
+                return;
+            }
+    
+            const users: DocumentReference[] = groupDocSnapshot.get("users") || [];
+            setGroupMembers(users);
+    
+            const userLogCounts: { [userId: string]: number } = {}; // Tracks the number of logs each user authored
+    
+            // Iterate over the `approvedLogs` references
+            for (const logRef of approvedLogs) {
+                if (logRef instanceof DocumentReference) {
+                    const logSnapshot = await getDoc(logRef);
+    
+                    if (logSnapshot.exists()) {
+                        const logData = logSnapshot.data();
+                        const authorRef: DocumentReference = logData.author; // Get the `author` field
+    
+                        if (authorRef && authorRef.id) {
+                            const authorId = authorRef.id;
+    
+                            // Increment the count of logs authored by this user
+                            userLogCounts[authorId] = (userLogCounts[authorId] || 0) + 1;
+                        }
+                    } else {
+                        console.warn("Log document does not exist for:", logRef.path);
+                    }
+                } else {
+                    console.error("Invalid log reference in approvedLogs:", logRef);
+                }
+            }
+    
+            // Map the log counts to the group members
+            const userProgressData = users.map((member) => ({
+                userId: member.id,
+                approvedLogs: userLogCounts[member.id] || 0, // Default to 0 if the user authored no logs
+            }));
+    
+            setUserProgress(userProgressData); // Update the state with user progress
         } catch (error) {
-          console.error("Error fetching approved logs:", error);
+            console.error("Error fetching group data:", error);
         }
-      };
+    };
+
+    useEffect(() => {
+        if (groupRef.length > 0) {
+            fetchApprovedLogs(groupRef[0]);
+        }
+    });
+
     
 
     const checkPlant = async () => {
@@ -144,8 +203,8 @@ export function Group() {
         let pendingVotes = await checkPendingVotes(user);
         // console.log("THese are the votes");
 
-        console.log(pendingVotes);
-        console.log("after the votes");
+        // console.log(pendingVotes);
+        // console.log("after the votes");
 
 
 
@@ -178,7 +237,7 @@ export function Group() {
                         setModalVisible(true); // Show the VotingModal
                         setHasShownModal(true); // Mark modal as shown
                     } else {
-                        console.log();
+                        // console.log();
 
                     }
                 }
@@ -338,7 +397,7 @@ export function Group() {
                 ) : hasGroups ? (
                     <View style={styles.inner_container}>
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}><Text>Button</Text></TouchableOpacity> */}
-                        <TouchableOpacity onPress={() => console.log(approvedLogs.length)}><Text>Test Button</Text></TouchableOpacity>
+                        <TouchableOpacity onPress={() => fetchApprovedLogs()}><Text>Test Button</Text></TouchableOpacity>
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>click! </TouchableOpacity> */}
                         <Text>{groupCode}</Text>
                         <View>
@@ -351,16 +410,17 @@ export function Group() {
 
                         </View>
                         <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={streak} />
-                        {groupMembers.map((member, i) => {
+                        {userProgress.map(({ userId, approvedLogs }, i) => {
                             // Initialize a variable to count the total approved logs for this member
-                            let memberApprovedLogs = 0;
-
+                            // let memberApprovedLogs = 0;
+                            
+                            
 
                             return (
                                 <UserProgress
-                                    key={member.id} // Unique key for each member
+                                    key={userId} // Unique key for each member
                                     frequency={frequency}
-                                    totalVotes={memberApprovedLogs} // Pass the total votes count
+                                    totalVotes={approvedLogs} // Pass the total votes count
                                 />
                             );
                         })}
