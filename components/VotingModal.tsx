@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { db } from "../utils/firebaseConfig";
 import {
     Modal,
@@ -51,9 +51,16 @@ const VotingModal: React.FC<ModalComponentProps> = ({
         return num / 2;
     }
 
+    useEffect(() => {
+        if (logRef) {
+            getImageFromLogRef();
+        } else {
+            // console.warn("logRef is null or undefined.");
+        }
+    }, [logRef]); // Dependency array to only run when logRef changes
+
     const getImageFromLogRef = async () => {
         if (!logRef) {
-            console.error('logRef is null or undefined');
             return null;
         }
 
@@ -82,7 +89,6 @@ const VotingModal: React.FC<ModalComponentProps> = ({
             return null;
         }
     };
-    getImageFromLogRef()
 
     const handleUpvote = async () => {
         if (!logRef || !currentUser) {
@@ -143,7 +149,12 @@ const VotingModal: React.FC<ModalComponentProps> = ({
                             // Update the group document
                             await updateDoc(groupRef, {
                                 approvedLogs: updatedApprovedLogs, // Overwrite the array with duplicates allowed
-                                streak: increment(1), // Increment the streak by 1
+                            });
+
+                            // Increment the streak of the author
+                            await updateDoc(authorRef, {
+                                // add to array with no duplicates
+                                approvedLogs: arrayUnion(logRef),
                             });
 
                             console.log('Streak incremented and author added to approvedLogs in the group (duplicates allowed).');

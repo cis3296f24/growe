@@ -4,7 +4,7 @@ import Avatar from '../../assets/images/Avatar.png';
 
 interface UserProgressProps {
   frequency: number; // Total votes needed to fill the tube
-  totalVotes: number; // Votes already completed
+  totalVotes: number // Votes already completed
 }
 
 const UserProgress: React.FC<UserProgressProps> = ({ frequency, totalVotes }) => {

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Image, View, TextInput, Button, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, memo } from 'react';
+import { Image, View, TextInput, Button, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollViewBase } from 'react-native';
 import { useUser } from './UserContext';
 import { fetchApprovedLogs } from '../utils/log'
 import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
@@ -22,6 +22,7 @@ import { createPlant, getDecayDate } from '@/utils/plant';
 import VotingModal from './VotingModal'
 import ProfilePic from '../assets/images/Avatar.png'
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ScrollView } from 'react-native';
 
 
 const { width, height } = Dimensions.get('window');
@@ -45,14 +46,14 @@ export function Group() {
     const [plantImageChoices, setPlantImageChoices] = useState<string[] | null>(null);
     const [plantNameChoices, setPlantNameChoices] = useState<string[]>([]);
     const [plantLatinNames, setPlantLatinNames] = useState<string[]>([]);
-    const [approvedLogs, setApprovedLogs] = useState([])
+    const [approvedLogs, setApprovedLogs] = useState<DocumentReference[]>([])
     const [modalVisible, setModalVisible] = useState(false);
     const [response, setResponse] = useState<string | null>(null);
     const [hasShownModal, setHasShownModal] = useState(false);
     const [currentLogRef, setCurrentLogRef] = useState<DocumentReference | null>(null);
     const [streak, setStreak] = useState(0);
     const [userProgress, setUserProgress] = useState<{ userId: string, approvedLogs: number }[]>([]);
-
+    const [userProgressComponents, setUserProgressComponents] = useState<JSX.Element[]>([]);
 
     const fetchGroups = async () => {
         const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
@@ -117,37 +118,37 @@ export function Group() {
                 console.error("Group reference is not available.");
                 return;
             }
-    
+
             const groupDocSnapshot = await getDoc(groupRef[0]);
             if (!groupDocSnapshot.exists()) {
                 console.error("Group document does not exist.");
                 return;
             }
-    
+
             // Fetch approved logs and group members
             const approvedLogs = groupDocSnapshot.get("approvedLogs") || [];
             if (!Array.isArray(approvedLogs)) {
                 console.error("Approved logs field is not an array.");
                 return;
             }
-    
+
             const users: DocumentReference[] = groupDocSnapshot.get("users") || [];
             setGroupMembers(users);
-    
+
             const userLogCounts: { [userId: string]: number } = {}; // Tracks the number of logs each user authored
-    
+
             // Iterate over the `approvedLogs` references
             for (const logRef of approvedLogs) {
                 if (logRef instanceof DocumentReference) {
                     const logSnapshot = await getDoc(logRef);
-    
+
                     if (logSnapshot.exists()) {
                         const logData = logSnapshot.data();
                         const authorRef: DocumentReference = logData.author; // Get the `author` field
-    
+
                         if (authorRef && authorRef.id) {
                             const authorId = authorRef.id;
-    
+
                             // Increment the count of logs authored by this user
                             userLogCounts[authorId] = (userLogCounts[authorId] || 0) + 1;
                         }
@@ -158,13 +159,13 @@ export function Group() {
                     console.error("Invalid log reference in approvedLogs:", logRef);
                 }
             }
-    
+
             // Map the log counts to the group members
             const userProgressData = users.map((member) => ({
                 userId: member.id,
                 approvedLogs: userLogCounts[member.id] || 0, // Default to 0 if the user authored no logs
             }));
-    
+
             setUserProgress(userProgressData); // Update the state with user progress
         } catch (error) {
             console.error("Error fetching group data:", error);
@@ -177,7 +178,34 @@ export function Group() {
         }
     });
 
-    
+    useEffect(() => {
+        if (groupMembers.length > 0) {
+            fetchUserProgress();
+        }
+    }, [groupMembers]);
+
+    const fetchUserProgress = async () => {
+        const userProgressComponents = await Promise.all(
+            groupMembers.map(async (member, i) => {
+                // get the member's snapshot, then get id field
+                const memberDoc: DocumentSnapshot = await getDoc(member);
+                const memberData = memberDoc.data();
+                const memberApprovedLogs = memberData?.approvedLogs || [];
+                console.log("Member Approved Logs:", memberApprovedLogs);
+
+                return (
+                    <UserProgress
+                        key={member.id || i}
+                        frequency={frequency}
+                        totalVotes={memberApprovedLogs.length ? memberApprovedLogs.length : 0}
+                    />
+                );
+            })
+        );
+        // update the state with the user progress components
+        setUserProgressComponents(userProgressComponents);
+    }
+
 
     const checkPlant = async () => {
         const plant = await getPlant(user);
@@ -206,6 +234,7 @@ export function Group() {
         // console.log(pendingVotes);
         // console.log("after the votes");
 
+        
 
 
         if (pendingVotes && Array.isArray(pendingVotes)) {
@@ -243,7 +272,7 @@ export function Group() {
                 }
             }
         } else {
-            console.log('No pending votes or an error occurred.');
+            // console.log('No pending votes or an error occurred.');
         }
     };
 
@@ -335,7 +364,7 @@ export function Group() {
 
         const plantChoices = await Promise.all(plantChoicesPromises);
         setPlantImageChoices(plantChoices);
-        console.log('Plant Image Choices:', plantChoices);
+        // console.log('Plant Image Choices:', plantChoices);
     };
 
     const handleModalClose = (userResponse: string) => {
@@ -343,6 +372,25 @@ export function Group() {
         setResponse(userResponse);
         grabVotes()
     };
+
+    useEffect(() => {
+        const fetchUserProgress = async () => {
+            if (groupMembers.length === 0 || groupRef.length === 0) return;
+
+            const logs = await fetchApprovedLogs(groupRef[0]); // Fetch approved logs
+            const userProgressData = groupMembers.map((member) => {
+                const authoredLogs = logs.filter((log) => log.author?.id === member.id); // Filter logs by member ID
+                return {
+                    userId: member.id,
+                    approvedLogs: authoredLogs.length, // Count logs authored by the member
+                };
+            });
+
+            setUserProgress(userProgressData); // Store in state
+        };
+
+        fetchUserProgress();
+    }, [groupMembers, groupRef]); // Dependencies: re-run when groupMembers or groupRef change
 
     return (
 
@@ -397,7 +445,18 @@ export function Group() {
                 ) : hasGroups ? (
                     <View style={styles.inner_container}>
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}><Text>Button</Text></TouchableOpacity> */}
-                        <TouchableOpacity onPress={() => fetchApprovedLogs()}><Text>Test Button</Text></TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={async () => {
+                                if (groupRef.length > 0) {
+                                    const approvedLogs = await fetchApprovedLogs(groupRef[0]); // Call the function with the groupRef
+                                    console.log("Fetched Approved Logs:", approvedLogs); // Log the approved logs
+                                } else {
+                                    console.warn("Group reference is not available.");
+                                }
+                            }}
+                        >
+                            <Text>Test Button</Text>
+                        </TouchableOpacity>
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>click! </TouchableOpacity> */}
                         <Text>{groupCode}</Text>
                         <View>
@@ -410,28 +469,18 @@ export function Group() {
 
                         </View>
                         <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={streak} />
-                        {userProgress.map(({ userId, approvedLogs }, i) => {
-                            // Initialize a variable to count the total approved logs for this member
-                            // let memberApprovedLogs = 0;
-                            
-                            
 
-                            return (
-                                <UserProgress
-                                    key={userId} // Unique key for each member
-                                    frequency={frequency}
-                                    totalVotes={approvedLogs} // Pass the total votes count
-                                />
-                            );
-                        })}
-                        <VotingModal
-                            visible={modalVisible}
-                            onClose={handleModalClose}
-                            profilePic={ProfilePic}
-                            question="Do you like this image?"
-                            logRef={currentLogRef} // Pass the Firestore document reference
-                            totalMembers={groupMembers.length}
-                        />
+                        <ScrollView style={styles.scrollheight}>
+                            {
+                                userProgressComponents.map((component, i) => (
+                                    <View key={i}>
+                                        {component}
+                                    </View>
+                                ))
+                            }
+                        </ScrollView>
+
+
                     </View>
                 ) : (
                     <View style={styles.container}>
@@ -516,6 +565,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         color: 'black',
         borderRadius: 10,
+    },
+    scrollheight: {
+        width: "100%"
     },
     container: {
         flex: 1,
