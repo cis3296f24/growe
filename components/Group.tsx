@@ -54,6 +54,7 @@ export function Group() {
     const [streak, setStreak] = useState(0);
     const [userProgress, setUserProgress] = useState<{ userId: string, approvedLogs: number }[]>([]);
     const [userProgressComponents, setUserProgressComponents] = useState<JSX.Element[]>([]);
+    
 
     const fetchGroups = async () => {
         const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
@@ -234,7 +235,7 @@ export function Group() {
         //console.log(pendingVotes);
         // console.log("after the votes");
 
-        
+
 
 
         if (pendingVotes && Array.isArray(pendingVotes)) {
@@ -445,6 +446,13 @@ export function Group() {
                 ) : hasGroups ? (
                     <View style={styles.inner_container}>
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}><Text>Button</Text></TouchableOpacity> */}
+                        <VotingModal
+                            visible={modalVisible}
+                            onClose={handleModalClose}
+                            profilePic={ProfilePic}
+                            question="Do you like this image?"
+                            logRef={currentLogRef} // Pass the Firestore document reference
+                            totalMembers={groupMembers.length} />
                         <TouchableOpacity
                             onPress={async () => {
                                 if (groupRef.length > 0) {
@@ -468,7 +476,7 @@ export function Group() {
                             {<Image source={Plant} style={styles.image} />}
 
                         </View>
-                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={streak} />
+                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvedLogs.length} />
 
                         <ScrollView style={styles.scrollheight}>
                             {
