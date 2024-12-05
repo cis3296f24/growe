@@ -226,12 +226,12 @@ export function Group() {
             return;
         }
 
-        // console.log('Group Members:', groupMembers); // Log group members for debugging
+        //console.log('Group Members:', groupMembers); // Log group members for debugging
 
         let pendingVotes = await checkPendingVotes(user);
         // console.log("THese are the votes");
 
-        // console.log(pendingVotes);
+        //console.log(pendingVotes);
         // console.log("after the votes");
 
         
