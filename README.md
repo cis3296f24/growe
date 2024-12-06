@@ -266,7 +266,7 @@ classDiagram
     +User user
   }
 ```
-##Sequence Diagram
+## Sequence Diagram
 
 Use Case: Signing Up from login page
 ```mermaid
@@ -409,8 +409,6 @@ This is the life cycle of a user on this app for a three person group with the g
             <sub><b>Khanh</b></sub>
         </a>
     </td>
-    
-  
     <td align="center">
         <a href="https://github.com/Ruben-amalgam">
             <img src="https://avatars.githubusercontent.com/u/171351822?v=4" width="100;" alt="Ruben-amalgam"/>
@@ -418,7 +416,6 @@ This is the life cycle of a user on this app for a three person group with the g
             <sub><b>Ruben</b></sub>
         </a>
     </td>
-
     <td align="center">
         <a href="https://github.com/tus29603">
             <img src="https://avatars.githubusercontent.com/u/157152397?v=4" width="100;" alt="tus29603"/>
