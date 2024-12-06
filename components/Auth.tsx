@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, Image } from 'react-native';
+import { View, TextInput, Button, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { signUp, login, logout, checkUsernameExists, checkEmailExists, resetPassword } from '../utils/authenticate';
 import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
 import { useRouter } from 'expo-router';
 import { useUser } from './UserContext';
+
+
 import {
   Button as ButtonGluestack,
   ButtonText,
@@ -16,7 +18,7 @@ import colors from 'tailwindcss/colors';
 import { Input, InputField } from '@/components/ui/input';
 import { useFonts } from 'expo-font';
 import { Text as GlueText } from '@/components/ui/text';
-import { ProfilePictureUpload } from './ProfilePictureUpload';
+import ProfilePictureUpload from './ProfilePictureUpload';
 
 export function Auth() {
   const router = useRouter();
@@ -26,7 +28,8 @@ export function Auth() {
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [profileImageUri, setProfileImageUri] = useState<string | null | undefined>(null);
-  const { user } = useUser();
+  const { user } = useUser() as { user: User | null};
+  console.log("current user in auth.tsx: ", user);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [emailValid, setEmailValid] = useState(false);
@@ -381,24 +384,16 @@ export function Auth() {
             </View>
           )}
          {step === 'signup-profile-picture' && (
-            <View>
-              <ProfilePictureUpload onComplete={(uploadedUri) => setProfileImageUri(uploadedUri ?? null)} />
-              {profileImageUri && (
-                <Image source={{ uri: profileImageUri }} style={styles.imagePreview} />
-              )}
-              <View style={styles.uploadActions}>
-                <ButtonGluestack
-                  className="bg-primaryGreen p-2 rounded-2xl w-72"
-                  size="xl"
-                  variant="solid"
-                  action="primary"
-                  onPress={handleSignUp}
-                  disabled={!profileImageUri}
-                >
-                  <ButtonText>Sign Up</ButtonText>
-                </ButtonGluestack>
-              </View>
-            </View>
+             <View>
+              {/* //@ts-ignore */}
+                <ProfilePictureUpload userId={user?.uid || null} />
+            
+
+             <TouchableOpacity onPress={handleSignUp} disabled={!profileImageUri}>
+               <Text>Sign Up</Text>
+             </TouchableOpacity>
+           </View>
+           
           )}
 
          {step === 'reset-password' && (

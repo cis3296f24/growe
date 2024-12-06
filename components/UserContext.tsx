@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User } from 'firebase/auth';
 import { auth } from '../utils/firebaseConfig'; // Adjust the import path as needed
 import { onAuthStateChanged } from 'firebase/auth';
-import { checkPendingVotes } from '../utils/user'; // Adjust the import path
 
 // Define the type for a pending vote
 

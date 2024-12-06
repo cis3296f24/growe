@@ -1,8 +1,9 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile} from 'firebase/auth';
 //@ts-ignore
-import { collection, getDocs, setDoc } from 'firebase/firestore';
+import { collection, getDocs, setDoc, waitForPendingWrites } from 'firebase/firestore';
 import { addUser, updateProfilePicture } from './user';
 import { auth, db } from './firebaseConfig';
+import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 
 
 // Sign Up Function
@@ -13,9 +14,18 @@ export const signUp = async (email, password, username, displayName, profileImag
     const user = userCredential.user;
 
     console.log("User signed up:", user);
+let profileImageUrl = null;
+if (profileImageUrl){
+  const storage = getStorage();
+  const storageRef = ref(storage, `profile+pictures/${user.uid}`);
+  const response = await fetch(profileImageUrl);
+  const blob = await response.blob();
+  await uploadBytes(storageRef, blob);
+  profileImageUrl = await getDownloadURL(storageRef);
 
+}
     // Step 2: Update Firebase Auth profile with displayName
-    await updateProfile(user, { displayName });
+    await updateProfile(user, { displayName, photoURL: profileImageUr });
 
     // Step 3: Create a Firestore document for the user
     const userDocRef = doc(db, "users", user.uid);
