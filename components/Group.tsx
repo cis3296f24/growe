@@ -419,7 +419,7 @@ export function Group() {
             <View style={styles.container}>
                 {!plant && hasGroups ? (
                     // {!plant && hasGroups ? (
-                    <View className='p-5 gap-4'>
+                    <View className='p-5 gap-4 pb-28'>
                         <Heading size='2xl' className="font-regular text-neutral-300">
                             Choose a plant to get started.
                         </Heading>
