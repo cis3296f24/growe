@@ -11,26 +11,16 @@ export default function Header() {
     const toggleSwitch = () => setIsEnabled(previousState => !previousState);
 
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <LinearGradient
-                colors={['#8E9F8D', '#596558']}
-                start={{ x: 1, y: 1 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.gradientBackground}
-            >
-                <View style={styles.header}>
-                    <TouchableOpacity>
-                        <Logo height={40} width={40} />
-                    </TouchableOpacity>
-                    <View style={styles.headerRightContainer}>
-                        <CustomSwitch />
+        <View style={styles.header}>
+            <TouchableOpacity>
+                <Logo height={40} width={40} color={'#8F9C8F'}/>
+            </TouchableOpacity>
+            <View style={styles.headerRightContainer}>
                         <TouchableOpacity>
-                            <Image source={Avatar} style={styles.avatar} />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </LinearGradient>
-        </SafeAreaView>
+                    <Image source={Avatar} style={styles.avatar} />
+                </TouchableOpacity>
+            </View>
+        </View>
     );
 }
 
@@ -48,6 +38,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        paddingTop: 50,
+        paddingHorizontal: 16,
+        paddingVertical: 15,
+        backgroundColor: '#596558',
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
     },
     headerRightContainer: {
         flexDirection: 'row',

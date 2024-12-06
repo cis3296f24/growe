@@ -168,7 +168,7 @@ export function Auth() {
               </Input>
               {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
               <View className='pl-1 pt-2 flex-row'>
-                <GlueText className="font-regular text-neutral-500" size='xl'>
+                <GlueText className="font-regular text-neutral-300" size='xl'>
                   Don't have an account?
                 </GlueText>
                 <ButtonGluestack size='xl' variant="link" onPress={() => handleStep('signup-email')} className='pl-1 h-auto min-h-0'>
@@ -213,7 +213,7 @@ export function Auth() {
                   onPressOut={() => setIsActive(false)}
                   onPress={() => handleStep('reset-password')}
                 >
-                  <ButtonText className='font-regular text-neutral-500'>Forgot Password?</ButtonText>
+                  <ButtonText className='font-regular text-neutral-300'>Forgot Password?</ButtonText>
                 </ButtonGluestack>
               </View>
               <View className='flex-row justify-between pt-2'>
@@ -258,7 +258,7 @@ export function Auth() {
               </Input>
               {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
               <View className='pl-1 pt-2 flex-row'>
-                <GlueText size='xl' className="font-regular text-neutral-500">
+                <GlueText size='xl' className="font-regular text-neutral-300">
                   Already have an account?
                 </GlueText>
                 <ButtonGluestack size='xl' variant="link" onPress={() => handleStep('login-email')} className='pl-1 h-auto min-h-0'>
@@ -440,6 +440,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     paddingBottom: 128,
+    backgroundColor: '#596558',
   },
   input: {
     height: 40,

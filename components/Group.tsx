@@ -23,7 +23,16 @@ import VotingModal from './VotingModal'
 import ProfilePic from '../assets/images/Avatar.png'
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native';
-
+import { Text as GlueText } from '@/components/ui/text';
+import {
+    Button as ButtonGluestack,
+    ButtonText,
+    ButtonSpinner,
+    ButtonIcon,
+    ButtonGroup,
+} from '@/components/ui/button';
+import { Input, InputField } from '@/components/ui/input';
+import { useFonts } from 'expo-font';
 
 const { width, height } = Dimensions.get('window');
 
@@ -55,9 +64,9 @@ export function Group() {
     const [userProgress, setUserProgress] = useState<{ userId: string, approvedLogs: number }[]>([]);
     const [userProgressComponents, setUserProgressComponents] = useState<JSX.Element[]>([]);
     const [daysOfTheWeek, setDaysOfTheWeek] = useState(null)
-
-
-
+    const [fontsLoaded] = useFonts({
+        "SF-Pro-Rounded-Regular": require("../assets/fonts/SF-Pro-Rounded-Regular.ttf"),
+      });
 
     const fetchGroups = async () => {
         const groupRefs = await checkUserHasGroup(user);
@@ -87,6 +96,7 @@ export function Group() {
         }
     };
 
+    
     useEffect(() => {
         fetchGroups();
         // console.log('fetching groups');
@@ -404,110 +414,50 @@ export function Group() {
             style={{ width: "100%", height: "100%" }}
         >
             <View style={styles.container}>
-                {!plant && !hasGroups ? (
-                    // <View className='p-5'>
-                    //     <Text>Choose a plant to get started.</Text>
-                    //     <View className='flex-row'>
-                    //         <View className='p-2'>
-                    //             <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                    //                 <Box className='h-40 w-40'>
-                    //                     {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[0] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                    //                 </Box>
-                    //             </TouchableOpacity>
-                    //         </View>
-                    //         <View className='p-2'>
-                    //             <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                    //                 <Box className='h-40 w-40'>
-                    //                     {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[1] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                    //                 </Box>
-                    //             </TouchableOpacity>
-                    //         </View>
-                    //     </View>
-                    //     <View className='flex-row'>
-                    //         <View className='p-2'>
-                    //             <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                    //                 <Box className='h-40 w-40'>
-                    //                     {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[2] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                    //                 </Box>
-                    //             </TouchableOpacity>
-                    //         </View>
-                    //         <View className='p-2'>
-                    //             <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                    //                 <Box className='h-40 w-40'>
-                    //                     {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[3] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                    //                 </Box>
-                    //             </TouchableOpacity>
-                    //         </View>
-                    //     </View>
-                    //     <Button title="Refresh Plants" onPress={() => {
-                    //         handleGeneratePlantNames();
-                    //         setPlant(null);
-                    //     }} />
-                    // </View>
-                    <View style={styles.container}>
-                        {step === 'initial' && (
-                            <View>
-                                <Text>Welcome to your garden.</Text>
-                                <Text>It's time to plant a new seed.</Text>
-                                <Button title="Create a Group" onPress={() => handleStep('name-group')} />
-                                <Button title="Join a Group" onPress={() => handleStep('enter-code')} />
+                {!plant && hasGroups ? (
+                    // {!plant && hasGroups ? (
+                    <View className='p-5'>
+                        <GlueText size='xl' className="font-regular text-neutral-300">
+                            Choose a plant to get started.
+                        </GlueText>
+                        <View className='flex-row'>
+                            <View className='p-2'>
+                                <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                    <Box className='h-40 w-40'>
+                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[0] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                    </Box>
+                                </TouchableOpacity>
                             </View>
-                        )}
-                        {step === 'name-group' && (
-                            <View>
-                                <Text>What is the group's name?</Text>
-                                <TextInput
-                                    placeholder={'Group Name'}
-                                    placeholderTextColor="gray"
-                                    value={groupName}
-                                    onChangeText={setGroupName}
-                                    style={styles.input}
-                                />
-                                <Button title="Next" onPress={() => handleStep('create-habit')} />
-                                <Button title="Back" onPress={() => handleStep('initial')} />
+                            <View className='p-2'>
+                                <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                    <Box className='h-40 w-40'>
+                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[1] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                    </Box>
+                                </TouchableOpacity>
                             </View>
-                        )}
-                        {step === 'create-habit' && (
-                            <View>
-                                <Text>What is the group's habit?</Text>
-                                <TextInput
-                                    placeholder="Habit"
-                                    placeholderTextColor="gray"
-                                    value={habit}
-                                    onChangeText={setHabit}
-                                    style={styles.input}
-                                />
-                                <Button title="Next" onPress={() => handleStep('set-frequency')} />
-                                <Button title="Back" onPress={() => handleStep('name-group')} />
+                        </View>
+                        <View className='flex-row'>
+                            <View className='p-2'>
+                                <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                    <Box className='h-40 w-40'>
+                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[2] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                    </Box>
+                                </TouchableOpacity>
                             </View>
-                        )}
-                        {step === 'set-frequency' && (
-                            <View>
-                                <Text>How many days a week would your group like to commit to practicing this habit?</Text>
-                                <Text>{frequency} Days a Week</Text>
-                                <Button title="+" onPress={() => handleFrequency(frequency + 1)} />
-                                <Button title="-" onPress={() => handleFrequency(frequency - 1)} />
-                                {error && <Text style={styles.error}>{error}</Text>}
-                                <Button title="Create Group" onPress={() => handleCreateGroup()} />
-                                <Button title="Back" onPress={() => handleStep('create-habit')} />
+                            <View className='p-2'>
+                                <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                    <Box className='h-40 w-40'>
+                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[3] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                    </Box>
+                                </TouchableOpacity>
                             </View>
-                        )}
-                        {step === 'enter-code' && (
-                            <View>
-                                <TextInput
-                                    placeholder="Group Code"
-                                    placeholderTextColor="gray"
-                                    value={codeInput}
-                                    onChangeText={setCodeInput}
-                                    style={styles.input}
-                                />
-                                {error && <Text style={styles.error}>{error}</Text>}
-                                <Button title="Back" onPress={() => handleStep('initial')} />
-                                <Button title="Join" onPress={() => handleJoinGroup()} />
-                            </View>
-                        )}
+                        </View>
+                        <Button title="Refresh Plants" onPress={() => {
+                            handleGeneratePlantNames();
+                            setPlant(null);
+                        }} />
                     </View>
-                ) : hasGroups ? (
+                ) : plant && hasGroups ? (
                     <View style={styles.inner_container}>
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}><Text>Button</Text></TouchableOpacity> */}
                         <VotingModal
@@ -517,15 +467,35 @@ export function Group() {
                             question="Do you like this image?"
                             logRef={currentLogRef} // Pass the Firestore document reference
                             totalMembers={groupMembers.length} />
-
-                        <Text>{groupCode}</Text>
+                        {/*
+                        <TouchableOpacity
+                            onPress={async () => {
+                                if (groupRef.length > 0) {
+                                    const approvedLogs = await fetchApprovedLogs(groupRef[0]); // Call the function with the groupRef
+                                    console.log("Fetched Approved Logs:", approvedLogs); // Log the approved logs
+                                } else {
+                                    console.warn("Group reference is not available.");
+                                }
+                            }}
+                        >
+                            <Text>Test Button</Text>
+                        </TouchableOpacity>
+                        */}
+                        {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>click! </TouchableOpacity> */}
+                        <GlueText size='xl' className="font-regular text-neutral-300">
+                        {groupCode}
+                        </GlueText>
                         <View>
-                            <Text style={styles.header}>{habit}</Text>
+                            <GlueText size='xl' className="font-regular text-neutral-300" style={styles.header}>
+                            {habit}
+                            </GlueText>
                             <FrequencyBar />
                             {groupRef.length > 0 ? (
                                 <DaysOfTheWeek groupRef={groupRef[0]} />
                             ) : (
-                                <Text>Loading group information...</Text>
+                                <GlueText size='xl' className="font-regular text-neutral-300">
+                                Loading group information...
+                                </GlueText>
                             )}
                         </View>
                         <View style={styles.image_container}>
@@ -544,74 +514,109 @@ export function Group() {
                             }
                         </ScrollView>
 
-
                     </View>
                 ) : (
-                    //////////////////////////////////////////////////////////////////////////
                     <View style={styles.container}>
-                        {/* {step === 'initial' && (
-                            <View>
-                                <Text>Welcome to your garden.</Text>
-                                <Text>It's time to plant a new seed.</Text>
-                                <Button title="Create a Group" onPress={() => handleStep('name-group')} />
-                                <Button title="Join a Group" onPress={() => handleStep('enter-code')} />
+                        {step === 'initial' && (
+                            <View style={styles.choose}>
+                                <GlueText size='xl' className="font-regular text-neutral-300">
+                                It's time to plant a new seed.
+                                </GlueText>
+                                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl" size="xl" variant="solid" action="primary" onPress={() => handleStep('name-group')}>
+                                    <ButtonText className='font-bold'>Create a Group</ButtonText>
+                                </ButtonGluestack>
+                                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl" size="xl" variant="solid" action="primary" onPress={() => handleStep('enter-code')}>
+                                    <ButtonText className='font-bold'>Join a Group</ButtonText>
+                                </ButtonGluestack>
                             </View>
                         )}
                         {step === 'name-group' && (
                             <View>
-                                <Text>What is the group's name?</Text>
-                                <TextInput
-                                    placeholder={'Group Name'}
-                                    placeholderTextColor="gray"
+                                <GlueText size='xl' className="font-regular text-neutral-300">
+                                What is the group's name?
+                                </GlueText>
+                                <Input
+                                    variant="outline"
+                                    size="xl"
+                                    isDisabled={false}
+                                    isInvalid={false}
+                                    isReadOnly={false}
+                                    className='rounded-2xl min-w-72'
+                                >
+                                    <InputField
+                                    className='font-regular'
+                                    placeholder="Group Name"
                                     value={groupName}
                                     onChangeText={setGroupName}
-                                    style={styles.input}
-                                />
+                                    />
+                                </Input>
                                 <Button title="Next" onPress={() => handleStep('create-habit')} />
                                 <Button title="Back" onPress={() => handleStep('initial')} />
                             </View>
                         )}
                         {step === 'create-habit' && (
                             <View>
-                                <Text>What is the group's habit?</Text>
-                                <TextInput
+                                <GlueText size='xl' className="font-regular text-neutral-300">
+                                What is the group's habit?
+                                </GlueText>
+                                <Input
+                                    variant="outline"
+                                    size="xl"
+                                    isDisabled={false}
+                                    isInvalid={false}
+                                    isReadOnly={false}
+                                    className='rounded-2xl min-w-72'
+                                >
+                                    <InputField
+                                    className='font-regular'
                                     placeholder="Habit"
-                                    placeholderTextColor="gray"
                                     value={habit}
                                     onChangeText={setHabit}
-                                    style={styles.input}
-                                />
+                                    />
+                                </Input>
                                 <Button title="Next" onPress={() => handleStep('set-frequency')} />
                                 <Button title="Back" onPress={() => handleStep('name-group')} />
                             </View>
                         )}
                         {step === 'set-frequency' && (
                             <View>
-                                <Text>How many days a week would your group like to commit to practicing this habit?</Text>
-                                <Text>{frequency} Days a Week</Text>
+                                <GlueText size='xl' className="font-regular text-neutral-300">
+                                How many days a week would your group like to commit to practicing this habit?
+                                </GlueText>
+                                <GlueText size='xl' className="font-regular text-neutral-300">
+                                {frequency} Days a Week
+                                </GlueText>
                                 <Button title="+" onPress={() => handleFrequency(frequency + 1)} />
                                 <Button title="-" onPress={() => handleFrequency(frequency - 1)} />
-                                {error && <Text style={styles.error}>{error}</Text>}
+                                {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
                                 <Button title="Create Group" onPress={() => handleCreateGroup()} />
                                 <Button title="Back" onPress={() => handleStep('create-habit')} />
                             </View>
                         )}
                         {step === 'enter-code' && (
                             <View>
-                                <TextInput
+                                <Input
+                                    variant="outline"
+                                    size="xl"
+                                    isDisabled={false}
+                                    isInvalid={false}
+                                    isReadOnly={false}
+                                    className='rounded-2xl min-w-72'
+                                >
+                                    <InputField
+                                    className='font-regular'
                                     placeholder="Group Code"
-                                    placeholderTextColor="gray"
                                     value={codeInput}
                                     onChangeText={setCodeInput}
-                                    style={styles.input}
-                                />
-                                {error && <Text style={styles.error}>{error}</Text>}
+                                    placeholderTextColor={'white'}
+                                    />
+                                </Input>
+                                {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
                                 <Button title="Back" onPress={() => handleStep('initial')} />
                                 <Button title="Join" onPress={() => handleJoinGroup()} />
                             </View>
-                        )} */}
+                        )}
                     </View>
-                    ///////////////////////////////////////////////
                 )}
             </View >
         </LinearGradient>
@@ -619,6 +624,10 @@ export function Group() {
 }
 
 const styles = StyleSheet.create({
+    choose: {
+        flex: 1,
+        justifyContent: 'center',
+    },
     error: {
         color: 'red',
     },

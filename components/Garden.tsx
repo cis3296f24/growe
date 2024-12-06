@@ -39,7 +39,7 @@ export function Garden() {
             colors={['#8E9F8D', '#596558']}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
-            style={styles.gradientContainer}
+            style={{ width: "100%", height: "100%" }}
         >
             {hasGroups ? (
                 <View style={styles.container}>
@@ -82,7 +82,6 @@ const styles = StyleSheet.create({
         width: 250,
         height: '50%',
         borderRadius: 10,
-
     },
     text: {
         fontSize: 24,
