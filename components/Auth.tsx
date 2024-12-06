@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Button, Text, StyleSheet, Image } from 'react-native';
 import { signUp, login, logout, checkUsernameExists, checkEmailExists, resetPassword } from '../utils/authenticate';
 import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
@@ -16,14 +16,16 @@ import colors from 'tailwindcss/colors';
 import { Input, InputField } from '@/components/ui/input';
 import { useFonts } from 'expo-font';
 import { Text as GlueText } from '@/components/ui/text';
+import { ProfilePictureUpload } from './ProfilePictureUpload';
 
 export function Auth() {
   const router = useRouter();
-  const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password' |'reset-password'>('login-email');
+  const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password' |'signup-profile-picture' |'reset-password'>('login-email');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
+  const [profileImageUri, setProfileImageUri] = useState<string | null | undefined>(null);
   const { user } = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -35,7 +37,7 @@ export function Auth() {
 
   const handleSignUp = async () => {
     try {
-      const newUser = await signUp(email, password, username, displayName);
+      const newUser = await signUp(email, password, username, displayName, profileImageUri as null | undefined);
       if (newUser) {
         router.push('./home');
       }
@@ -372,13 +374,34 @@ export function Auth() {
                   <ButtonText className='font-bold'>Back</ButtonText>
                 </ButtonGluestack>
                 {password.length >= 6 && 
-                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-24" size="xl" variant="solid" action="primary" onPress={handleSignUp}>
-                  <ButtonText className='font-bold'>Sign Up</ButtonText>
+                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-24" size="xl" variant="solid" action="primary" onPress={() => setStep('signup-profile-picture')}>
+                  <ButtonText className='font-bold'>Next</ButtonText>
                 </ButtonGluestack>}
               </View>
             </View>
           )}
-          {step === 'reset-password' && (
+         {step === 'signup-profile-picture' && (
+            <View>
+              <ProfilePictureUpload onComplete={(uploadedUri) => setProfileImageUri(uploadedUri ?? null)} />
+              {profileImageUri && (
+                <Image source={{ uri: profileImageUri }} style={styles.imagePreview} />
+              )}
+              <View style={styles.uploadActions}>
+                <ButtonGluestack
+                  className="bg-primaryGreen p-2 rounded-2xl w-72"
+                  size="xl"
+                  variant="solid"
+                  action="primary"
+                  onPress={handleSignUp}
+                  disabled={!profileImageUri}
+                >
+                  <ButtonText>Sign Up</ButtonText>
+                </ButtonGluestack>
+              </View>
+            </View>
+          )}
+
+         {step === 'reset-password' && (
               <View className='flex-col'>
                 <Input
                   variant="outline"
@@ -460,5 +483,21 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  profileUploadContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  imagePreview: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    marginVertical: 16,
+  },
+  uploadActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
   },
 });

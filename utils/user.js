@@ -1,4 +1,5 @@
 import { collection, query, where, getDocs, getDoc, doc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL} from "firebase/storage";
 import { db } from "./firebaseConfig";
 import { Timestamp } from "firebase/firestore";
 
@@ -69,6 +70,23 @@ export const updateUserVote = async (logRef, userRef, voteType) => {
         console.error('Error updating user vote:', error);
         return false;
     }
+};
+// upload the profile piture and update firestore
+export const updateProfilePicture = async (userRef, blob) => {
+  const storage = getStorage();
+  const storageRef = ref(storage, `profile_pictures/${userRef.id}`);
+
+  try{
+    await uploadBytes(storageRef, blob);
+    const downloadURL = await getDownloadURL(storageRef);
+    await updateDoc(userRef, {profileImageUrl: downloadURL});
+
+    return downloadURL;
+
+  } catch(error){
+    console.error("Error updating profile picture:", error);
+    throw error;
+  }
 };
 
 

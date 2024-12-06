@@ -1,21 +1,41 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile} from 'firebase/auth';
 //@ts-ignore
-import { collection, getDocs } from 'firebase/firestore';
-import { addUser } from './user';
+import { collection, getDocs, setDoc } from 'firebase/firestore';
+import { addUser, updateProfilePicture } from './user';
 import { auth, db } from './firebaseConfig';
 
 
 // Sign Up Function
-export const signUp = async (email, password, username, displayName) => {
+export const signUp = async (email, password, username, displayName, profileImageUrl = null) => {
   try {
+    // Step 1: Create user in Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    console.log('User signed up:', userCredential.user);
-    await updateProfile(userCredential.user, { displayName });
-    await addUser(userCredential.user, username, displayName);
-    return userCredential.user;
+    const user = userCredential.user;
+
+    console.log("User signed up:", user);
+
+    // Step 2: Update Firebase Auth profile with displayName
+    await updateProfile(user, { displayName });
+
+    // Step 3: Create a Firestore document for the user
+    const userDocRef = doc(db, "users", user.uid);
+    await setDoc(userDocRef, {
+      email,
+      username,
+      displayName,
+      profileImageUrl, // Save the profile picture URL (or null if not provided)
+      createdAt: new Date(),
+    });
+
+    // Step 4: Additional setup via addUser (if defined)
+    if (addUser) {
+      await addUser(user, username, displayName);
+    }
+
+    return user; // Return the user object
   } catch (error) {
-    console.error(`Error signing up with email ${email}: ${error.message}`);
-    return null;
+    console.error(`Error signing up with email ${email}:`, error.message);
+    throw error; // Throw the error for the caller to handle
   }
 };
 
