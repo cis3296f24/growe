@@ -56,8 +56,8 @@ export function Group() {
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
     const [plant, setPlant] = useState<DocumentReference | null>(null);
     const [plantImageChoices, setPlantImageChoices] = useState<string[] | null>(null);
-    const [plantNameChoices, setPlantNameChoices] = useState<string[]>([]);
-    const [plantLatinNames, setPlantLatinNames] = useState<string[]>([]);
+    const [plantNameChoices, setPlantNameChoices] = useState<string[]>(["plant1", "plant2", "plant3", "plant4"]);
+    const [plantLatinNames, setPlantLatinNames] = useState<string[]>(["plant1", "plant2", "plant3", "plant4"]);
     const [approvedLogs, setApprovedLogs] = useState<DocumentReference[]>([])
     const [modalVisible, setModalVisible] = useState(false);
     const [response, setResponse] = useState<string | null>(null);
@@ -419,46 +419,76 @@ export function Group() {
             <View style={styles.container}>
                 {!plant && hasGroups ? (
                     // {!plant && hasGroups ? (
-                    <View className='p-5'>
-                        <GlueText size='xl' className="font-regular text-neutral-300">
+                    <View className='p-5 gap-4'>
+                        <Heading size='2xl' className="font-regular text-neutral-300">
                             Choose a plant to get started.
-                        </GlueText>
-                        <View className='flex-row'>
-                            <View className='p-2'>
-                                <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                    <Box className='h-40 w-40'>
-                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[0] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                                    </Box>
-                                </TouchableOpacity>
+                        </Heading>
+                        <Box className=''>
+                            <View className='flex-row gap-4'>
+                                <View className='p-2 rounded-2xl bg-primaryGreen'>
+                                    <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-40'>
+                                            {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[0] }} onError={(e) => console.log('Image failed to load', e.nativeEvent)} className='w-20 h-20'/> : <Spinner size="small" color={colors.gray[500]} />}
+                                            <Heading size='lg' className="font-bold text-neutral-300 pt-2">
+                                                {plantNameChoices[0]}
+                                            </Heading>
+                                            <GlueText size='lg' italic className="font-italic text-neutral-300">
+                                                {plantLatinNames[0]}
+                                            </GlueText>
+                                        </Box>
+                                    </TouchableOpacity>
+                                </View>
+                                <View className='p-2 rounded-2xl bg-primaryGreen'>
+                                    <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-40'>
+                                            {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[1] }} className='w-20 h-20' onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                            <Heading size='lg' className="font-bold text-neutral-300 pt-2">
+                                                {plantNameChoices[1]}
+                                            </Heading>
+                                            <GlueText size='lg' italic className="font-italic text-neutral-300">
+                                                {plantLatinNames[1]}
+                                            </GlueText>
+                                        </Box>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-                            <View className='p-2'>
-                                <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                    <Box className='h-40 w-40'>
-                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[1] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                                    </Box>
-                                </TouchableOpacity>
+                            <View className='flex-row pt-4 gap-4'>
+                            <View className='p-2 rounded-2xl bg-primaryGreen'>
+                                    <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-40'>
+                                            {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[2] }} className='w-20 h-20' onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                            <Heading size='lg' className="font-bold text-neutral-300 pt-2">
+                                                {plantNameChoices[2]}
+                                            </Heading>
+                                            <GlueText size='lg' italic className="font-italic text-neutral-300">
+                                                {plantLatinNames[2]}
+                                            </GlueText>
+                                        </Box>
+                                    </TouchableOpacity>
+                                </View>
+                                <View className='p-2 rounded-2xl bg-primaryGreen'>
+                                    <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-40'>
+                                            {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[3] }} className='w-20 h-20' onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                            <Heading size='lg' className="font-bold text-neutral-300 pt-2">
+                                                {plantNameChoices[3]}
+                                            </Heading>
+                                            <GlueText size='lg' italic className="font-italic text-neutral-300">
+                                                {plantLatinNames[3]}
+                                            </GlueText>
+                                        </Box>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-                        </View>
-                        <View className='flex-row'>
-                            <View className='p-2'>
-                                <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                    <Box className='h-40 w-40'>
-                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[2] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                                    </Box>
-                                </TouchableOpacity>
-                            </View>
-                            <View className='p-2'>
-                                <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                    <Box className='h-40 w-40'>
-                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[3] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                                    </Box>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                        <Button title="Refresh Plants" onPress={() => {
-                            handleGeneratePlantNames();
-                            setPlant(null);
-                        }} />
+                            <Box className='pt-4'>
+                                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-full" size="xl" onPress={() => {
+                                handleGeneratePlantNames();
+                                setPlant(null);
+                                }}>
+                                    <ButtonText className='font-bold'>Refresh Plants</ButtonText>
+                                </ButtonGluestack>
+                            </Box>
+                        </Box>
                     </View>
                 ) : plant && hasGroups ? (
                     <View style={styles.inner_container}>
@@ -502,7 +532,7 @@ export function Group() {
                             )}
                         </View>
                         <View style={styles.image_container}>
-                            {<Image source={Plant} style={styles.image} />}
+                            {<Image source={Plant} className='w-20 h-20' />}
 
                         </View>
                         <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvedLogs.length} />
@@ -734,10 +764,6 @@ const styles = StyleSheet.create({
     image_container: {
         height: height * .3,
         width: width * .5,
-    },
-    image: {
-        width: "100%",
-        height: "100%",
     },
     header: {
         fontSize: 20,

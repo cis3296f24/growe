@@ -191,6 +191,7 @@ module.exports = {
         light: "SF-Pro-Rounded-Light",
         thin: "SF-Pro-Rounded-Thin",
         ultralight: "SF-Pro-Rounded-Ultralight",
+        italic: "cmunci",
       },
       fontWeight: {
         extrablack: '950',
