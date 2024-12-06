@@ -8,9 +8,8 @@ interface UserProgressProps {
 }
 
 const UserProgress: React.FC<UserProgressProps> = ({ frequency, totalVotes }) => {
-  // Calculate the number of filled cells
-  const totalCells = frequency; // Fixed number of cells in the tube for visual clarity
-  const filledCells = totalVotes
+  const totalCells = frequency; // Fixed number of normal cells
+  const excessVotes = totalVotes > frequency ? totalVotes - frequency : 0; // Calculate excess votes
 
   return (
     <View style={styles.container}>
@@ -22,13 +21,26 @@ const UserProgress: React.FC<UserProgressProps> = ({ frequency, totalVotes }) =>
       {/* Progress Bar with Outer Tube */}
       <View style={styles.barContainer}>
         <View style={styles.tube}>
-          {Array.from({ length: totalCells }).map((_, index) => (
+          {/* Render normal cells */}
+          {Array.from({ length: totalCells }).map((_, index) => {
+            const isFilled = index < totalVotes;
+
+            return (
+              <View
+                key={`normal-${index}`}
+                style={[
+                  styles.cell,
+                  isFilled && styles.filledCell, // Highlight filled cells
+                ]}
+              />
+            );
+          })}
+
+          {/* Render excess cells */}
+          {Array.from({ length: excessVotes }).map((_, index) => (
             <View
-              key={index}
-              style={[
-                styles.cell,
-                index < filledCells && styles.filledCell, // Highlight filled cells
-              ]}
+              key={`excess-${index}`}
+              style={[styles.cell, styles.goldCell]} // Excess cells are gold
             />
           ))}
         </View>
@@ -67,13 +79,16 @@ const styles = StyleSheet.create({
   },
   cell: {
     flex: 1, // Ensures cells evenly distribute space
-    height: "100%",
+    height: '100%',
     backgroundColor: '#92A491', // Default unfilled cell color
     borderRadius: 10,
     marginHorizontal: 1, // Reduced space between cells
   },
   filledCell: {
     backgroundColor: '#BED3BD', // Color for filled cells
+  },
+  goldCell: {
+    backgroundColor: 'gold', // Color for excess cells
   },
 });
 
