@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { signUp, login, logout, checkUsernameExists, checkEmailExists, resetPassword } from '../utils/authenticate';
+import { signUp, login, logout, checkUsernameExists, checkEmailExists, resetPassword, uploadProfilePicture } from '../utils/authenticate';
 import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
 import { useRouter } from 'expo-router';
 import { useUser } from './UserContext';
+import { doc } from "firebase/firestore";
 
 
 import {
@@ -22,7 +23,7 @@ import ProfilePictureUpload from './ProfilePictureUpload';
 
 export function Auth() {
   const router = useRouter();
-  const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password' |'signup-profile-picture' |'reset-password'>('login-email');
+  const [step, setStep] = useState<'initial' | 'login-email' | 'login-password' | 'signup-email' | 'signup-username' | 'signup-password' |'signup-profile-picture' | 'upload-profile-picture' |' home'| 'reset-password'>('login-email');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -40,7 +41,7 @@ export function Auth() {
 
   const handleSignUp = async () => {
     try {
-      const newUser = await signUp(email, password, username, displayName, profileImageUri as null | undefined);
+      const newUser = await signUp(email, password, username, displayName);
       if (newUser) {
         router.push('./home');
       }
@@ -49,6 +50,35 @@ export function Auth() {
     }
     return;
   };
+  // const handleSignUp = async () => {
+  //   try {
+  //     const newUser = await signUp(email, password, username, displayName);
+  //     if (newUser) {
+  //       router.push('./upload-profile-picture'); // Redirect to profile picture upload page
+  //     }
+  //   } catch (e) {
+  //     setError('Error signing up: ' + e);
+  //   }
+  //   return;
+  // };
+
+  const handleProfilePictureUpload = async () => {
+    try {
+      if (!profileImageUri) {
+        setError('Please select a profile picture.');
+        return;
+      }
+      await uploadProfilePicture(user, profileImageUri);
+      router.push('./home'); // Redirect to home after successful upload
+    } catch (e) {
+      if (e instanceof Error) {
+        setError('Error uploading profile picture: ' + e.message);
+      } else {
+        setError('An unknown error occurred while uploading the profile picture.');
+      }
+    }
+  };
+  
 
   const handleStep = (newStep: typeof step) => {
     setStep(newStep);
@@ -344,7 +374,7 @@ export function Auth() {
               </View>
             </View>
           )}
-          {step === 'signup-password' && (
+         {step === 'signup-password' && (
             <View className='flex-col'>
               <Input
                 variant="outline"
@@ -354,9 +384,9 @@ export function Auth() {
                 isReadOnly={false}
                 className='rounded-2xl min-w-72'
               >
-                <InputField 
-                  className='font-regular' 
-                  placeholder="Password" 
+                <InputField
+                  className='font-regular'
+                  placeholder="Password"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -364,11 +394,11 @@ export function Auth() {
               </Input>
               {error && <Text className='color-red-400 font-regular pl-1'>{error}</Text>}
               <View className='flex-row justify-between pt-3'>
-                <ButtonGluestack 
+                <ButtonGluestack
                   className={`bg-primaryGreen p-2 rounded-2xl w-16`}
-                  size="xl" 
-                  variant="solid" 
-                  action="primary" 
+                  size="xl"
+                  variant="solid"
+                  action="primary"
                   data-active={isActive}
                   onPressIn={() => setIsActive(true)}
                   onPressOut={() => setIsActive(false)}
@@ -376,26 +406,29 @@ export function Auth() {
                 >
                   <ButtonText className='font-bold'>Back</ButtonText>
                 </ButtonGluestack>
-                {password.length >= 6 && 
-                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-24" size="xl" variant="solid" action="primary" onPress={() => setStep('signup-profile-picture')}>
-                  <ButtonText className='font-bold'>Next</ButtonText>
-                </ButtonGluestack>}
+                {password.length >= 6 &&
+                  <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-24" size="xl" variant="solid" action="primary" onPress={handleSignUp}>
+                    <ButtonText className='font-bold'>Sign Up</ButtonText>
+                  </ButtonGluestack>}
               </View>
             </View>
           )}
-         {step === 'signup-profile-picture' && (
-             <View>
-              {/* //@ts-ignore */}
-                <ProfilePictureUpload userId={user?.uid || null} />
-            
-
-             <TouchableOpacity onPress={handleSignUp} disabled={!profileImageUri}>
-               <Text>Sign Up</Text>
-             </TouchableOpacity>
-           </View>
-           
-          )}
-
+        {step === 'upload-profile-picture' && (
+                <View>
+                  <ProfilePictureUpload onComplete={(uri) => setProfileImageUri(uri)} userId={''} />
+                  <ButtonGluestack
+                    className="bg-primaryGreen p-2 rounded-2xl w-24"
+                    size="xl"
+                    variant="solid"
+                    action="primary"
+                    onPress={handleProfilePictureUpload}
+                  >
+                    <ButtonText className="font-bold">Upload</ButtonText>
+                  </ButtonGluestack>
+                  {error && <Text className="color-red-400 font-regular pl-1">{error}</Text>}
+                </View>
+              )}
+        
          {step === 'reset-password' && (
               <View className='flex-col'>
                 <Input

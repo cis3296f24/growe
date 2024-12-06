@@ -4,48 +4,57 @@ import { collection, getDocs, setDoc, waitForPendingWrites } from 'firebase/fire
 import { addUser, updateProfilePicture } from './user';
 import { auth, db } from './firebaseConfig';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { doc } from "firebase/firestore";
 
 
 // Sign Up Function
-export const signUp = async (email, password, username, displayName, profileImageUrl = null) => {
+export const signUp = async (email, password, username, displayName) => {
   try {
     // Step 1: Create user in Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
     console.log("User signed up:", user);
-let profileImageUrl = null;
-if (profileImageUrl){
-  const storage = getStorage();
-  const storageRef = ref(storage, `profile+pictures/${user.uid}`);
-  const response = await fetch(profileImageUrl);
-  const blob = await response.blob();
-  await uploadBytes(storageRef, blob);
-  profileImageUrl = await getDownloadURL(storageRef);
 
-}
     // Step 2: Update Firebase Auth profile with displayName
-    await updateProfile(user, { displayName, photoURL: profileImageUr });
+    await updateProfile(user, { displayName });
 
-    // Step 3: Create a Firestore document for the user
-    const userDocRef = doc(db, "users", user.uid);
-    await setDoc(userDocRef, {
-      email,
-      username,
-      displayName,
-      profileImageUrl, // Save the profile picture URL (or null if not provided)
-      createdAt: new Date(),
-    });
-
-    // Step 4: Additional setup via addUser (if defined)
-    if (addUser) {
-      await addUser(user, username, displayName);
-    }
-
-    return user; // Return the user object
+    console.log("User profile updated:", { displayName});
+    await addUser (user, username, displayName);
+    return user;
   } catch (error) {
     console.error(`Error signing up with email ${email}:`, error.message);
     throw error; // Throw the error for the caller to handle
+  }
+};
+
+export const uploadProfilePicture = async (user, profileImageUrl) => {
+  try {
+    if (!profileImageUrl) {
+      throw new Error('No profile image provided');
+    }
+
+    const storage = getStorage();
+    const storageRef = ref(storage, `profile_pictures/${user.uid}`);
+    const response = await fetch(profileImageUrl);
+    const blob = await response.blob();
+    await uploadBytes(storageRef, blob);
+
+    const downloadURL = await getDownloadURL(storageRef);
+
+    // Update user's Firestore document with the profile picture URL
+    const userDocRef = doc(db, "users", user.uid);
+    await updateDoc(userDocRef, { profileImageUrl: downloadURL });
+
+    // Optionally update Firebase Auth profile
+    await updateProfile(user, { photoURL: downloadURL });
+
+    console.log("Profile picture uploaded and updated successfully:", downloadURL);
+
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading profile picture:", error);
+    throw error;
   }
 };
 
