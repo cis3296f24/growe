@@ -651,7 +651,6 @@ const styles = StyleSheet.create({
         width: "100%",
         alignItems: "center",
         height: "100%",
-        borderWidth: 2
 
 
     },

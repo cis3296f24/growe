@@ -5,7 +5,6 @@ import {
     StyleSheet,
     Image,
     TouchableOpacity,
-    ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,8 +17,6 @@ export function Garden() {
     const router = useRouter();
     const [groups, setGroups] = useState<DocumentReference[]>([]);
     const [hasGroups, setHasGroups] = useState(false);
-    const [gardenImage, setGardenImage] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
     const { user } = useUser();
 
     useEffect(() => {
@@ -35,20 +32,6 @@ export function Garden() {
             setHasGroups(true);
         };
         fetchGroups();
-
-        // Fetch a random garden image from Lorem Picsum
-        const fetchGardenImage = async () => {
-            try {
-                const response = await fetch('https://picsum.photos/800/600?random');
-                setGardenImage(response.url); // Set the remote URL
-            } catch (error) {
-                console.error('Error fetching garden image:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchGardenImage();
     }, [user]);
 
     return (
@@ -60,19 +43,11 @@ export function Garden() {
         >
             {hasGroups ? (
                 <View style={styles.container}>
-                    {loading ? (
-                        <ActivityIndicator size="large" color="#fff" />
-                    ) : (
-                        <Image
-                            source={
-                                gardenImage
-                                    ? { uri: gardenImage } // Dynamically fetched image
-                                    : GardenLocalImage // Fallback to local image
-                            }
-                            style={styles.gardenImage}
-                            resizeMode="cover"
-                        />
-                    )}
+                    <Image
+                        source={GardenLocalImage} // Always use the local image
+                        style={styles.gardenImage}
+                        resizeMode="cover"
+                    />
                     <Text style={styles.text}>Welcome to Your Garden!</Text>
                 </View>
             ) : (
@@ -104,9 +79,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     gardenImage: {
-        width: '100%',
-        height: '70%',
+        width: 250,
+        height: '50%',
         borderRadius: 10,
+
     },
     text: {
         fontSize: 24,
