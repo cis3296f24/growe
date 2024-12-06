@@ -63,28 +63,29 @@ export function Group() {
         const groupRefs = await checkUserHasGroup(user);
 
         if (Array.isArray(groupRefs) && groupRefs.length > 0) {
+            console.log("Fetched Group References:", groupRefs);
+            setGroupRef(groupRefs);
             setGroups(groupRefs);
             setHasGroups(true);
 
             const groupData = await getDoc(groupRefs[0]);
-
             if (groupData.exists()) {
                 const users = groupData.get("users") || [];
                 const approvedLogs = groupData.get("approvedLogs") || [];
-                setGroupMembers(Array.isArray(users) ? users : []);
-                setApprovedLogs(Array.isArray(approvedLogs) ? approvedLogs : []);
+                setGroupMembers(users);
+                setApprovedLogs(approvedLogs);
                 setFrequency(groupData.get("frequency") || 1);
                 setGroupCode(groupData.get("joinCode"));
                 setGroupName(groupData.get("name") || "Unnamed Group");
             }
         } else {
+            setGroupRef([]);
             setHasGroups(false);
             setGroupMembers([]);
             setApprovedLogs([]);
+            console.warn("No groups found for the user.");
         }
     };
-
-
 
     useEffect(() => {
         fetchGroups();
@@ -523,9 +524,9 @@ export function Group() {
                             <FrequencyBar />
                             {groupRef.length > 0 ? (
                                 <DaysOfTheWeek groupRef={groupRef[0]} />
-                            ) : null
-
-                            }
+                            ) : (
+                                <Text>Loading group information...</Text>
+                            )}
                         </View>
                         <View style={styles.image_container}>
                             {<Image source={Plant} style={styles.image} />}
