@@ -54,7 +54,10 @@ export function Group() {
     const [streak, setStreak] = useState(0);
     const [userProgress, setUserProgress] = useState<{ userId: string, approvedLogs: number }[]>([]);
     const [userProgressComponents, setUserProgressComponents] = useState<JSX.Element[]>([]);
-    
+    const [daysOfTheWeek, setDaysOfTheWeek] = useState(null)
+
+
+
 
     const fetchGroups = async () => {
         const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
@@ -470,7 +473,11 @@ export function Group() {
                         <View>
                             <Text style={styles.header}>{habit}</Text>
                             <FrequencyBar />
-                            <DaysOfTheWeek selectedDays={['m', 't', 'w']} />
+                            {groupRef.length > 0 ? (
+                                <DaysOfTheWeek groupRef={groupRef[0]} />
+                            ) : (
+                                <Text>Loading group information...</Text>
+                            )}
                         </View>
                         <View style={styles.image_container}>
                             {<Image source={Plant} style={styles.image} />}

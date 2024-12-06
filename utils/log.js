@@ -68,7 +68,7 @@ export const fetchApprovedLogs = async (groupRef) => {
           } else {
             console.warn("Log document does not exist:", logRef.path);
           }
-        } else {
+     } else {
           console.error("Invalid log reference:", logRef);
         }
         return null; // Ensure invalid references don't break the array
