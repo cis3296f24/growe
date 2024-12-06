@@ -74,6 +74,7 @@ export function Group() {
                 setGroupMembers(Array.isArray(users) ? users : []);
                 setApprovedLogs(Array.isArray(approvedLogs) ? approvedLogs : []);
                 setFrequency(groupData.get("frequency") || 1);
+                setGroupCode(groupData.get("joinCode"));
                 setGroupName(groupData.get("name") || "Unnamed Group");
             }
         } else {
@@ -515,16 +516,16 @@ export function Group() {
                             question="Do you like this image?"
                             logRef={currentLogRef} // Pass the Firestore document reference
                             totalMembers={groupMembers.length} />
-                        
+
                         <Text>{groupCode}</Text>
                         <View>
                             <Text style={styles.header}>{habit}</Text>
                             <FrequencyBar />
                             {groupRef.length > 0 ? (
                                 <DaysOfTheWeek groupRef={groupRef[0]} />
-                            ) : (
-                                <Text>Loading group information...</Text>
-                            )}
+                            ) : null
+
+                            }
                         </View>
                         <View style={styles.image_container}>
                             {<Image source={Plant} style={styles.image} />}
