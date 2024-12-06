@@ -60,35 +60,32 @@ export function Group() {
 
 
     const fetchGroups = async () => {
-        const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
-        if (groupRefs && groupRefs.length > 0) {
+        const groupRefs = await checkUserHasGroup(user);
+
+        if (Array.isArray(groupRefs) && groupRefs.length > 0) {
+            console.log("Fetched Group References:", groupRefs);
+            setGroupRef(groupRefs);
             setGroups(groupRefs);
             setHasGroups(true);
+
             const groupData = await getDoc(groupRefs[0]);
-            setGroupRef(groupRefs);
-            //issue here----------------------------------------------------------------------------------------------------------------
-            const users = groupData.get("users");
-            setGroupMembers(users);
-            setStreak(groupData.get("streak"))
-            setHabit(groupData.get("habit"));
-            setFrequency(groupData.get("frequency"));
-            setGroupName(groupData.get("name"));
-            setGroupCode(groupData.get("joinCode"));
-            setApprovedLogs(groupData.get("approvedLogs"))
-            const memberNames = await Promise.all(users.map(async (member: DocumentReference) => {
-                const memberDoc: DocumentSnapshot = await getDoc(member);
-                if (!memberDoc.exists()) {
-                    return 'Unknown';
-                }
-                return memberDoc.get("displayName");
-            }));
-            setGroupMemberNames(memberNames);
+            if (groupData.exists()) {
+                const users = groupData.get("users") || [];
+                const approvedLogs = groupData.get("approvedLogs") || [];
+                setGroupMembers(users);
+                setApprovedLogs(approvedLogs);
+                setFrequency(groupData.get("frequency") || 1);
+                setGroupCode(groupData.get("joinCode"));
+                setGroupName(groupData.get("name") || "Unnamed Group");
+            }
         } else {
+            setGroupRef([]);
             setHasGroups(false);
+            setGroupMembers([]);
+            setApprovedLogs([]);
+            console.warn("No groups found for the user.");
         }
     };
-
-
 
     useEffect(() => {
         fetchGroups();
@@ -283,6 +280,8 @@ export function Group() {
 
 
     const handleCreateGroup = async () => {
+        console.log("a;lskdjfa;lskdjf;lksadjf");
+
 
         const newUserGroup = await createGroup(user, groupName, habit, frequency);
 
@@ -405,99 +404,46 @@ export function Group() {
             style={{ width: "100%", height: "100%" }}
         >
             <View style={styles.container}>
-                {plant && hasGroups ? (
-                    // {!plant && hasGroups ? (
-                    <View className='p-5'>
-                        <Text>Choose a plant to get started.</Text>
-                        <View className='flex-row'>
-                            <View className='p-2'>
-                                <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                    <Box className='h-40 w-40'>
-                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[0] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                                    </Box>
-                                </TouchableOpacity>
-                            </View>
-                            <View className='p-2'>
-                                <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                    <Box className='h-40 w-40'>
-                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[1] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                                    </Box>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                        <View className='flex-row'>
-                            <View className='p-2'>
-                                <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                    <Box className='h-40 w-40'>
-                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[2] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                                    </Box>
-                                </TouchableOpacity>
-                            </View>
-                            <View className='p-2'>
-                                <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                    <Box className='h-40 w-40'>
-                                        {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[3] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
-                                    </Box>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                        <Button title="Refresh Plants" onPress={() => {
-                            handleGeneratePlantNames();
-                            setPlant(null);
-                        }} />
-                    </View>
-                ) : hasGroups ? (
-                    <View style={styles.inner_container}>
-                        {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}><Text>Button</Text></TouchableOpacity> */}
-                        <VotingModal
-                            visible={modalVisible}
-                            onClose={handleModalClose}
-                            profilePic={ProfilePic}
-                            question="Do you like this image?"
-                            logRef={currentLogRef} // Pass the Firestore document reference
-                            totalMembers={groupMembers.length} />
-                        <TouchableOpacity
-                            onPress={async () => {
-                                if (groupRef.length > 0) {
-                                    const approvedLogs = await fetchApprovedLogs(groupRef[0]); // Call the function with the groupRef
-                                    console.log("Fetched Approved Logs:", approvedLogs); // Log the approved logs
-                                } else {
-                                    console.warn("Group reference is not available.");
-                                }
-                            }}
-                        >
-                            <Text>Test Button</Text>
-                        </TouchableOpacity>
-                        {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>click! </TouchableOpacity> */}
-                        <Text>{groupCode}</Text>
-                        <View>
-                            <Text style={styles.header}>{habit}</Text>
-                            <FrequencyBar />
-                            {groupRef.length > 0 ? (
-                                <DaysOfTheWeek groupRef={groupRef[0]} />
-                            ) : (
-                                <Text>Loading group information...</Text>
-                            )}
-                        </View>
-                        <View style={styles.image_container}>
-                            {<Image source={Plant} style={styles.image} />}
-
-                        </View>
-                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvedLogs.length} />
-
-                        <ScrollView style={styles.scrollheight}>
-                            {
-                                userProgressComponents.map((component, i) => (
-                                    <View key={i}>
-                                        {component}
-                                    </View>
-                                ))
-                            }
-                        </ScrollView>
-
-
-                    </View>
-                ) : (
+                {!plant && !hasGroups ? (
+                    // <View className='p-5'>
+                    //     <Text>Choose a plant to get started.</Text>
+                    //     <View className='flex-row'>
+                    //         <View className='p-2'>
+                    //             <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                    //                 <Box className='h-40 w-40'>
+                    //                     {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[0] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                    //                 </Box>
+                    //             </TouchableOpacity>
+                    //         </View>
+                    //         <View className='p-2'>
+                    //             <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                    //                 <Box className='h-40 w-40'>
+                    //                     {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[1] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                    //                 </Box>
+                    //             </TouchableOpacity>
+                    //         </View>
+                    //     </View>
+                    //     <View className='flex-row'>
+                    //         <View className='p-2'>
+                    //             <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                    //                 <Box className='h-40 w-40'>
+                    //                     {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[2] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                    //                 </Box>
+                    //             </TouchableOpacity>
+                    //         </View>
+                    //         <View className='p-2'>
+                    //             <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
+                    //                 <Box className='h-40 w-40'>
+                    //                     {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[3] }} style={styles.image} onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                    //                 </Box>
+                    //             </TouchableOpacity>
+                    //         </View>
+                    //     </View>
+                    //     <Button title="Refresh Plants" onPress={() => {
+                    //         handleGeneratePlantNames();
+                    //         setPlant(null);
+                    //     }} />
+                    // </View>
                     <View style={styles.container}>
                         {step === 'initial' && (
                             <View>
@@ -561,6 +507,111 @@ export function Group() {
                             </View>
                         )}
                     </View>
+                ) : hasGroups ? (
+                    <View style={styles.inner_container}>
+                        {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}><Text>Button</Text></TouchableOpacity> */}
+                        <VotingModal
+                            visible={modalVisible}
+                            onClose={handleModalClose}
+                            profilePic={ProfilePic}
+                            question="Do you like this image?"
+                            logRef={currentLogRef} // Pass the Firestore document reference
+                            totalMembers={groupMembers.length} />
+
+                        <Text>{groupCode}</Text>
+                        <View>
+                            <Text style={styles.header}>{habit}</Text>
+                            <FrequencyBar />
+                            {groupRef.length > 0 ? (
+                                <DaysOfTheWeek groupRef={groupRef[0]} />
+                            ) : (
+                                <Text>Loading group information...</Text>
+                            )}
+                        </View>
+                        <View style={styles.image_container}>
+                            {<Image source={Plant} style={styles.image} />}
+
+                        </View>
+                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvedLogs.length} />
+
+                        <ScrollView style={styles.scrollheight}>
+                            {
+                                userProgressComponents.map((component, i) => (
+                                    <View key={i}>
+                                        {component}
+                                    </View>
+                                ))
+                            }
+                        </ScrollView>
+
+
+                    </View>
+                ) : (
+                    //////////////////////////////////////////////////////////////////////////
+                    <View style={styles.container}>
+                        {/* {step === 'initial' && (
+                            <View>
+                                <Text>Welcome to your garden.</Text>
+                                <Text>It's time to plant a new seed.</Text>
+                                <Button title="Create a Group" onPress={() => handleStep('name-group')} />
+                                <Button title="Join a Group" onPress={() => handleStep('enter-code')} />
+                            </View>
+                        )}
+                        {step === 'name-group' && (
+                            <View>
+                                <Text>What is the group's name?</Text>
+                                <TextInput
+                                    placeholder={'Group Name'}
+                                    placeholderTextColor="gray"
+                                    value={groupName}
+                                    onChangeText={setGroupName}
+                                    style={styles.input}
+                                />
+                                <Button title="Next" onPress={() => handleStep('create-habit')} />
+                                <Button title="Back" onPress={() => handleStep('initial')} />
+                            </View>
+                        )}
+                        {step === 'create-habit' && (
+                            <View>
+                                <Text>What is the group's habit?</Text>
+                                <TextInput
+                                    placeholder="Habit"
+                                    placeholderTextColor="gray"
+                                    value={habit}
+                                    onChangeText={setHabit}
+                                    style={styles.input}
+                                />
+                                <Button title="Next" onPress={() => handleStep('set-frequency')} />
+                                <Button title="Back" onPress={() => handleStep('name-group')} />
+                            </View>
+                        )}
+                        {step === 'set-frequency' && (
+                            <View>
+                                <Text>How many days a week would your group like to commit to practicing this habit?</Text>
+                                <Text>{frequency} Days a Week</Text>
+                                <Button title="+" onPress={() => handleFrequency(frequency + 1)} />
+                                <Button title="-" onPress={() => handleFrequency(frequency - 1)} />
+                                {error && <Text style={styles.error}>{error}</Text>}
+                                <Button title="Create Group" onPress={() => handleCreateGroup()} />
+                                <Button title="Back" onPress={() => handleStep('create-habit')} />
+                            </View>
+                        )}
+                        {step === 'enter-code' && (
+                            <View>
+                                <TextInput
+                                    placeholder="Group Code"
+                                    placeholderTextColor="gray"
+                                    value={codeInput}
+                                    onChangeText={setCodeInput}
+                                    style={styles.input}
+                                />
+                                {error && <Text style={styles.error}>{error}</Text>}
+                                <Button title="Back" onPress={() => handleStep('initial')} />
+                                <Button title="Join" onPress={() => handleJoinGroup()} />
+                            </View>
+                        )} */}
+                    </View>
+                    ///////////////////////////////////////////////
                 )}
             </View >
         </LinearGradient>
@@ -600,7 +651,6 @@ const styles = StyleSheet.create({
         width: "100%",
         alignItems: "center",
         height: "100%",
-        borderWidth: 2
 
 
     },

@@ -50,7 +50,7 @@ const DaysOfTheWeek: React.FC<DaysOfTheWeekProps> = ({ groupRef }) => {
     if (percentage >= 50) return '#FFC107'; // Lighter gold for 50%-69%
     if (percentage >= 30) return '#FFB300'; // Darker gold for 30%-49%
     if (percentage > 0) return '#C7E6C4';
-    // gay green #8E9F8D
+    // gray green
     return '#E5E5E5'; // Default gray for none <30%
   };
 
