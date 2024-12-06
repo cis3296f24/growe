@@ -33,6 +33,9 @@ import {
 } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import { useFonts } from 'expo-font';
+import JoinGroup from '@/assets/icons/joinGroup.svg';
+import CreateGroup from '@/assets/icons/createGroup.svg';
+import { Heading } from '@/components/ui/heading';
 
 const { width, height } = Dimensions.get('window');
 
@@ -47,7 +50,7 @@ export function Group() {
     const [codeInput, setCodeInput] = useState('');
     const [habit, setHabit] = useState('Go for a walk');
     const [frequency, setFrequency] = useState(3);
-    const [error, setError] = useState(' ');
+    const [error, setError] = useState('');
     const [groupMembers, setGroupMembers] = useState<DocumentReference[]>([]);
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
@@ -67,6 +70,7 @@ export function Group() {
     const [fontsLoaded] = useFonts({
         "SF-Pro-Rounded-Regular": require("../assets/fonts/SF-Pro-Rounded-Regular.ttf"),
       });
+    const [isActive, setIsActive] = useState(false);
 
     const fetchGroups = async () => {
         const groupRefs = await checkUserHasGroup(user);
@@ -318,7 +322,7 @@ export function Group() {
 
     const handleStep = (newStep: typeof step) => {
         setStep(newStep);
-        setError(' ');
+        setError('');
     }
 
     const handleFrequency = (newFrequency: number) => {
@@ -406,7 +410,6 @@ export function Group() {
     }, [groupMembers, groupRef]); // Dependencies: re-run when groupMembers or groupRef change
 
     return (
-
         <LinearGradient
             colors={['#8E9F8D', '#596558']}
             start={{ x: 0, y: 0 }}
@@ -516,25 +519,32 @@ export function Group() {
 
                     </View>
                 ) : (
-                    <View style={styles.container}>
+                    <View className='pb-28'>
                         {step === 'initial' && (
-                            <View style={styles.choose}>
-                                <GlueText size='xl' className="font-regular text-neutral-300">
-                                It's time to plant a new seed.
-                                </GlueText>
-                                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl" size="xl" variant="solid" action="primary" onPress={() => handleStep('name-group')}>
+                            <Box className='flex-1 justify-center items-center gap-4'>
+                            <Heading size='xl' className="font-bold text-neutral-300">
+                            It's time to plant a new seed.
+                            </Heading>
+                            <ButtonGluestack className="bg-primaryGreen p-4 rounded-2xl" style={{ width: 200, height: 150 }} size="xl" variant="solid" action="primary" onPress={() => handleStep('name-group')}>
+                                <Box className='flex flex-col items-center justify-center gap-1'>
+                                    <CreateGroup height={50} width={50}/>
                                     <ButtonText className='font-bold'>Create a Group</ButtonText>
-                                </ButtonGluestack>
-                                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl" size="xl" variant="solid" action="primary" onPress={() => handleStep('enter-code')}>
+                                </Box>
+                            </ButtonGluestack>
+                            <ButtonGluestack className="bg-primaryGreen p-4 rounded-2xl" style={{ width: 200, height: 150 }} size="xl" variant="solid" action="primary" onPress={() => handleStep('enter-code')}>
+                                <Box className='flex flex-col items-center justify-center gap-1'>
+                                    <JoinGroup height={50} width={50}/>
                                     <ButtonText className='font-bold'>Join a Group</ButtonText>
-                                </ButtonGluestack>
-                            </View>
+                                </Box>
+                            </ButtonGluestack>
+                        </Box>
+
                         )}
                         {step === 'name-group' && (
-                            <View>
-                                <GlueText size='xl' className="font-regular text-neutral-300">
+                            <Box className='flex-1 justify-center items-center gap-4'>
+                                <Heading size='xl' className="font-regular text-neutral-300">
                                 What is the group's name?
-                                </GlueText>
+                                </Heading>
                                 <Input
                                     variant="outline"
                                     size="xl"
@@ -550,15 +560,27 @@ export function Group() {
                                     onChangeText={setGroupName}
                                     />
                                 </Input>
-                                <Button title="Next" onPress={() => handleStep('create-habit')} />
-                                <Button title="Back" onPress={() => handleStep('initial')} />
-                            </View>
+                                <Box className='w-full'>
+                                    <Box className='flex-row justify-between'>
+                                        <ButtonGluestack
+                                        className={`bg-primaryGreen p-2 rounded-2xl w-16`}
+                                        size="xl"
+                                        onPress={() => handleStep('initial')}
+                                        >
+                                            <ButtonText className='font-bold'>Back</ButtonText>
+                                        </ButtonGluestack>
+                                        <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-16" size="xl" onPress={() => handleStep('create-habit')}>
+                                            <ButtonText className='font-bold'>Next</ButtonText>
+                                        </ButtonGluestack>
+                                    </Box>
+                                </Box>
+                            </Box>
                         )}
                         {step === 'create-habit' && (
-                            <View>
-                                <GlueText size='xl' className="font-regular text-neutral-300">
+                            <Box className='flex-1 justify-center items-center gap-4'>
+                                <Heading size='xl' className="font-regular text-neutral-300">
                                 What is the group's habit?
-                                </GlueText>
+                                </Heading>
                                 <Input
                                     variant="outline"
                                     size="xl"
@@ -574,27 +596,65 @@ export function Group() {
                                     onChangeText={setHabit}
                                     />
                                 </Input>
-                                <Button title="Next" onPress={() => handleStep('set-frequency')} />
-                                <Button title="Back" onPress={() => handleStep('name-group')} />
-                            </View>
+                                <Box className='w-full'>
+                                    <Box className='flex-row justify-between'>
+                                        <ButtonGluestack
+                                        className={`bg-primaryGreen p-2 rounded-2xl w-16`}
+                                        size="xl"
+                                        onPress={() => handleStep('name-group')}
+                                        >
+                                            <ButtonText className='font-bold'>Back</ButtonText>
+                                        </ButtonGluestack>
+                                        <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-16" size="xl" onPress={() => handleStep('set-frequency')}>
+                                            <ButtonText className='font-bold'>Next</ButtonText>
+                                        </ButtonGluestack>
+                                    </Box>
+                                </Box>
+                            </Box>
                         )}
                         {step === 'set-frequency' && (
-                            <View>
-                                <GlueText size='xl' className="font-regular text-neutral-300">
+                            <Box className='flex-1 flex flex-col justify-center items-center gap-10'>
+                                <Heading size='xl' className="font-regular text-neutral-300 text-center pl-16 pr-16">
                                 How many days a week would your group like to commit to practicing this habit?
-                                </GlueText>
-                                <GlueText size='xl' className="font-regular text-neutral-300">
-                                {frequency} Days a Week
-                                </GlueText>
-                                <Button title="+" onPress={() => handleFrequency(frequency + 1)} />
-                                <Button title="-" onPress={() => handleFrequency(frequency - 1)} />
-                                {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
-                                <Button title="Create Group" onPress={() => handleCreateGroup()} />
-                                <Button title="Back" onPress={() => handleStep('create-habit')} />
-                            </View>
+                                </Heading>
+                                <Box className='flex-row gap-10'>
+                                    <Box className='flex-col justify-center'>
+                                        <Heading size='5xl' className='text-baseGreen'>{frequency}</Heading>
+                                        <Heading size='xl' className="font-bold text-neutral-300">
+                                        Days a Week
+                                        </Heading>
+                                    </Box>
+                                    <Box className='flex-col gap-2'>
+                                        <ButtonGluestack className={`bg-primaryGreen p-2 rounded-2xl w-12`} size="xl" onPress={() => handleFrequency(frequency + 1)}>
+                                            <ButtonText className='font-bold'>+</ButtonText>
+                                        </ButtonGluestack>
+                                        <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-12" size="xl" onPress={() => handleFrequency(frequency - 1)}>
+                                            <ButtonText className='font-bold'>-</ButtonText>
+                                        </ButtonGluestack>
+                                    </Box>
+                                </Box>
+                                {error && <GlueText size='lg' className='color-red-400 font-regular'>{error}</GlueText>}
+                                <Box className='w-72'>
+                                    <Box className='flex-row justify-between'>
+                                        <ButtonGluestack
+                                        className={`bg-primaryGreen p-2 rounded-2xl w-16`}
+                                        size="xl"
+                                        onPress={() => handleStep('create-habit')}
+                                        >
+                                            <ButtonText className='font-bold'>Back</ButtonText>
+                                        </ButtonGluestack>
+                                        <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-32" size="xl" onPress={() => handleCreateGroup()}>
+                                            <ButtonText className='font-bold'>Create Group</ButtonText>
+                                        </ButtonGluestack>
+                                    </Box>
+                                </Box>
+                            </Box>
                         )}
                         {step === 'enter-code' && (
-                            <View>
+                            <Box className='flex-1 justify-center items-center gap-4'>
+                                <Heading size='xl' className="font-regular text-neutral-300 text-center pl-16 pr-16">
+                                Enter the group's code to join.
+                                </Heading>
                                 <Input
                                     variant="outline"
                                     size="xl"
@@ -611,10 +671,22 @@ export function Group() {
                                     placeholderTextColor={'white'}
                                     />
                                 </Input>
-                                {error && <Text className='color-red-400 font-regular pl-1 pt-1'>{error}</Text>}
-                                <Button title="Back" onPress={() => handleStep('initial')} />
-                                <Button title="Join" onPress={() => handleJoinGroup()} />
-                            </View>
+                                {error && <GlueText size='lg' className='color-red-400 font-regular'>{error}</GlueText>}
+                                <Box className='w-72'>
+                                    <Box className='flex-row justify-between'>
+                                        <ButtonGluestack
+                                        className={`bg-primaryGreen p-2 rounded-2xl w-16`}
+                                        size="xl"
+                                        onPress={() => handleStep('initial')}
+                                        >
+                                            <ButtonText className='font-bold'>Back</ButtonText>
+                                        </ButtonGluestack>
+                                        <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-16" size="xl" onPress={() => handleJoinGroup()}>
+                                            <ButtonText className='font-bold'>Join</ButtonText>
+                                        </ButtonGluestack>
+                                    </Box>
+                                </Box>
+                            </Box>
                         )}
                     </View>
                 )}
@@ -645,13 +717,9 @@ const styles = StyleSheet.create({
         width: "100%"
     },
     container: {
-        flex: 1,
-        justifyContent: 'flex-start',
-        padding: 16,
-        width: "100%",
         alignItems: "center",
-        height: "100%",
-
+        flex: 1,
+        justifyContent: "center",
     },
     inner_container: {
         flex: 1,
