@@ -5,11 +5,9 @@ import { Garden } from '../components/Garden';
 
 export default function HomeLayout() {
     return (
-            <SafeAreaView style={styles.safeArea}>
-                <View style={styles.content}>
-                        <Garden />
-                </View>
-            </SafeAreaView>
+        <View style={styles.content}>
+            <Garden />
+        </View>
     );
 }
 

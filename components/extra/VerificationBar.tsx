@@ -1,32 +1,41 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 
 interface VerificationProgressProps {
-  frequency: number; // Frequency value (cells per user)
-  totalUsers: number; // Total number of users
-  approvedLogs: number; // Approved logs
+  frequency?: number; // Frequency value (cells per user)
+  totalUsers?: number; // Total number of users
+  approvedLogs?: number; // Approved logs
 }
 
-  const VerificationProgress: React.FC<VerificationProgressProps> = ({ frequency, totalUsers, approvedLogs }) => {
+const VerificationProgress: React.FC<VerificationProgressProps> = ({
+  frequency = 0,
+  totalUsers = 0,
+  approvedLogs = 0,
+}) => {
   const totalCells = frequency * totalUsers; // Total number of cells
-  const cappedApprovedCells = approvedLogs; // Ensure approved cells do not exceed total cells
+  const cappedApprovedCells = Math.min(approvedLogs, totalCells); // Ensure approved cells do not exceed total cells
 
   return (
     <View style={styles.container}>
-      <View style={styles.tube}>
-        {Array.from({ length: totalCells }).map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.cell,
-              index < cappedApprovedCells && styles.cellApproved, // Highlight approved cells
-            ]}
-          />
-        ))}
-      </View>
+      {totalCells > 0 ? (
+        <View style={styles.tube}>
+          {Array.from({ length: totalCells }).map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.cell,
+                index < cappedApprovedCells && styles.cellApproved, // Highlight approved cells
+              ]}
+            />
+          ))}
+        </View>
+      ) : (
+        <Text>No data available</Text> // Fallback UI
+      )}
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

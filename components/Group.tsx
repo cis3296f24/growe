@@ -69,33 +69,33 @@ export function Group() {
       });
 
     const fetchGroups = async () => {
-        const groupRefs: DocumentReference[] = await checkUserHasGroup(user);
-        if (groupRefs && groupRefs.length > 0) {
+        const groupRefs = await checkUserHasGroup(user);
+
+        if (Array.isArray(groupRefs) && groupRefs.length > 0) {
+            console.log("Fetched Group References:", groupRefs);
+            setGroupRef(groupRefs);
             setGroups(groupRefs);
             setHasGroups(true);
+
             const groupData = await getDoc(groupRefs[0]);
-            setGroupRef(groupRefs);
-            //issue here----------------------------------------------------------------------------------------------------------------
-            const users = groupData.get("users");
-            setGroupMembers(users);
-            setStreak(groupData.get("streak"))
-            setHabit(groupData.get("habit"));
-            setFrequency(groupData.get("frequency"));
-            setGroupName(groupData.get("name"));
-            setGroupCode(groupData.get("joinCode"));
-            setApprovedLogs(groupData.get("approvedLogs"))
-            const memberNames = await Promise.all(users.map(async (member: DocumentReference) => {
-                const memberDoc: DocumentSnapshot = await getDoc(member);
-                if (!memberDoc.exists()) {
-                    return 'Unknown';
-                }
-                return memberDoc.get("displayName");
-            }));
-            setGroupMemberNames(memberNames);
+            if (groupData.exists()) {
+                const users = groupData.get("users") || [];
+                const approvedLogs = groupData.get("approvedLogs") || [];
+                setGroupMembers(users);
+                setApprovedLogs(approvedLogs);
+                setFrequency(groupData.get("frequency") || 1);
+                setGroupCode(groupData.get("joinCode"));
+                setGroupName(groupData.get("name") || "Unnamed Group");
+            }
         } else {
+            setGroupRef([]);
             setHasGroups(false);
+            setGroupMembers([]);
+            setApprovedLogs([]);
+            console.warn("No groups found for the user.");
         }
     };
+
     
     useEffect(() => {
         fetchGroups();
@@ -290,6 +290,8 @@ export function Group() {
 
 
     const handleCreateGroup = async () => {
+        console.log("a;lskdjfa;lskdjf;lksadjf");
+
 
         const newUserGroup = await createGroup(user, groupName, habit, frequency);
 
@@ -412,7 +414,7 @@ export function Group() {
             style={{ width: "100%", height: "100%" }}
         >
             <View style={styles.container}>
-                {plant && hasGroups ? (
+                {!plant && hasGroups ? (
                     // {!plant && hasGroups ? (
                     <View className='p-5'>
                         <GlueText size='xl' className="font-regular text-neutral-300">
@@ -455,7 +457,7 @@ export function Group() {
                             setPlant(null);
                         }} />
                     </View>
-                ) : hasGroups ? (
+                ) : plant && hasGroups ? (
                     <View style={styles.inner_container}>
                         {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}><Text>Button</Text></TouchableOpacity> */}
                         <VotingModal
@@ -511,7 +513,6 @@ export function Group() {
                                 ))
                             }
                         </ScrollView>
-
 
                     </View>
                 ) : (
@@ -659,7 +660,6 @@ const styles = StyleSheet.create({
         width: "100%",
         alignItems: "center",
         height: "100%",
-        borderWidth: 2
 
 
     },

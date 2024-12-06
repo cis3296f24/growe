@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Switch } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import Logo from '../assets/icons/logo.svg';
-import Avatar from '../assets/images/Avatar.png'
+import Avatar from '../assets/images/Avatar.png';
 import CustomSwitch from './extra/CustomSwitch';
-
 
 export default function Header() {
     const [isEnabled, setIsEnabled] = useState(false);
-     const toggleSwitch = () => setIsEnabled(previousState => !previousState);
+    const toggleSwitch = () => setIsEnabled(previousState => !previousState);
+
     return (
         <View style={styles.header}>
-            <TouchableOpacity >
+            <TouchableOpacity>
                 <Logo height={40} width={40} color={'#8F9C8F'}/>
             </TouchableOpacity>
             <View style={styles.headerRightContainer}>
-                <TouchableOpacity >
+                        <TouchableOpacity>
                     <Image source={Avatar} style={styles.avatar} />
                 </TouchableOpacity>
             </View>
@@ -23,6 +25,15 @@ export default function Header() {
 }
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 0, // Prevents overlap with content below
+        backgroundColor: 'transparent', // Matches gradient to avoid visual breaks
+    },
+    gradientBackground: {
+        width: '100%',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
