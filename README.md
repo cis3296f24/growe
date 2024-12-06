@@ -1,97 +1,3 @@
-Use Case: Signing Up
-```mermaid
-sequenceDiagram
-  participant User
-  participant Auth
-  participant Server
-  participant Database
-
-  User ->> Auth : Enter Email
-  Auth ->> Server : Store Email
-  Server --> Database : Check Email Exists
-  Database -->> Server : Validate Email
-  Server -->> Auth : Validate Step
-  User ->> Auth : Enter Username and Display Name
-  Auth ->> Server : Store Username
-  Server --> Database : Check Username Exists
-  Database -->> Server : Validate Username
-  Server -->> Auth : Validate Step
-  User ->> Auth : Enter Password
-  User ->> Auth : Request Sign Up
-  Auth ->> Server : Handle Sign Up
-  Server --> Database : Add User
-  Database -->> Server : Return User
-  Server -->> Auth : Return User
-  Auth -->> User : Serve Home Screen
-```
-Use Case: Creating Group
-```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant Backend
-
-    User->>Frontend: Submit group creation request
-    Frontend->>Backend: Retrieve user document (getDoc)
-    Backend->>Backend: Generate join code
-    Backend->>Backend: Create group document (addDoc)
-    Backend->>Backend: Update user document with new group (updateDoc)
-    Backend-->>Frontend: Return new group document
-    Frontend-->>User: Confirm group creation
-```
-Use Case: Join Group
-```mermaid
-
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant Backend
-
-    User->>Frontend: Submit join code
-    Frontend->>Backend: Query groups collection with join code (where)
-    Backend-->>Frontend: Return matching group or false
-    alt Group Found
-        Frontend->>Backend: Retrieve user document (getDoc)
-        Backend-->>Backend: Return user data
-        Backend->>Backend: Update user document with new group (updateDoc)
-        Backend->>Backend: Update group document with new user (updateDoc)
-        Backend-->>Frontend: Return updated group data
-        Frontend-->>User: Group joined successfully
-    else No Group Found
-        Frontend-->>User: Display error message: Invalid join code
-    end
-```
-Use Case: Logging in
-```mermaid
-sequenceDiagram
-  participant User
-  participant Auth
-  participant Server
-  participant Database
-
-  User ->> Auth : Enter Email
-  Auth ->> Server : Store Email
-  
-  
-  Server -->> Auth : Validate Step
-  User ->> Auth : Enter Password
-  Auth ->> Server : Store Password
-  Server--> Database: Check if Password is correct
-  Server --> Database : Check Email Exists
-  
-  alt Password is correct and email Exists
-  Database -->> Server : Validate Email
-  Database-->> Server : Validate Password
- Server -->> Auth : Handle Sign in
-Auth -->> User : Server Home Screen
-else Password Incorrect or email DNE
-Database -->> Server : Email or Password dne
-Server -->> Auth : Handle Incorrect sign in
-Auth -->> User : Incorrect Password or email message
-
-end
-```
-
 [![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=16892524)
 <div align="center">
 
@@ -360,6 +266,106 @@ classDiagram
     +User user
   }
 ```
+##Sequence Diagram
+
+Use Case: Signing Up from login page
+```mermaid
+sequenceDiagram
+  participant User
+  participant Auth
+  participant Server
+  participant Database
+
+  User ->> Auth : Enter Email
+  Auth ->> Server : Store Email
+  Server --> Database : Check Email Exists
+  Database -->> Server : Validate Email
+  Server -->> Auth : Validate Step
+  User ->> Auth : Enter Username and Display Name
+  Auth ->> Server : Store Username
+  Server --> Database : Check Username Exists
+  Database -->> Server : Validate Username
+  Server -->> Auth : Validate Step
+  User ->> Auth : Enter Password
+  User ->> Auth : Request Sign Up
+  Auth ->> Server : Handle Sign Up
+  Server --> Database : Add User
+  Database -->> Server : Return User
+  Server -->> Auth : Return User
+  Auth -->> User : Serve Home Screen
+```
+Use Case: Creating Group after successfully login or sign up
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+
+    User->>Frontend: Submit group creation request
+    Frontend->>Backend: Retrieve user document (getDoc)
+    Backend->>Backend: Generate join code
+    Backend->>Backend: Create group document (addDoc)
+    Backend->>Backend: Update user document with new group (updateDoc)
+    Backend-->>Frontend: Return new group document
+    Frontend-->>User: Confirm group creation
+```
+
+Use Case: Logging in
+```mermaid
+sequenceDiagram
+  participant User
+  participant Auth
+  participant Server
+  participant Database
+
+  User ->> Auth : Enter Email
+  Auth ->> Server : Store Email
+  
+  
+  Server -->> Auth : Validate Step
+  User ->> Auth : Enter Password
+  Auth ->> Server : Store Password
+  Server--> Database: Check if Password is correct
+  Server --> Database : Check Email Exists
+  
+  alt Password is correct and email Exists
+  Database -->> Server : Validate Email
+  Database-->> Server : Validate Password
+ Server -->> Auth : Handle Sign in
+Auth -->> User : Server Home Screen
+else Password Incorrect or email DNE
+Database -->> Server : Email or Password dne
+Server -->> Auth : Handle Incorrect sign in
+Auth -->> User : Incorrect Password or email message
+
+end
+```
+
+
+Use Case: Join Group 
+```mermaid
+
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+
+    User->>Frontend: Submit join code
+    Frontend->>Backend: Query groups collection with join code (where)
+    Backend-->>Frontend: Return matching group or false
+    alt Group Found
+        Frontend->>Backend: Retrieve user document (getDoc)
+        Backend-->>Backend: Return user data
+        Backend->>Backend: Update user document with new group (updateDoc)
+        Backend->>Backend: Update group document with new user (updateDoc)
+        Backend-->>Frontend: Return updated group data
+        Frontend-->>User: Group joined successfully
+    else No Group Found
+        Frontend-->>User: Display error message: Invalid join code
+    end
+```
+
+
 
 # Background
 This is the life cycle of a user on this app for a three person group with the goal to workout 3 days a week:
@@ -400,16 +406,11 @@ This is the life cycle of a user on this app for a three person group with the g
         <a href="https://github.com/khanhquocng2801">
             <img src="https://avatars.githubusercontent.com/u/102694034?v=4" width="100;" alt="khanhquocng2801"/>
             <br />
-            <sub><b>Khan</b></sub>
+            <sub><b>Khanh</b></sub>
         </a>
     </td>
-    <td align="center">
-        <a href="https://github.com/omarshakir8">
-            <img src="https://avatars.githubusercontent.com/u/71716775?v=4" width="100;" alt="omarshakir8"/>
-            <br />
-            <sub><b>Omar</b></sub>
-        </a>
-    </td>
+    
+  
     <td align="center">
         <a href="https://github.com/Ruben-amalgam">
             <img src="https://avatars.githubusercontent.com/u/171351822?v=4" width="100;" alt="Ruben-amalgam"/>
@@ -417,11 +418,12 @@ This is the life cycle of a user on this app for a three person group with the g
             <sub><b>Ruben</b></sub>
         </a>
     </td>
+
     <td align="center">
         <a href="https://github.com/tus29603">
             <img src="https://avatars.githubusercontent.com/u/157152397?v=4" width="100;" alt="tus29603"/>
             <br />
-            <sub><b>Tes</b></sub>
+            <sub><b>Tesfaldet</b></sub>
         </a>
     </td>
     <td align="center">
