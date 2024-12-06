@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 60,
+    height: 70,
     backgroundColor: '#4F584F',
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -50,5 +50,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    paddingBottom: 10,
   },
 });

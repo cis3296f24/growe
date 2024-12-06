@@ -11,10 +11,9 @@ export default function Header() {
     return (
         <View style={styles.header}>
             <TouchableOpacity >
-                <Logo height={40} width={40} />
+                <Logo height={40} width={40} color={'#8F9C8F'}/>
             </TouchableOpacity>
             <View style={styles.headerRightContainer}>
-                <CustomSwitch />
                 <TouchableOpacity >
                     <Image source={Avatar} style={styles.avatar} />
                 </TouchableOpacity>
@@ -28,9 +27,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        paddingTop: 50,
         paddingHorizontal: 16,
-        paddingVertical: 10,
-        backgroundColor: 'transparent',
+        paddingVertical: 15,
+        backgroundColor: '#596558',
     },
     headerTitle: {
         fontSize: 18,
