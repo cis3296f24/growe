@@ -5,16 +5,39 @@ import Log from '../assets/icons/log.svg';
 import Group from '../assets/icons/group.svg';
 import Garden from '../assets/icons/garden.svg';
 import { usePathname } from 'expo-router';
+import { useUser } from './UserContext';
+import { checkUserHasGroup } from '../utils/group';
+import { User } from 'firebase/auth';
 
 export default function Footer() {
   const router = useRouter();
   const [selected, setSelected] = useState('home');
   const pathname = usePathname();
+  const { user } = useUser();
+  const [hasGroup, setHasGroup] = useState(false);
 
   useEffect(() => {
     console.log(pathname);
     setSelected(pathname.replace('/', ''));
   }, [pathname]);
+
+  useEffect(() => {
+    const checkForGroup = async (user: User) => {
+      if (user) {
+        const result = await checkUserHasGroup(user)
+        if (result) {
+          setHasGroup(true);
+        } else {
+          setHasGroup(false);
+        }
+      }
+    }
+    if (user) {
+      checkForGroup(user);
+    } else {
+      setHasGroup(false);
+    }
+  });
 
   const handlePress = (screen: string) => {
     setSelected(screen);
@@ -26,8 +49,13 @@ export default function Footer() {
       <TouchableOpacity onPress={() => handlePress('home')} disabled={selected === 'home'}>
         <Garden color={selected === 'home' ? '#ECFFEB' : '#B0C5AF'} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => handlePress('log')} disabled={selected === 'log'}>
-        <Log color={selected === 'log' ? '#ECFFEB' : '#B0C5AF'} />
+      <TouchableOpacity onPress={() => handlePress('log')} disabled={selected === 'log' || !hasGroup}>
+        {hasGroup ? (
+          <Log color={selected === 'log' ? '#ECFFEB' : '#B0C5AF'} />
+        ) : (
+          <Log color={'#757C75'} />
+        )  
+        }
       </TouchableOpacity>
       <TouchableOpacity onPress={() => handlePress('group')} disabled={selected === 'group'}>
         <Group color={selected === 'group' ? '#ECFFEB' : '#B0C5AF'} />
