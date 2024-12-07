@@ -54,7 +54,7 @@ export const fetchApprovedLogs = async (groupRef) => {
 
     // Validate that `approvedLogs` is an array
     if (!Array.isArray(approvedLogs)) {
-      console.error("Approved logs field is not an array, assuming it is new empty array:", approvedLogs);
+      //console.error("Approved logs field is not an array, assuming it is new empty array:", approvedLogs);
       return [];
     }
 
