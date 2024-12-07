@@ -65,4 +65,10 @@ export const getDecayProgress = (plantingDate) => {
   return decayProgress.toFixed(2); // Return decay progress with two decimal points
 };
 
-  
+export const getCurrentGrowStateImage = async (plantRef) => {
+  const plantDoc = await getDoc(plantRef);
+  const plantData = plantDoc.data();
+  const growState = plantData.growState;
+  const growStateImageUrls = plantData.growStateImageUrls;
+  return growStateImageUrls[growState];
+}
