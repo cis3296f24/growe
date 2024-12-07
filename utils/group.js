@@ -32,6 +32,7 @@ export const createGroup = async (user, groupName, habit, frequency) => {
         garden: null,
         streak: 0,
         joinCode: joinCode,
+        plant: null,
     };
     const newGroupDoc = await addDoc(groupRef, groupDoc);
 
