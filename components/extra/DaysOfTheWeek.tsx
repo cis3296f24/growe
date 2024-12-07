@@ -55,7 +55,7 @@ const DaysOfTheWeek: React.FC<DaysOfTheWeekProps> = ({ groupRef }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View className='flex-row justify-around items-center gap-2'>
       {days.map((day, index) => {
         const logCount = dayLogCounts[day] || 0; // Get log count for the day
         const percentage = totalLogs ? (logCount / totalLogs) * 100 : 0; // Calculate percentage
