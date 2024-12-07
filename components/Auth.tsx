@@ -31,6 +31,8 @@ export function Auth() {
   const [isActive, setIsActive] = useState(false);
   const [fontsLoaded] = useFonts({
     "SF-Pro-Rounded-Regular": require("../assets/fonts/SF-Pro-Rounded-Regular.ttf"),
+    "SF-Pro-Rounded-Bold": require("../assets/fonts/SF-Pro-Rounded-Bold.ttf"),
+    "cmunci": require("../assets/fonts/cmunci.ttf"),
   });
 
   const handleSignUp = async () => {
