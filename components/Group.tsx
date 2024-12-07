@@ -11,7 +11,7 @@ import FrequencyBar from './extra/FrequencyBar';
 import DaysOfTheWeek from './extra/DaysOfTheWeek';
 import Plant from '../assets/images/Plant.png';
 import UserProgress from './extra/UserProgress';
-import { getPlant } from '@/utils/group';
+import { getPlant, setPlant } from '@/utils/group';
 import { G } from 'react-native-svg';
 import { Box } from '@/components/ui/box';
 import { generateAndUploadImage } from '@/utils/diffusion';
@@ -36,6 +36,7 @@ import { useFonts } from 'expo-font';
 import JoinGroup from '@/assets/icons/joinGroup.svg';
 import CreateGroup from '@/assets/icons/createGroup.svg';
 import { Heading } from '@/components/ui/heading';
+import { generatePlantInfo } from '@/utils/completion';
 
 const { width, height } = Dimensions.get('window');
 
@@ -43,7 +44,6 @@ export function Group() {
 
     const [step, setStep] = useState<'initial' | 'name-group' | 'create-habit' | 'set-frequency' | 'display-code' | 'enter-code'>('initial');
     const [groups, setGroups] = useState<DocumentReference[]>([]);
-    const [groupRef, setGroupRef] = useState<DocumentReference[]>([]);
     const [hasGroups, setHasGroups] = useState(false);
     const { user } = useUser();
     const [groupName, setGroupName] = useState(`${user?.displayName}'s group`);
@@ -54,7 +54,7 @@ export function Group() {
     const [groupMembers, setGroupMembers] = useState<DocumentReference[]>([]);
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
-    const [plant, setPlant] = useState<DocumentReference | null>(null);
+    const [currentPlant, setCurrentPlant] = useState<DocumentReference | null>(null);
     const [plantImageChoices, setPlantImageChoices] = useState<string[] | null>(null);
     const [plantNameChoices, setPlantNameChoices] = useState<string[]>(["plant1", "plant2", "plant3", "plant4"]);
     const [plantLatinNames, setPlantLatinNames] = useState<string[]>(["plant1", "plant2", "plant3", "plant4"]);
@@ -77,7 +77,6 @@ export function Group() {
 
         if (Array.isArray(groupRefs) && groupRefs.length > 0) {
             console.log("Fetched Group References:", groupRefs);
-            setGroupRef(groupRefs);
             setGroups(groupRefs);
             setHasGroups(true);
 
@@ -92,7 +91,7 @@ export function Group() {
                 setGroupName(groupData.get("name") || "Unnamed Group");
             }
         } else {
-            setGroupRef([]);
+            setGroups([]);
             setHasGroups(false);
             setGroupMembers([]);
             setApprovedLogs([]);
@@ -100,13 +99,12 @@ export function Group() {
         }
     };
 
-    
     useEffect(() => {
         fetchGroups();
-        // console.log('fetching groups');
+        console.log('fetching groups');
         checkPlant();
-        // console.log('fetching plant');
-    }, [user]);
+        console.log('fetching plant');
+    }, []);
 
     useEffect(() => {
         // Only call grabVotes if groupMembers is populated
@@ -129,12 +127,12 @@ export function Group() {
     // USE THIS AND TRY TO GET THE DATA ---------------------------------------------------------------------------------------------------------------------------------------
     const fetchGroupData = async () => {
         try {
-            if (groupRef.length === 0 || !groupRef[0]) {
+            if (groups.length === 0 || !groups[0]) {
                 console.error("Group reference is not available.");
                 return;
             }
 
-            const groupDocSnapshot = await getDoc(groupRef[0]);
+            const groupDocSnapshot = await getDoc(groups[0]);
             if (!groupDocSnapshot.exists()) {
                 console.error("Group document does not exist.");
                 return;
@@ -188,8 +186,8 @@ export function Group() {
     };
 
     useEffect(() => {
-        if (groupRef.length > 0) {
-            fetchApprovedLogs(groupRef[0]);
+        if (groups.length > 0) {
+            fetchApprovedLogs(groups[0]);
         }
     });
 
@@ -225,12 +223,12 @@ export function Group() {
     const checkPlant = async () => {
         const plant = await getPlant(user);
         if (plant != null) {
-            // console.log('plant');
-            setPlant(plant);
+            console.log('plant');
+            setCurrentPlant(plant);
         } else {
-            // console.log('no plant');
-            setPlant(null);
-            // console.log('generating plant names');
+            console.log('no plant');
+            setCurrentPlant(null);
+            console.log('generating plant names');
             await handleGeneratePlantNames();
         }
     };
@@ -358,22 +356,27 @@ export function Group() {
                 getDecayDate(currentDate),
                 true,
             );
-            setPlant(plantDocRef);
+            const groupDocRef = groups[0];
+            await setPlant(groupDocRef, plantDocRef);
+            setCurrentPlant(plantDocRef);
         } else {
             console.error('Plant image choices not found');
         }
     }
 
     const handleGeneratePlantNames = async () => {
-        const plantNames = ['Aloe Vera', 'Yucca', 'Succulent', 'Sunflower'];
-        setPlantNameChoices(plantNames);
+        return;
+        const plantNames = await generatePlantInfo();
+        console.log('Plant Names:', plantNames);
+        setPlantNameChoices(plantNames.map((plant) => plant.common));
+        setPlantLatinNames(plantNames.map((plant) => plant.scientific));
     }
 
     const handleGeneratePlantChoices = async () => {
         if (plantNameChoices.length === 0) return; // Ensure there are plant names
         const plantChoicesPromises = plantNameChoices.map(async (plantName) => {
             const downloadURL = await generateAndUploadImage(
-                `isolated ${plantName} plant at the fruiting growth stage, white background, isometric perspective, 8-bit pixel art style`,
+                `isolated ${plantName} plant at the fruiting growth stage, white background, isometric perspective, flat vector art style`,
                 `plants/${uuid.v4()}-${plantName}-${'fruiting'}-${Date.now()}.png`
             );
             return downloadURL;
@@ -392,9 +395,9 @@ export function Group() {
 
     useEffect(() => {
         const fetchUserProgress = async () => {
-            if (groupMembers.length === 0 || groupRef.length === 0) return;
+            if (groupMembers.length === 0 || groups.length === 0) return;
 
-            const logs = await fetchApprovedLogs(groupRef[0]); // Fetch approved logs
+            const logs = await fetchApprovedLogs(groups[0]); // Fetch approved logs
             const userProgressData = groupMembers.map((member) => {
                 const authoredLogs = logs.filter((log) => log.author?.id === member.id); // Filter logs by member ID
                 return {
@@ -407,7 +410,7 @@ export function Group() {
         };
 
         fetchUserProgress();
-    }, [groupMembers, groupRef]); // Dependencies: re-run when groupMembers or groupRef change
+    }, [groupMembers, groups]); // Dependencies: re-run when groupMembers or groupRef change
 
     return (
         <LinearGradient
@@ -417,7 +420,7 @@ export function Group() {
             style={{ width: "100%", height: "100%" }}
         >
             <View style={styles.container}>
-                {!plant && hasGroups ? (
+                {!currentPlant && hasGroups ? (
                     // {!plant && hasGroups ? (
                     <View className='p-5 gap-4 pb-28'>
                         <Heading size='2xl' className="font-regular text-neutral-300">
@@ -460,7 +463,7 @@ export function Group() {
                                             <Heading size='lg' className="font-bold text-neutral-300 pt-2">
                                                 {plantNameChoices[2]}
                                             </Heading>
-                                            <GlueText size='lg' italic className="font-italic text-neutral-300">
+                                            <GlueText size='lg' className="font-italic text-neutral-300">
                                                 {plantLatinNames[2]}
                                             </GlueText>
                                         </Box>
@@ -480,19 +483,10 @@ export function Group() {
                                     </TouchableOpacity>
                                 </View>
                             </View>
-                            <Box className='pt-4'>
-                                <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-full" size="xl" onPress={() => {
-                                handleGeneratePlantNames();
-                                setPlant(null);
-                                }}>
-                                    <ButtonText className='font-bold'>Refresh Plants</ButtonText>
-                                </ButtonGluestack>
-                            </Box>
                         </Box>
                     </View>
-                ) : plant && hasGroups ? (
-                    <View style={styles.inner_container}>
-                        {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}><Text>Button</Text></TouchableOpacity> */}
+                ) : currentPlant && hasGroups ? (
+                    <View>
                         <VotingModal
                             visible={modalVisible}
                             onClose={handleModalClose}
@@ -500,31 +494,16 @@ export function Group() {
                             question="Do you like this image?"
                             logRef={currentLogRef} // Pass the Firestore document reference
                             totalMembers={groupMembers.length} />
-                        {/*
-                        <TouchableOpacity
-                            onPress={async () => {
-                                if (groupRef.length > 0) {
-                                    const approvedLogs = await fetchApprovedLogs(groupRef[0]); // Call the function with the groupRef
-                                    console.log("Fetched Approved Logs:", approvedLogs); // Log the approved logs
-                                } else {
-                                    console.warn("Group reference is not available.");
-                                }
-                            }}
-                        >
-                            <Text>Test Button</Text>
-                        </TouchableOpacity>
-                        */}
-                        {/* <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>click! </TouchableOpacity> */}
-                        <GlueText size='xl' className="font-regular text-neutral-300">
-                        {groupCode}
-                        </GlueText>
                         <View>
-                            <GlueText size='xl' className="font-regular text-neutral-300" style={styles.header}>
+                            <Heading size='2xl' className="font-bold text-neutral-300">
                             {habit}
-                            </GlueText>
-                            <FrequencyBar />
-                            {groupRef.length > 0 ? (
-                                <DaysOfTheWeek groupRef={groupRef[0]} />
+                            </Heading>
+                            <FrequencyBar
+                                frequency={frequency}
+                                code={groupCode}
+                            />
+                            {groups.length > 0 ? (
+                                <DaysOfTheWeek groupRef={groups[0]} />
                             ) : (
                                 <GlueText size='xl' className="font-regular text-neutral-300">
                                 Loading group information...
@@ -758,18 +737,9 @@ const styles = StyleSheet.create({
         width: "100%",
         alignItems: "center",
         height: "100%",
-
-
     },
     image_container: {
         height: height * .3,
         width: width * .5,
     },
-    header: {
-        fontSize: 20,
-        lineHeight: 23.87,
-        textAlign: "center",
-        color: "white",
-        marginBottom: 20
-    }
 });
