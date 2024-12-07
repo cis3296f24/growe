@@ -1,60 +1,33 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/ui/text';
+import { Box } from '@/components/ui/box';
 
-const FrequecyBar = () => {
+interface FrequencyBarProps {
+  frequency: number;
+  code: string;
+}
+
+const FrequencyBar: React.FC<FrequencyBarProps> = ({ frequency, code }) => {
+  const days: { [key: number]: string } = {
+    1: 'one day a week',
+    2: 'two days a week',
+    3: 'three days a week',
+    4: 'four days a week',
+    5: 'five days a week',
+    6: 'six days a week',
+    7: 'seven days a week',
+  };
   return (
-    <View style={styles.container}>
-      {/* Label */}
-      <View style={styles.label}>
-        <Text style={styles.labelText}>three days a week</Text>
-      </View>
-
-      {/* Badge */}
-      <View style={styles.badge}>
-        <View style={styles.icon} />
-        <Text style={styles.badgeText}>25</Text>
-      </View>
-    </View>
+    <Box className="flex-row items-center gap-2">
+      <Box className="bg-blue-300 p-1 px-3 rounded-full">
+        <Text className="text-white font-bold">{days[frequency]}</Text>
+      </Box>
+      <Box className="bg-violet-300 p-1 px-3 rounded-full">
+        <Text className="text-white font-bold">{code}</Text>
+      </Box>
+    </Box>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row', // Align the label and badge side by side
-    alignItems: 'center', // Center them vertically
-  },
-  label: {
-    backgroundColor: '#A7BEE6', // Light blue background
-    borderRadius: 15, // Fully rounded corners
-    paddingVertical: 5,
-    paddingHorizontal: 10, // Add some padding
-    marginRight: 8, // Space between label and badge
-  },
-  labelText: {
-    color: '#FFFFFF', // White text
-    fontSize: 14,
-    fontWeight: '500', // Semi-bold text
-  },
-  badge: {
-    backgroundColor: '#92A491', // Light green background
-    borderRadius: 15, // Fully rounded corners
-    flexDirection: 'row', // Align icon and text side by side
-    alignItems: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-  },
-  icon: {
-    backgroundColor: '#FFD700', // Gold circle
-    width: 12, // Circle size
-    height: 12,
-    borderRadius: 6, // Fully rounded
-    marginRight: 5, // Space between circle and text
-  },
-  badgeText: {
-    color: '#FFFFFF', // White text
-    fontSize: 14,
-    fontWeight: '500', // Semi-bold text
-  },
-});
-
-export default FrequecyBar;
+export default FrequencyBar;
