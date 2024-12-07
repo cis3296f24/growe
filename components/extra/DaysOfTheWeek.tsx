@@ -10,7 +10,7 @@ const DaysOfTheWeek: React.FC<DaysOfTheWeekProps> = ({ groupRef }) => {
   const [dayLogCounts, setDayLogCounts] = useState<{ [key: string]: number }>({});
   const [totalLogs, setTotalLogs] = useState(0); // Keep track of total logs
 
-  const days = ['su', 'm', 't', 'w', 'th', 'f', 'sa']; // Days of the week
+  const days = ['s', 'm', 't', 'w', 't', 'f', 's']; // Days of the week
 
   useEffect(() => {
     const fetchDays = async () => {
@@ -55,14 +55,14 @@ const DaysOfTheWeek: React.FC<DaysOfTheWeekProps> = ({ groupRef }) => {
   };
 
   return (
-    <View className='flex-row justify-around items-center gap-2'>
+    <View className='flex-row gap-2'>
       {days.map((day, index) => {
         const logCount = dayLogCounts[day] || 0; // Get log count for the day
         const percentage = totalLogs ? (logCount / totalLogs) * 100 : 0; // Calculate percentage
         const color = getGoldShade(percentage); // Determine color based on percentage
 
         return (
-          <View key={index} style={styles.dayContainer}>
+          <View key={index} className='items-center'>
             {/* Circle Indicator */}
             <View
               style={[
@@ -85,9 +85,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     marginVertical: 16,
-  },
-  dayContainer: {
-    alignItems: 'center',
   },
   circle: {
     width: 20,
