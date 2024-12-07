@@ -14,11 +14,11 @@ import UserProgress from './extra/UserProgress';
 import { getPlant, setPlant } from '@/utils/group';
 import { G } from 'react-native-svg';
 import { Box } from '@/components/ui/box';
-import { generateAndUploadImage } from '@/utils/diffusion';
+import { generateVectorAndUploadImage } from '@/utils/diffusion';
 import uuid from 'react-native-uuid';
 import { Spinner } from '@/components/ui/spinner';
 import colors, { current } from 'tailwindcss/colors';
-import { createPlant, getDecayDate } from '@/utils/plant';
+import { createPlant, getDecayDate, getCurrentGrowStateImage } from '@/utils/plant';
 import VotingModal from './VotingModal'
 import ProfilePic from '../assets/images/Avatar.png'
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -37,6 +37,11 @@ import JoinGroup from '@/assets/icons/joinGroup.svg';
 import CreateGroup from '@/assets/icons/createGroup.svg';
 import { Heading } from '@/components/ui/heading';
 import { generatePlantInfo } from '@/utils/completion';
+import { SvgUri } from 'react-native-svg';
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from '@/utils/firebaseConfig';
+import PlantWithGlow from './extra/PlantWithGlow';
+import { set } from 'zod';
 
 const { width, height } = Dimensions.get('window');
 
@@ -55,9 +60,15 @@ export function Group() {
     const [groupCode, setGroupCode] = useState('');
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
     const [currentPlant, setCurrentPlant] = useState<DocumentReference | null>(null);
-    const [plantImageChoices, setPlantImageChoices] = useState<string[] | null>(null);
-    const [plantNameChoices, setPlantNameChoices] = useState<string[]>(["plant1", "plant2", "plant3", "plant4"]);
-    const [plantLatinNames, setPlantLatinNames] = useState<string[]>(["plant1", "plant2", "plant3", "plant4"]);
+    const [currentPlantVector, setCurrentPlantVector] = useState<string | null>(null);
+    //const [plantVectorChoices, setPlantVectorChoices] = useState<string[] | null>(['https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2F430ae251-c653-4344-b5cc-6c621369227c-Moonflower-fruiting-1733596102842.svg?alt=media&token=5374210e-51a6-4356-b7b9-461a0a72ccef', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fcc2f0b19-f433-4f32-b6e0-e1a246ccf6fb-Dragon\'s%20Breath-fruiting-1733595662059.svg?alt=media&token=56583be4-f4e2-4bc1-8b6f-c1c1b1c2da68', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fcaf08d02-91c6-40fc-b0fc-66f9fa97a3b3-Triffid-fruiting-1733595667080.svg?alt=media&token=354d7407-5659-4a6e-ac66-be8d41ef9be0', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fc00eb46b-93e0-474c-b1fc-f0374817de69-Dragonleaf-fruiting-1733595477033.svg?alt=media&token=50e9406b-03e5-40bd-8752-dec9f420a62c']);
+    //const [plantNameChoices, setPlantNameChoices] = useState<string[]>(['Lunar Ephemeral', 'Dragon\'s Breath', 'Triffid', 'Dragonleaf']);
+    //const [plantLatinNames, setPlantLatinNames] = useState<string[]>(['Ipomoea alba', 'Dracaena draco', 'Dionaea muscipula', 'Dracaena marginata']);
+    const [plantVectorChoices, setPlantVectorChoices] = useState<string[] | null>([]);
+    const [plantNameChoices, setPlantNameChoices] = useState<string[]>([]);
+    const [plantLatinNames, setPlantLatinNames] = useState<string[]>([]);
+    const [plantName, setPlantName] = useState('');
+    const [plantLatinName, setPlantLatinName] = useState('');
     const [approvedLogs, setApprovedLogs] = useState<DocumentReference[]>([])
     const [modalVisible, setModalVisible] = useState(false);
     const [response, setResponse] = useState<string | null>(null);
@@ -69,8 +80,21 @@ export function Group() {
     const [daysOfTheWeek, setDaysOfTheWeek] = useState(null)
     const [fontsLoaded] = useFonts({
         "SF-Pro-Rounded-Regular": require("../assets/fonts/SF-Pro-Rounded-Regular.ttf"),
+        "SF-Pro-Rounded-Bold": require("../assets/fonts/SF-Pro-Rounded-Bold.ttf"),
+        "cmunci": require("../assets/fonts/cmunci.ttf"),
       });
     const [isActive, setIsActive] = useState(false);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (user) {
+            console.log("User is signed in:", user);
+          } else {
+            console.log("No user signed in");
+          }
+        });
+        return () => unsubscribe();
+      }, []);
 
     const fetchGroups = async () => {
         const groupRefs = await checkUserHasGroup(user);
@@ -118,9 +142,9 @@ export function Group() {
 
 
     useEffect(() => {
-        if (plantNameChoices.length > 0) {
+        if (plantNameChoices.length > 0 && plantVectorChoices?.length === 0) {
             handleGeneratePlantChoices();
-            // console.log('generating plant choices');
+            console.log('generating plant choices');
         }
     }, [plantNameChoices]);
 
@@ -204,7 +228,7 @@ export function Group() {
                 const memberDoc: DocumentSnapshot = await getDoc(member);
                 const memberData = memberDoc.data();
                 const memberApprovedLogs = memberData?.approvedLogs || [];
-                console.log("Member Approved Logs:", memberApprovedLogs);
+                //console.log("Member Approved Logs:", memberApprovedLogs);
 
                 return (
                     <UserProgress
@@ -219,17 +243,29 @@ export function Group() {
         setUserProgressComponents(userProgressComponents);
     }
 
-
     const checkPlant = async () => {
-        const plant = await getPlant(user);
+        const plant: DocumentReference = await getPlant(user);
+        const plantData = await getDoc(plant);
         if (plant != null) {
             console.log('plant');
             setCurrentPlant(plant);
+            setPlantName(plantData.get('plantName'));
+            setPlantLatinName(plantData.get('plantLatinName'));
+            const currentVectorUri = await getCurrentGrowStateImage(plant);
+            console.log('currentVectorUri', currentVectorUri);
+            if (currentVectorUri) {
+                setCurrentPlantVector(currentVectorUri);
+            } else {
+                console.warn('currentVectorUri is null or undefined');
+            }
         } else {
             console.log('no plant');
             setCurrentPlant(null);
-            console.log('generating plant names');
-            await handleGeneratePlantNames();
+            if (plantNameChoices.length === 0) {
+                await handleGeneratePlantNames();
+            } else {
+                console.log('plant names already generated');
+            }
         }
     };
 
@@ -246,9 +282,6 @@ export function Group() {
 
         //console.log(pendingVotes);
         // console.log("after the votes");
-
-
-
 
         if (pendingVotes && Array.isArray(pendingVotes)) {
             for (const docRef of pendingVotes) {
@@ -337,9 +370,10 @@ export function Group() {
         const plantStages = ['sprouting', 'seedling', 'vegetating', 'budding', 'flowering'];
 
         const plantStagesPromises = plantStages.map(async (stage) => {
-            const downloadURL = await generateAndUploadImage(
-                `isolated ${plantNameChoices[plantChoiceIndex]} plant at the ${stage} growth stage, white background, isometric perspective, 8-bit pixel art style`,
-                `plants/${uuid.v4()}-${plantNameChoices[plantChoiceIndex]}-${stage}-${Date.now()}.png`
+            const downloadURL = await generateVectorAndUploadImage(
+                `isolated ${plantNameChoices[plantChoiceIndex]} plant at the ${stage} growth stage, white background, isometric perspective, flat vector art style`,
+                `plants/${uuid.v4()}-${plantNameChoices[plantChoiceIndex]}-${stage}-${Date.now()}.png`,
+                `plants/${uuid.v4()}-${plantNameChoices[plantChoiceIndex]}-${stage}-${Date.now()}.svg`
             );
             return downloadURL;
         });
@@ -347,10 +381,10 @@ export function Group() {
         const plantStageImages = await Promise.all(plantStagesPromises);
         const currentDate = new Date();
 
-        if (plantImageChoices && plantImageChoices.length >= 4) {
+        if (plantVectorChoices && plantVectorChoices.length >= 4) {
             const plantDocRef: DocumentReference = await createPlant(
                 0,
-                [...plantStageImages, plantImageChoices[plantChoiceIndex]],
+                [...plantStageImages, plantVectorChoices[plantChoiceIndex]],
                 plantNameChoices[plantChoiceIndex],
                 plantLatinNames[plantChoiceIndex],
                 getDecayDate(currentDate),
@@ -365,7 +399,6 @@ export function Group() {
     }
 
     const handleGeneratePlantNames = async () => {
-        return;
         const plantNames = await generatePlantInfo();
         console.log('Plant Names:', plantNames);
         setPlantNameChoices(plantNames.map((plant) => plant.common));
@@ -374,17 +407,20 @@ export function Group() {
 
     const handleGeneratePlantChoices = async () => {
         if (plantNameChoices.length === 0) return; // Ensure there are plant names
+        console.log('Plant choices generation started');
         const plantChoicesPromises = plantNameChoices.map(async (plantName) => {
-            const downloadURL = await generateAndUploadImage(
+            console.log(`Generating vector for: ${plantName}`);
+            const downloadURL = await generateVectorAndUploadImage(
                 `isolated ${plantName} plant at the fruiting growth stage, white background, isometric perspective, flat vector art style`,
-                `plants/${uuid.v4()}-${plantName}-${'fruiting'}-${Date.now()}.png`
+                `plants/${uuid.v4()}-${plantName}-${'fruiting'}-${Date.now()}.png`,
+                `plants/${uuid.v4()}-${plantName}-${'fruiting'}-${Date.now()}.svg`,
             );
             return downloadURL;
         });
 
         const plantChoices = await Promise.all(plantChoicesPromises);
-        setPlantImageChoices(plantChoices);
-        // console.log('Plant Image Choices:', plantChoices);
+        setPlantVectorChoices(plantChoices);
+        console.log('Plant choices generation completed: ' + plantChoices);
     };
 
     const handleModalClose = (userResponse: string) => {
@@ -426,12 +462,16 @@ export function Group() {
                         <Heading size='2xl' className="font-regular text-neutral-300">
                             Choose a plant to get started.
                         </Heading>
-                        <Box className=''>
+                        <Box>
                             <View className='flex-row gap-4'>
                                 <View className='p-2 rounded-2xl bg-primaryGreen'>
-                                    <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-40'>
-                                            {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[0] }} onError={(e) => console.log('Image failed to load', e.nativeEvent)} className='w-20 h-20'/> : <Spinner size="small" color={colors.gray[500]} />}
+                                    <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantVectorChoices && plantVectorChoices.length >= 4 ? false : true}>
+                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-auto'>
+
+                                            <Box className='w-40 h-40'>
+                                            {plantVectorChoices ? <SvgUri uri={plantVectorChoices[0]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="small" color={colors.gray[500]} />}
+                                            </Box>
+
                                             <Heading size='lg' className="font-bold text-neutral-300 pt-2">
                                                 {plantNameChoices[0]}
                                             </Heading>
@@ -442,9 +482,12 @@ export function Group() {
                                     </TouchableOpacity>
                                 </View>
                                 <View className='p-2 rounded-2xl bg-primaryGreen'>
-                                    <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-40'>
-                                            {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[1] }} className='w-20 h-20' onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                    <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantVectorChoices && plantVectorChoices.length >= 4 ? false : true}>
+                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-auto'>
+
+                                            <Box className='w-40 h-40'>
+                                            {plantVectorChoices ? <SvgUri uri={plantVectorChoices[1]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="small" color={colors.gray[500]} />}
+                                            </Box>
                                             <Heading size='lg' className="font-bold text-neutral-300 pt-2">
                                                 {plantNameChoices[1]}
                                             </Heading>
@@ -457,9 +500,12 @@ export function Group() {
                             </View>
                             <View className='flex-row pt-4 gap-4'>
                             <View className='p-2 rounded-2xl bg-primaryGreen'>
-                                    <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-40'>
-                                            {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[2] }} className='w-20 h-20' onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                    <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantVectorChoices && plantVectorChoices.length >= 4 ? false : true}>
+                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-auto'>
+
+                                            <Box className='w-40 h-40'>
+                                            {plantVectorChoices ? <SvgUri uri={plantVectorChoices[2]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="small" color={colors.gray[500]} />}
+                                            </Box>
                                             <Heading size='lg' className="font-bold text-neutral-300 pt-2">
                                                 {plantNameChoices[2]}
                                             </Heading>
@@ -470,9 +516,12 @@ export function Group() {
                                     </TouchableOpacity>
                                 </View>
                                 <View className='p-2 rounded-2xl bg-primaryGreen'>
-                                    <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantImageChoices && plantImageChoices.length >= 4 ? false : true}>
-                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-40'>
-                                            {plantImageChoices && plantImageChoices.length >= 4 ? <Image source={{ uri: plantImageChoices[3] }} className='w-20 h-20' onError={(e) => console.log('Image failed to load', e.nativeEvent)} /> : <Spinner size="small" color={colors.gray[500]} />}
+                                    <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantVectorChoices && plantVectorChoices.length >= 4 ? false : true}>
+                                        <Box className='flex-col flex justify-center align-middle items-center w-40 h-auto'>
+
+                                            <Box className='w-40 h-40'>
+                                            {plantVectorChoices ? <SvgUri uri={plantVectorChoices[3]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="small" color={colors.gray[500]} />}
+                                            </Box>
                                             <Heading size='lg' className="font-bold text-neutral-300 pt-2">
                                                 {plantNameChoices[3]}
                                             </Heading>
@@ -486,22 +535,23 @@ export function Group() {
                         </Box>
                     </View>
                 ) : currentPlant && hasGroups ? (
-                    <View>
+                    <Box className='flex flex-col items-center align-middle gap-4'>
                         <VotingModal
                             visible={modalVisible}
                             onClose={handleModalClose}
                             profilePic={ProfilePic}
-                            question="Do you like this image?"
+                            question={`Did ${user?.displayName} ${habit.toLowerCase()}?`}
                             logRef={currentLogRef} // Pass the Firestore document reference
                             totalMembers={groupMembers.length} />
-                        <View>
-                            <Heading size='2xl' className="font-bold text-neutral-300">
+                        
+                            <Heading size='2xl' className="font-bold text-white pt-20">
                             {habit}
                             </Heading>
                             <FrequencyBar
                                 frequency={frequency}
                                 code={groupCode}
                             />
+                        <Box>
                             {groups.length > 0 ? (
                                 <DaysOfTheWeek groupRef={groups[0]} />
                             ) : (
@@ -509,11 +559,21 @@ export function Group() {
                                 Loading group information...
                                 </GlueText>
                             )}
-                        </View>
-                        <View style={styles.image_container}>
-                            {<Image source={Plant} className='w-20 h-20' />}
-
-                        </View>
+                        </Box>
+                        <Box className='w-80 h-80'>
+                        <PlantWithGlow currentPlantVector={currentPlantVector} />
+                        </Box>
+                        <Box className='flex-row gap-1'>
+                            <GlueText size='xl' className="font-regular text-neutral-300">
+                                {plantName}
+                            </GlueText>
+                            <GlueText size='xl' className="font-regular text-neutral-300">
+                                |
+                            </GlueText>
+                            <GlueText size='xl' className="font-italic text-neutral-300">
+                                {plantLatinName}
+                            </GlueText>
+                        </Box>
                         <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvedLogs.length} />
 
                         <ScrollView style={styles.scrollheight}>
@@ -526,7 +586,7 @@ export function Group() {
                             }
                         </ScrollView>
 
-                    </View>
+                    </Box>
                 ) : (
                     <View className='pb-28'>
                         {step === 'initial' && (
@@ -737,9 +797,5 @@ const styles = StyleSheet.create({
         width: "100%",
         alignItems: "center",
         height: "100%",
-    },
-    image_container: {
-        height: height * .3,
-        width: width * .5,
     },
 });
