@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { View, TouchableOpacity, StyleSheet, Image, Alert } from "react-native";
-import { getAuth, User } from "firebase/auth"; // Import User type
+import { getAuth,updateProfile, User } from "firebase/auth"; // Import User type
 import Logo from "../assets/icons/logo.svg";
 import CustomSwitch from "./extra/CustomSwitch";
 import * as ImagePicker from "expo-image-picker";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc,setDoc, getDoc, } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db } from "../utils/firebaseConfig"; // Update path if needed
+
 
 export default function Header() {
     const [user, setUser] = useState<User | null>(null); // Allow null or User type
@@ -48,20 +49,53 @@ export default function Header() {
         }
     };
 
+  
+
     const uploadImage = async (uri: string) => {
+        if (!user?.uid) {
+            Alert.alert("Error", "User is not logged in.");
+            return null;
+        }
+    
         try {
             const response = await fetch(uri);
             const blob = await response.blob();
-
+    
+            // Upload image to Firebase Storage
             const storage = getStorage();
-            const storageRef = ref(storage, `profile_pictures/${user?.uid}`);
+            const storageRef = ref(storage, `profile_pictures/${user.uid}`);
             await uploadBytes(storageRef, blob);
-
+    
+            // Get the download URL
             const downloadURL = await getDownloadURL(storageRef);
-
-            const userRef = doc(db, "users", user?.uid);
-            await updateDoc(userRef, { profileImageUrl: downloadURL });
-
+    
+            // Firestore reference
+            const userRef = doc(db, "users", user.uid);
+    
+            // Check if the document exists
+            const docSnapshot = await getDoc(userRef);
+    
+            if (docSnapshot.exists()) {
+                // Document exists, update it
+                await updateDoc(userRef, { profileImageUrl: downloadURL });
+            } else {
+                // Document does not exist, create it
+                await setDoc(userRef, { profileImageUrl: downloadURL });
+            }
+    
+            // Update Firebase Authentication profile
+            const auth = getAuth();
+            const currentUser = auth.currentUser;
+    
+            if (currentUser) {
+                await updateProfile(currentUser, { photoURL: downloadURL });
+            } else {
+                console.error("No current user is logged in");
+            }
+    
+            // Update local user state
+            setUser({ ...user, photoURL: downloadURL });
+    
             return downloadURL;
         } catch (error) {
             console.error("Error uploading image:", error);
@@ -69,6 +103,8 @@ export default function Header() {
             return null;
         }
     };
+    
+    
 
     return (
         <View style={styles.header}>
