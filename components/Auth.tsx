@@ -512,20 +512,4 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  profileUploadContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  imagePreview: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    marginVertical: 16,
-  },
-  uploadActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 16,
-  },
 });

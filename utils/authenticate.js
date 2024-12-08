@@ -8,9 +8,9 @@ import { doc } from "firebase/firestore";
 
 
 // Sign Up Function
+
 export const signUp = async (email, password, username, displayName) => {
   try {
-    // Step 1: Create user in Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
