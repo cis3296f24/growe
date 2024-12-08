@@ -401,8 +401,8 @@ export function Group() {
     const handleGeneratePlantNames = async () => {
         const plantNames = await generatePlantInfo();
         console.log('Plant Names:', plantNames);
-        setPlantNameChoices(plantNames.map((plant) => plant.common));
-        setPlantLatinNames(plantNames.map((plant) => plant.scientific));
+        setPlantNameChoices(plantNames.map((plant: { common: any; }) => plant.common));
+        setPlantLatinNames(plantNames.map((plant: { scientific: any; }) => plant.scientific));
     }
 
     const handleGeneratePlantChoices = async () => {

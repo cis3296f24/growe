@@ -18,6 +18,36 @@ export const signUp = async (email, password, username, displayName) => {
     return null;
   }
 };
+export const uploadProfilePicture = async (user, profileImageUrl) => {
+  try {
+    if (!profileImageUrl) {
+      throw new Error('No profile image provided');
+    }
+
+    const storage = getStorage();
+    const storageRef = ref(storage, `profile_pictures/${user.uid}`);
+    const response = await fetch(profileImageUrl);
+    const blob = await response.blob();
+    await uploadBytes(storageRef, blob);
+
+    const downloadURL = await getDownloadURL(storageRef);
+
+    // Update user's Firestore document with the profile picture URL
+    const userDocRef = doc(db, "users", user.uid);
+    await updateDoc(userDocRef, { profileImageUrl: downloadURL });
+
+    // Optionally update Firebase Auth profile
+    await updateProfile(user, { photoURL: downloadURL });
+
+    console.log("Profile picture uploaded and updated successfully:", downloadURL);
+
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading profile picture:", error);
+    throw error;
+  }
+};
+
 
 // Login Function
 export const login = async (email, password) => {
