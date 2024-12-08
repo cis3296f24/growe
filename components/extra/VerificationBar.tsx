@@ -16,9 +16,10 @@ const VerificationProgress: React.FC<VerificationProgressProps> = ({
   const cappedApprovedCells = Math.min(approvedLogs, totalCells); // Ensure approved cells do not exceed total cells
 
   return (
-    <View style={styles.container}>
+    <View className='justify-center items-center'>
       {totalCells > 0 ? (
-        <View style={styles.tube}>
+        // translate this to tailwindcss
+        <View className='flex-row bg-[#92A491] rounded-full h-5 w-80 overflow-hidden items-center justify-center p-2'>
           {Array.from({ length: totalCells }).map((_, index) => (
             <View
               key={index}
