@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { Image, View, TextInput, Button, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollViewBase } from 'react-native';
+import { Image, View, TextInput, Button, StyleSheet, Dimensions, TouchableOpacity, ScrollViewBase } from 'react-native';
 import { useUser } from './UserContext';
 import { fetchApprovedLogs } from '../utils/log'
 import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
@@ -23,7 +23,7 @@ import VotingModal from './VotingModal'
 import ProfilePic from '../assets/images/Avatar.png'
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native';
-import { Text as GlueText } from '@/components/ui/text';
+import { Text } from '@/components/ui/text';
 import {
     Button as ButtonGluestack,
     ButtonText,
@@ -54,7 +54,7 @@ export function Group() {
     const [groupName, setGroupName] = useState(`${user?.displayName}'s group`);
     const [codeInput, setCodeInput] = useState('');
     const [habit, setHabit] = useState('Go for a walk');
-    const [frequency, setFrequency] = useState(3);
+    const [frequency, setFrequency] = useState(1);
     const [error, setError] = useState('');
     const [groupMembers, setGroupMembers] = useState<DocumentReference[]>([]);
     const [groupCode, setGroupCode] = useState('');
@@ -136,7 +136,7 @@ export function Group() {
             // console.log('groupMembers updated:', groupMembers);
             grabVotes();
         } else {
-            // console.log('groupMembers is empty. Skipping grabVotes.');
+            console.log('groupMembers is empty. Skipping grabVotes.');
         }
     }, [groupMembers]); // 
 
@@ -311,14 +311,11 @@ export function Group() {
                         setCurrentLogRef(docRef)
                         setModalVisible(true); // Show the VotingModal
                         setHasShownModal(true); // Mark modal as shown
-                    } else {
-                        // console.log();
-
                     }
                 }
             }
         } else {
-            // console.log('No pending votes or an error occurred.');
+            console.log('No pending votes or an error occurred.');
         }
     };
 
@@ -475,9 +472,9 @@ export function Group() {
                                             <Heading size='lg' className="font-bold text-neutral-300 pt-2">
                                                 {plantNameChoices[0]}
                                             </Heading>
-                                            <GlueText size='lg' italic className="font-italic text-neutral-300">
+                                            <Text size='lg' italic className="font-italic text-neutral-300">
                                                 {plantLatinNames[0]}
-                                            </GlueText>
+                                            </Text>
                                         </Box>
                                     </TouchableOpacity>
                                 </View>
@@ -491,9 +488,9 @@ export function Group() {
                                             <Heading size='lg' className="font-bold text-neutral-300 pt-2">
                                                 {plantNameChoices[1]}
                                             </Heading>
-                                            <GlueText size='lg' italic className="font-italic text-neutral-300">
+                                            <Text size='lg' italic className="font-italic text-neutral-300">
                                                 {plantLatinNames[1]}
-                                            </GlueText>
+                                            </Text>
                                         </Box>
                                     </TouchableOpacity>
                                 </View>
@@ -509,9 +506,9 @@ export function Group() {
                                             <Heading size='lg' className="font-bold text-neutral-300 pt-2">
                                                 {plantNameChoices[2]}
                                             </Heading>
-                                            <GlueText size='lg' className="font-italic text-neutral-300">
+                                            <Text size='lg' className="font-italic text-neutral-300">
                                                 {plantLatinNames[2]}
-                                            </GlueText>
+                                            </Text>
                                         </Box>
                                     </TouchableOpacity>
                                 </View>
@@ -525,9 +522,9 @@ export function Group() {
                                             <Heading size='lg' className="font-bold text-neutral-300 pt-2">
                                                 {plantNameChoices[3]}
                                             </Heading>
-                                            <GlueText size='lg' italic className="font-italic text-neutral-300">
+                                            <Text size='lg' italic className="font-italic text-neutral-300">
                                                 {plantLatinNames[3]}
-                                            </GlueText>
+                                            </Text>
                                         </Box>
                                     </TouchableOpacity>
                                 </View>
@@ -542,48 +539,51 @@ export function Group() {
                             profilePic={ProfilePic}
                             question={`Did ${user?.displayName} ${habit.toLowerCase()}?`}
                             logRef={currentLogRef} // Pass the Firestore document reference
-                            totalMembers={groupMembers.length} />
+                            totalMembers={groupMembers.length}
+                        />
                         
-                            <Heading size='2xl' className="font-bold text-white pt-20">
-                            {habit}
-                            </Heading>
-                            <FrequencyBar
-                                frequency={frequency}
-                                code={groupCode}
-                            />
+                        <Heading size='2xl' className="font-bold text-white pt-16">
+                        {habit}
+                        </Heading>
+                        <FrequencyBar
+                            frequency={frequency}
+                            code={groupCode}
+                        />
                         <Box>
                             {groups.length > 0 ? (
                                 <DaysOfTheWeek groupRef={groups[0]} />
                             ) : (
-                                <GlueText size='xl' className="font-regular text-neutral-300">
+                                <Text size='xl' className="font-regular text-neutral-300">
                                 Loading group information...
-                                </GlueText>
+                                </Text>
                             )}
                         </Box>
                         <Box className='w-80 h-80'>
                         <PlantWithGlow currentPlantVector={currentPlantVector} />
                         </Box>
                         <Box className='flex-row gap-1'>
-                            <GlueText size='xl' className="font-regular text-neutral-300">
+                            <Text size='xl' className="font-regular text-neutral-300">
                                 {plantName}
-                            </GlueText>
-                            <GlueText size='xl' className="font-regular text-neutral-300">
+                            </Text>
+                            <Text size='xl' className="font-regular text-neutral-300">
                                 |
-                            </GlueText>
-                            <GlueText size='xl' className="font-italic text-neutral-300">
+                            </Text>
+                            <Text size='xl' className="font-italic text-neutral-300">
                                 {plantLatinName}
-                            </GlueText>
+                            </Text>
                         </Box>
                         <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvedLogs.length} />
 
-                        <ScrollView style={styles.scrollheight}>
+                        <ScrollView className='w-96'>
+                            <Box className='flex-col gap-2 pt-4'>
                             {
                                 userProgressComponents.map((component, i) => (
-                                    <View key={i}>
+                                    <Box key={i}>
                                         {component}
-                                    </View>
+                                    </Box>
                                 ))
                             }
+                            </Box>
                         </ScrollView>
 
                     </Box>
@@ -702,7 +702,7 @@ export function Group() {
                                         </ButtonGluestack>
                                     </Box>
                                 </Box>
-                                {error && <GlueText size='lg' className='color-red-400 font-regular'>{error}</GlueText>}
+                                {error && <Text size='lg' className='color-red-400 font-regular'>{error}</Text>}
                                 <Box className='w-72'>
                                     <Box className='flex-row justify-between'>
                                         <ButtonGluestack
@@ -740,7 +740,7 @@ export function Group() {
                                     placeholderTextColor={'white'}
                                     />
                                 </Input>
-                                {error && <GlueText size='lg' className='color-red-400 font-regular'>{error}</GlueText>}
+                                {error && <Text size='lg' className='color-red-400 font-regular'>{error}</Text>}
                                 <Box className='w-72'>
                                     <Box className='flex-row justify-between'>
                                         <ButtonGluestack
@@ -781,9 +781,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         color: 'black',
         borderRadius: 10,
-    },
-    scrollheight: {
-        width: "100%"
     },
     container: {
         alignItems: "center",
