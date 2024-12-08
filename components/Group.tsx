@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useUser } from './UserContext';
-import { fetchApprovedLogs } from '../utils/log'
+import { fetchApprovedLogs, fetchUserLogs } from '../utils/log'
 import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
 import { checkUserHasGroup, joinGroup, createGroup } from '../utils/group';
 import { checkPendingVotes } from '../utils/user';
@@ -84,7 +84,7 @@ export function Group() {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
           if (user) {
-            console.log("User is signed in:", user);
+            console.log("User is signed in");
           } else {
             console.log("No user signed in");
           }
@@ -96,7 +96,7 @@ export function Group() {
         const groupRefs = await checkUserHasGroup(user);
 
         if (Array.isArray(groupRefs) && groupRefs.length > 0) {
-            console.log("Fetched Group References:", groupRefs);
+            //console.log("Fetched Group References:", groupRefs);
             setGroups(groupRefs);
             setHasGroups(true);
 
@@ -129,7 +129,7 @@ export function Group() {
     useEffect(() => {
         // Only call grabVotes if groupMembers is populated
         if (groupMembers.length > 0) {
-            // console.log('groupMembers updated:', groupMembers);
+            console.log('groupMembers updated. Grabbing votes.');
             grabVotes();
         } else {
             console.log('groupMembers is empty. Skipping grabVotes.');
@@ -218,19 +218,26 @@ export function Group() {
     }, [groupMembers]);
 
     const fetchUserProgress = async () => {
+        if (groupMembers.length === 0 || groups.length === 0) {
+            console.warn("Group members or group reference is not available.");
+            return;
+        }
         const userProgressComponents = await Promise.all(
             groupMembers.map(async (member, i) => {
                 // get the member's snapshot, then get id field
                 const memberDoc: DocumentSnapshot = await getDoc(member);
                 const memberData = memberDoc.data();
                 const memberApprovedLogs = memberData?.approvedLogs || [];
-                //console.log("Member Approved Logs:", memberApprovedLogs);
+                console.log("Member Approved Logs:", memberApprovedLogs);
+                const userLogs = await fetchUserLogs(member);
+                console.log("User Logs:", userLogs);
 
                 return (
                     <UserProgress
                         key={member.id || i}
                         frequency={frequency}
-                        totalVotes={memberApprovedLogs.length ? memberApprovedLogs.length : 0}
+                        approvedUserLogs={memberApprovedLogs.length ? memberApprovedLogs.length : 0}
+                        totalUserLogs={userLogs.length ? userLogs.length : 0}
                     />
                 );
             })
@@ -243,19 +250,19 @@ export function Group() {
         const plant: DocumentReference = await getPlant(user);
         const plantData = await getDoc(plant);
         if (plant != null) {
-            console.log('plant');
+            console.log('Plant exists.');
             setCurrentPlant(plant);
             setPlantName(plantData.get('plantName'));
             setPlantLatinName(plantData.get('plantLatinName'));
             const currentVectorUri = await getCurrentGrowStateImage(plant);
-            console.log('currentVectorUri', currentVectorUri);
+            // console.log('currentVectorUri', currentVectorUri);
             if (currentVectorUri) {
                 setCurrentPlantVector(currentVectorUri);
             } else {
                 console.warn('currentVectorUri is null or undefined');
             }
         } else {
-            console.log('no plant');
+            console.log('No plant exists.');
             setCurrentPlant(null);
             if (plantNameChoices.length === 0) {
                 await handleGeneratePlantNames();
@@ -311,7 +318,7 @@ export function Group() {
                 }
             }
         } else {
-            console.log('No pending votes or an error occurred.');
+            console.log('No pending votes.');
         }
     };
 
@@ -533,7 +540,7 @@ export function Group() {
                             visible={modalVisible}
                             onClose={handleModalClose}
                             profilePic={ProfilePic}
-                            question={`Did ${user?.displayName} ${habit.toLowerCase()}?`}
+                            question={`Did ${user?.displayName?.charAt(0).toUpperCase()}${user?.displayName?.slice(1)} ${habit.toLowerCase()}?`}
                             logRef={currentLogRef} // Pass the Firestore document reference
                             totalMembers={groupMembers.length}
                         />
