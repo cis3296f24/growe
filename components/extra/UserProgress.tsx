@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import Avatar from '../../assets/images/Avatar.png';
+import colors, { current } from 'tailwindcss/colors';
+import { Box } from '@/components/ui/box';
 
 interface UserProgressProps {
   frequency: number; // Total votes needed to fill the tube
@@ -12,21 +14,21 @@ const UserProgress: React.FC<UserProgressProps> = ({ frequency, totalVotes }) =>
   const excessVotes = totalVotes > frequency ? totalVotes - frequency : 0; // Calculate excess votes
 
   return (
-    <View style={styles.container}>
+    <Box className='flex-row items-center gap-2 w-full'>
       {/* Avatar */}
-      <View style={styles.avatarContainer}>
-        <Image source={Avatar} style={styles.avatar} />
-      </View>
+      <Box className='pr-1'>
+        <Image source={Avatar} className='h-12 w-12 rounded-full' />
+      </Box>
 
       {/* Progress Bar with Outer Tube */}
-      <View style={styles.barContainer}>
-        <View style={styles.tube}>
+      <Box className='flex-1'>
+        <Box className='flex-row bg-[#92A491] rounded-full h-5 items-center justify-between p-2'>
           {/* Render normal cells */}
           {Array.from({ length: totalCells }).map((_, index) => {
             const isFilled = index < totalVotes;
 
             return (
-              <View
+              <Box
                 key={`normal-${index}`}
                 style={[
                   styles.cell,
@@ -38,45 +40,18 @@ const UserProgress: React.FC<UserProgressProps> = ({ frequency, totalVotes }) =>
 
           {/* Render excess cells */}
           {Array.from({ length: excessVotes }).map((_, index) => (
-            <View
+            <Box
               key={`excess-${index}`}
               style={[styles.cell, styles.goldCell]} // Excess cells are gold
             />
           ))}
-        </View>
-      </View>
-    </View>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 2,
-    width: '90%',
-  },
-  avatarContainer: {
-    marginRight: 10,
-  },
-  avatar: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-  },
-  barContainer: {
-    flex: 1,
-  },
-  tube: {
-    flexDirection: 'row',
-    backgroundColor: '#92A491', // Tube background color
-    borderRadius: 10,
-    paddingHorizontal: 2, // Adjusted for snug fit
-    paddingVertical: 2,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   cell: {
     flex: 1, // Ensures cells evenly distribute space
     height: '100%',
