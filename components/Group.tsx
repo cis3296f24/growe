@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useUser } from './UserContext';
-import { fetchApprovedLogs, fetchUserLogs } from '../utils/log'
-import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
-import { checkUserHasGroup, joinGroup, createGroup } from '../utils/group';
+import { fetchApprovedLogs, fetchUserLogs, fetchGroupLogs } from '@/utils/log'
+import { arrayUnion, arrayRemove, DocumentReference, DocumentSnapshot, getDoc, updateDoc } from 'firebase/firestore';
+import { checkUserHasGroup, joinGroup, createGroup } from '@/utils/group';
+import { createChoices, getUndecidedChoices, getNewChoices } from '@/utils/choice';
 import { checkPendingVotes } from '../utils/user';
 import { LinearGradient } from 'expo-linear-gradient';
 import VerificationBar from './extra/VerificationBar';
@@ -38,14 +39,53 @@ import { SvgUri } from 'react-native-svg';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from '@/utils/firebaseConfig';
 import PlantWithGlow from './extra/PlantWithGlow';
+import { Skeleton, SkeletonText } from '@/components/ui/skeleton';
+import { array, set } from 'zod';
 
 const { width, height } = Dimensions.get('window');
+
+interface PlantTextChoice {
+    common: string;
+    scientific: string;
+    family: string;
+    genus: string;
+    species: string;
+    habitat: string;
+    region: string;
+    uses: string[];
+    description: string;
+    habit: string;
+    flowering: string;
+    edible: boolean;
+    toxicity: string;
+}
+
+interface PlantChoice {
+    growState: number;
+    growStateImageUrls: string[];
+    decayAt: string;
+    isOwned: boolean;
+    common: string;
+    scientific: string;
+    family: string;
+    genus: string;
+    species: string;
+    habitat: string;
+    region: string;
+    uses: string[];
+    description: string;
+    habit: string;
+    flowering: string;
+    edible: boolean;
+    toxicity: string;
+}
 
 export function Group() {
 
     const [step, setStep] = useState<'initial' | 'name-group' | 'create-habit' | 'set-frequency' | 'display-code' | 'enter-code'>('initial');
+    const [generatingPlant, setGeneratingPlant] = useState(false);
     const [groups, setGroups] = useState<DocumentReference[]>([]);
-    const [hasGroups, setHasGroups] = useState(false);
+    const [hasGroups, setHasGroups] = useState<boolean | null>(null);
     const { user } = useUser();
     const [groupName, setGroupName] = useState(`${user?.displayName}'s group`);
     const [codeInput, setCodeInput] = useState('');
@@ -54,15 +94,17 @@ export function Group() {
     const [error, setError] = useState('');
     const [groupMembers, setGroupMembers] = useState<DocumentReference[]>([]);
     const [groupCode, setGroupCode] = useState('');
+    const [groupLogs, setGroupLogs] = useState<DocumentReference[]>([]);
+    const [groupApprovedLogs, setGroupApprovedLogs] = useState<DocumentReference[]>([]);
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
     const [currentPlant, setCurrentPlant] = useState<DocumentReference | null>(null);
     const [currentPlantVector, setCurrentPlantVector] = useState<string | null>(null);
     //const [plantVectorChoices, setPlantVectorChoices] = useState<string[] | null>(['https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2F430ae251-c653-4344-b5cc-6c621369227c-Moonflower-fruiting-1733596102842.svg?alt=media&token=5374210e-51a6-4356-b7b9-461a0a72ccef', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fcc2f0b19-f433-4f32-b6e0-e1a246ccf6fb-Dragon\'s%20Breath-fruiting-1733595662059.svg?alt=media&token=56583be4-f4e2-4bc1-8b6f-c1c1b1c2da68', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fcaf08d02-91c6-40fc-b0fc-66f9fa97a3b3-Triffid-fruiting-1733595667080.svg?alt=media&token=354d7407-5659-4a6e-ac66-be8d41ef9be0', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fc00eb46b-93e0-474c-b1fc-f0374817de69-Dragonleaf-fruiting-1733595477033.svg?alt=media&token=50e9406b-03e5-40bd-8752-dec9f420a62c']);
     //const [plantNameChoices, setPlantNameChoices] = useState<string[]>(['Lunar Ephemeral', 'Dragon\'s Breath', 'Triffid', 'Dragonleaf']);
     //const [plantLatinNames, setPlantLatinNames] = useState<string[]>(['Ipomoea alba', 'Dracaena draco', 'Dionaea muscipula', 'Dracaena marginata']);
-    const [plantVectorChoices, setPlantVectorChoices] = useState<string[] | null>([]);
-    const [plantNameChoices, setPlantNameChoices] = useState<string[]>([]);
-    const [plantLatinNames, setPlantLatinNames] = useState<string[]>([]);
+    const [plantVectorChoices, setPlantVectorChoices] = useState<string[]>([]);
+    const [plantTextChoices, setPlantTextChoices] = useState<PlantTextChoice[]>([]);
+    const [plantChoicesRef, setPlantChoicesRef] = useState<DocumentReference | null>(null);
     const [plantName, setPlantName] = useState('');
     const [plantLatinName, setPlantLatinName] = useState('');
     const [approvedLogs, setApprovedLogs] = useState<DocumentReference[]>([])
@@ -109,6 +151,8 @@ export function Group() {
                 setFrequency(groupData.get("frequency") || 1);
                 setGroupCode(groupData.get("joinCode"));
                 setGroupName(groupData.get("name") || "Unnamed Group");
+                const groupDataLogs = await fetchGroupLogs(groupRefs[0]);
+                setGroupLogs(groupDataLogs);
             }
         } else {
             setGroups([]);
@@ -121,10 +165,15 @@ export function Group() {
 
     useEffect(() => {
         fetchGroups();
-        console.log('fetching groups');
-        checkPlant();
-        console.log('fetching plant');
+        console.log('Checked groups.');
     }, []);
+
+    useEffect(() => {
+        if (hasGroups != null) {
+            checkPlant();
+            console.log('Checked plant.');
+        }
+    }, [hasGroups]);
 
     useEffect(() => {
         // Only call grabVotes if groupMembers is populated
@@ -134,80 +183,26 @@ export function Group() {
         } else {
             console.log('groupMembers is empty. Skipping grabVotes.');
         }
-    }, [groupMembers]); // 
-
+    }, [groupMembers]);
 
     useEffect(() => {
-        if (plantNameChoices.length > 0 && plantVectorChoices?.length === 0) {
-            handleGeneratePlantChoices();
-            console.log('generating plant choices');
+        if (plantTextChoices.length > 0 && plantVectorChoices?.length === 0) {
+            handleGeneratePlantVectors();
+            console.log('B >>> Generated plant vectors');
         }
-    }, [plantNameChoices]);
+    }, [plantTextChoices]);
 
-    // USE THIS AND TRY TO GET THE DATA ---------------------------------------------------------------------------------------------------------------------------------------
-    const fetchGroupData = async () => {
-        try {
-            if (groups.length === 0 || !groups[0]) {
-                console.error("Group reference is not available.");
-                return;
-            }
-
-            const groupDocSnapshot = await getDoc(groups[0]);
-            if (!groupDocSnapshot.exists()) {
-                console.error("Group document does not exist.");
-                return;
-            }
-
-            // Fetch approved logs and group members
-            const approvedLogs = groupDocSnapshot.get("approvedLogs") || [];
-            if (!Array.isArray(approvedLogs)) {
-                console.error("Approved logs field is not an array.");
-                return;
-            }
-
-            const users: DocumentReference[] = groupDocSnapshot.get("users") || [];
-            setGroupMembers(users);
-
-            const userLogCounts: { [userId: string]: number } = {}; // Tracks the number of logs each user authored
-
-            // Iterate over the `approvedLogs` references
-            for (const logRef of approvedLogs) {
-                if (logRef instanceof DocumentReference) {
-                    const logSnapshot = await getDoc(logRef);
-
-                    if (logSnapshot.exists()) {
-                        const logData = logSnapshot.data();
-                        const authorRef: DocumentReference = logData.author; // Get the `author` field
-
-                        if (authorRef && authorRef.id) {
-                            const authorId = authorRef.id;
-
-                            // Increment the count of logs authored by this user
-                            userLogCounts[authorId] = (userLogCounts[authorId] || 0) + 1;
-                        }
-                    } else {
-                        console.warn("Log document does not exist for:", logRef.path);
-                    }
-                } else {
-                    console.error("Invalid log reference in approvedLogs:", logRef);
-                }
-            }
-
-            // Map the log counts to the group members
-            const userProgressData = users.map((member) => ({
-                userId: member.id,
-                approvedLogs: userLogCounts[member.id] || 0, // Default to 0 if the user authored no logs
-            }));
-
-            setUserProgress(userProgressData); // Update the state with user progress
-        } catch (error) {
-            console.error("Error fetching group data:", error);
+    useEffect(() => {
+        if (plantVectorChoices.length > 0 && plantTextChoices.length > 0 && plantChoicesRef === null) {
+            console.log('Plant vectors and text choices are available. Constructing plant choices.');
+            handleConstructPlantChoices();
+            console.log('C >>> Constructed plant choices');
         }
-    };
+    }, [plantVectorChoices]);
 
     useEffect(() => {
         if (groups.length > 0) {
-            fetchApprovedLogs(groups[0]);
+            fetchApprovedLogs(groups.at(-1));
         }
     });
 
@@ -247,13 +242,15 @@ export function Group() {
     }
 
     const checkPlant = async () => {
+        console.log('Checking plant');
         const plant: DocumentReference = await getPlant(user);
-        const plantData = await getDoc(plant);
-        if (plant != null) {
+        console.log('Plant:', plant);
+        if (plant) {
             console.log('Plant exists.');
             setCurrentPlant(plant);
-            setPlantName(plantData.get('plantName'));
-            setPlantLatinName(plantData.get('plantLatinName'));
+            const plantData = await getDoc(plant);
+            setPlantName(plantData.get('common'));
+            setPlantLatinName(plantData.get('scientific'));
             const currentVectorUri = await getCurrentGrowStateImage(plant);
             // console.log('currentVectorUri', currentVectorUri);
             if (currentVectorUri) {
@@ -262,12 +259,89 @@ export function Group() {
                 console.warn('currentVectorUri is null or undefined');
             }
         } else {
-            console.log('No plant exists.');
-            setCurrentPlant(null);
-            if (plantNameChoices.length === 0) {
-                await handleGeneratePlantNames();
-            } else {
-                console.log('plant names already generated');
+            try {
+                console.warn('No plant exists.');
+                setCurrentPlant(null);
+
+                // check if in group
+                if (groups.length === 0) {
+                    console.warn('No groups available. Waiting until user has group...');
+                    return;
+                }
+
+                const undecidedChoicesRef: DocumentReference | null = await getUndecidedChoices(groups.at(-1));
+                if (undecidedChoicesRef) {
+                    console.log('Has undecided choices');
+                    setPlantChoicesRef(undecidedChoicesRef);
+                    const undecidedChoicesDoc = await getDoc(undecidedChoicesRef);
+
+                    undecidedChoicesDoc.get('plants').forEach( async (plantDoc: DocumentReference) => {
+                        const choiceData = await getDoc(plantDoc);
+                        // Use functional updates for state
+                        setPlantVectorChoices(prev => [...prev, choiceData.get('growStateImageUrls').at(-1)]);
+                        setPlantTextChoices(prev => [...prev, {
+                            common: choiceData.get('common'),
+                            scientific: choiceData.get('scientific'),
+                            family: choiceData.get('family'),
+                            genus: choiceData.get('genus'),
+                            species: choiceData.get('species'),
+                            habitat: choiceData.get('habitat'),
+                            region: choiceData.get('region'),
+                            uses: choiceData.get('uses'),
+                            description: choiceData.get('description'),
+                            habit: choiceData.get('habit'),
+                            flowering: choiceData.get('flowering'),
+                            edible: choiceData.get('edible'),
+                            toxicity: choiceData.get('toxicity'),
+                        }]);
+                    });
+                    return;
+                }
+
+                console.log('No undecided choices. Checking for new choices.');
+                const plantNewChoicesRef = await getNewChoices(groups.at(-1));
+                if (plantNewChoicesRef) {
+                    console.log('Has new choices');
+                    setPlantChoicesRef(plantNewChoicesRef);
+                    const plantNewChoices = await getDoc(plantNewChoicesRef);
+
+                    await updateDoc(plantNewChoicesRef, {
+                        undecided: arrayUnion(groups.at(-1)),
+                    });
+
+                    plantNewChoices.get('plants').forEach( async (plantDoc: DocumentReference) => {
+                        // get the doc ref data
+                        const choiceData = await getDoc(plantDoc);
+                        // add the data to vector and text choices states
+                        setPlantVectorChoices(prev => [...prev, choiceData.get('growStateImageUrls').at(-1)]);
+                        setPlantTextChoices(prev => [...prev, {
+                            common: choiceData.get('common'),
+                            scientific: choiceData.get('scientific'),
+                            family: choiceData.get('family'),
+                            genus: choiceData.get('genus'),
+                            species: choiceData.get('species'),
+                            habitat: choiceData.get('habitat'),
+                            region: choiceData.get('region'),
+                            uses: choiceData.get('uses'),
+                            description: choiceData.get('description'),
+                            habit: choiceData.get('habit'),
+                            flowering: choiceData.get('flowering'),
+                            edible: choiceData.get('edible'),
+                            toxicity: choiceData.get('toxicity'),
+                        }]);
+                    });
+                    return;
+                } else if (plantTextChoices.length === 0) {
+                    console.warn('No new choices available. Generating new choices.');
+                    await handleGeneratePlantTextChoices();
+                    console.log('A >>> Generated new choices.');
+                    return;
+                } else {
+                    console.warn('No new choices available.');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error checking plant:', error);
             }
         }
     };
@@ -322,8 +396,6 @@ export function Group() {
         }
     };
 
-
-
     const handleCreateGroup = async () => {
         console.log("a;lskdjfa;lskdjf;lksadjf");
 
@@ -369,59 +441,158 @@ export function Group() {
 
         const plantStages = ['sprouting', 'seedling', 'vegetating', 'budding', 'flowering'];
 
-        const plantStagesPromises = plantStages.map(async (stage) => {
-            const downloadURL = await generateVectorAndUploadImage(
-                `isolated ${plantNameChoices[plantChoiceIndex]} plant at the ${stage} growth stage, white background, isometric perspective, flat vector art style`,
-                `plants/${uuid.v4()}-${plantNameChoices[plantChoiceIndex]}-${stage}-${Date.now()}.png`,
-                `plants/${uuid.v4()}-${plantNameChoices[plantChoiceIndex]}-${stage}-${Date.now()}.svg`
-            );
-            return downloadURL;
-        });
+        try {
+            const plantStagesPromises = plantStages.map(async (stage) => {
+                const downloadURL = await generateVectorAndUploadImage(
+                    `isolated ${plantTextChoices[plantChoiceIndex].common} plant at the ${stage} growth stage, white background, isometric perspective, flat vector art style`,
+                    `plants/${uuid.v4()}-${plantTextChoices[plantChoiceIndex].common}-${stage}-${Date.now()}.png`,
+                    `plants/${uuid.v4()}-${plantTextChoices[plantChoiceIndex].common}-${stage}-${Date.now()}.svg`
+                );
+                return downloadURL;
+            });
 
-        const plantStageImages = await Promise.all(plantStagesPromises);
-        const currentDate = new Date();
+            const plantStageImages = await Promise.all(plantStagesPromises);
+            const currentDate = new Date();
 
-        if (plantVectorChoices && plantVectorChoices.length >= 4) {
-            const plantDocRef: DocumentReference = await createPlant(
-                0,
-                [...plantStageImages, plantVectorChoices[plantChoiceIndex]],
-                plantNameChoices[plantChoiceIndex],
-                plantLatinNames[plantChoiceIndex],
-                getDecayDate(currentDate),
-                true,
-            );
-            const groupDocRef = groups[0];
+            // get choices ref and the chosen plant ref inside the choices ref
+
+            if (!plantChoicesRef) {
+                console.error('Plant choices ref is not available.');
+                return;
+            }
+
+            await updateDoc(plantChoicesRef, {
+                // remove group reference from undecided array and add it to decided array
+                undecided: arrayRemove(groups.at(-1)),
+                decided: arrayUnion(groups.at(-1)),
+            });
+
+            const choicesDoc = await getDoc(plantChoicesRef)
+
+            if (!choicesDoc.exists()) {
+                console.error('Choices document does not exist.');
+                return;
+            }
+            const plantDocRef: DocumentReference = choicesDoc.data().plants.at(plantChoiceIndex);
+
+            // add stage images and new decay date to the plant
+            const newDecayDate = getDecayDate(currentDate);
+
+            await updateDoc(plantDocRef, {
+                growStateImageUrls: [ ...plantStageImages, ...plantVectorChoices[plantChoiceIndex]],
+                decayAt: newDecayDate,
+            });
+
+            const groupDocRef = groups.at(-1);
             await setPlant(groupDocRef, plantDocRef);
             setCurrentPlant(plantDocRef);
-        } else {
-            console.error('Plant image choices not found');
+            await fetchGroups();
+            await checkPlant();
+        } catch (error) {
+            console.error('Error choosing plant:', error);
         }
     }
 
-    const handleGeneratePlantNames = async () => {
-        const plantNames = await generatePlantInfo();
-        console.log('Plant Names:', plantNames);
-        setPlantNameChoices(plantNames.map((plant) => plant.common));
-        setPlantLatinNames(plantNames.map((plant) => plant.scientific));
+    const handleGeneratePlantTextChoices = async () => {
+        const plantObjects = await generatePlantInfo();
+        console.log('Plant Names:', plantObjects);
+        setPlantTextChoices(plantObjects);
     }
 
-    const handleGeneratePlantChoices = async () => {
-        if (plantNameChoices.length === 0) return; // Ensure there are plant names
-        console.log('Plant choices generation started');
-        const plantChoicesPromises = plantNameChoices.map(async (plantName) => {
-            console.log(`Generating vector for: ${plantName}`);
-            const downloadURL = await generateVectorAndUploadImage(
-                `isolated ${plantName} plant at the fruiting growth stage, white background, isometric perspective, flat vector art style`,
-                `plants/${uuid.v4()}-${plantName}-${'fruiting'}-${Date.now()}.png`,
-                `plants/${uuid.v4()}-${plantName}-${'fruiting'}-${Date.now()}.svg`,
-            );
-            return downloadURL;
-        });
+    const handleGeneratePlantVectors = async () => {
+        try{
+            if (plantTextChoices.length === 0 || plantVectorChoices.length != 0) return; // Ensure there are plant names
+            console.log('Plant choices generation started');
+            const plantChoicesPromises = plantTextChoices.map(async (plantChoice) => {
+                console.log(`Generating vector for: ${plantChoice.common}`);
+                const downloadURL = await generateVectorAndUploadImage(
+                    `isolated ${plantChoice.common} plant at the fruiting growth stage, white background, isometric perspective, flat vector art style`,
+                    `plants/${uuid.v4()}-${plantChoice.common}-${'fruiting'}-${Date.now()}.png`,
+                    `plants/${uuid.v4()}-${plantChoice.common}-${'fruiting'}-${Date.now()}.svg`,
+                );
+                return downloadURL;
+            });
 
-        const plantChoices = await Promise.all(plantChoicesPromises);
-        setPlantVectorChoices(plantChoices);
-        console.log('Plant choices generation completed: ' + plantChoices);
+            const plantChoices: string[] = await Promise.all(plantChoicesPromises);
+            setPlantVectorChoices(plantChoices);
+            console.log('Plant choices generation completed: ' + plantChoices);
+        } catch (error) {
+            console.error('Error generating plant vectors:', error);
+        }
     };
+
+    const handleConstructPlantChoices = async () => {
+        try {
+            if (plantTextChoices.length === 0) {
+                console.error('Plant text choices are empty.');
+                return;
+            } else if (plantVectorChoices.length === 0) {
+                console.error('Plant vector choices are empty.');
+                return;
+            } else if (plantVectorChoices.length != plantTextChoices.length) {
+                console.error('Plant text and vector choices do not match in length.');
+                console.error('Plant Text Choices:', plantTextChoices);
+                console.error('Plant Vector Choices:', plantVectorChoices);
+                return;
+            }
+
+            let plantChoicesData: PlantChoice[] = [];
+
+            const plantRefs = plantTextChoices.map(async (plant, i) => {
+                const plantChoiceData: PlantChoice = {
+                    growState: 0,
+                    growStateImageUrls: [plantVectorChoices[i]],
+                    decayAt: getDecayDate(new Date()),
+                    isOwned: false,
+                    common: plant.common,
+                    scientific: plant.scientific,
+                    family: plant.family,
+                    genus: plant.genus,
+                    species: plant.species,
+                    habitat: plant.habitat,
+                    region: plant.region,
+                    uses: plant.uses,
+                    description: plant.description,
+                    habit: plant.habit,
+                    flowering: plant.flowering,
+                    edible: plant.edible,
+                    toxicity: plant.toxicity,
+                };
+                plantChoicesData.push(plantChoiceData);
+                const plantRef = await createPlant(
+                    0,
+                    [plantVectorChoices[i]],
+                    getDecayDate(new Date()),
+                    false,
+                    plant.common,
+                    plant.scientific,
+                    plant.family,
+                    plant.genus,
+                    plant.species,
+                    plant.habitat,
+                    plant.region,
+                    plant.uses,
+                    plant.description,
+                    plant.habit,
+                    plant.flowering,
+                    plant.edible,
+                    plant.toxicity,
+                );
+                return plantRef;
+            }
+            );
+
+            const plantRefsArray = await Promise.all(plantRefs);
+
+            const choicesRef = await createChoices(groups.at(-1), plantRefsArray);
+
+            console.log('Choices Ref:', choicesRef);
+
+            setPlantChoicesRef(choicesRef);
+        } catch (error) {
+            console.error('Error constructing plant choices:', error);
+        }
+    }
 
     const handleModalClose = (userResponse: string) => {
         setModalVisible(false);
@@ -433,7 +604,7 @@ export function Group() {
         const fetchUserProgress = async () => {
             if (groupMembers.length === 0 || groups.length === 0) return;
 
-            const logs = await fetchApprovedLogs(groups[0]); // Fetch approved logs
+            const logs = await fetchApprovedLogs(groups.at(-1)); // Fetch approved logs
             const userProgressData = groupMembers.map((member) => {
                 const authoredLogs = logs.filter((log) => log.author?.id === member.id); // Filter logs by member ID
                 return {
@@ -468,16 +639,25 @@ export function Group() {
                                     <TouchableOpacity onPress={() => handleChoosePlant(0)} disabled={plantVectorChoices && plantVectorChoices.length >= 4 ? false : true}>
                                         <Box className='flex-col flex justify-center align-middle items-center w-40 h-auto'>
 
-                                            <Box className='w-40 h-40'>
-                                            {plantVectorChoices ? <SvgUri uri={plantVectorChoices[0]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="small" color={colors.gray[500]} />}
+                                            <Box className='flex w-40 h-40 justify-center'>
+                                            {plantVectorChoices.length > 0 ? <SvgUri uri={plantVectorChoices[0]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="large" color={'#788478'} />}
                                             </Box>
 
-                                            <Heading size='lg' className="font-bold text-neutral-300 pt-2">
-                                                {plantNameChoices[0]}
-                                            </Heading>
-                                            <Text size='lg' italic className="font-italic text-neutral-300">
-                                                {plantLatinNames[0]}
-                                            </Text>
+                                            {plantTextChoices.length > 0 ? (
+                                                <Box className='flex-col align-middle justify-center items-center'>
+                                                    <Heading size='lg' className="font-bold text-neutral-300 pt-2">
+                                                        {plantTextChoices[0]?.common}
+                                                    </Heading>
+                                                    <Text size='lg' italic className="font-italic text-neutral-300">
+                                                        {plantTextChoices[0]?.scientific}
+                                                    </Text>
+                                                </Box>
+                                            ) : (
+                                                <Box className='flex-col align-middle justify-center items-center gap-2 pb-4'>
+                                                    <SkeletonText _lines={1} className='h-4 w-32 bg-slightGreen'/>
+                                                    <SkeletonText _lines={1} className='h-4 w-20 bg-slightGreen'/>
+                                                </Box>
+                                            )}
                                         </Box>
                                     </TouchableOpacity>
                                 </View>
@@ -485,15 +665,24 @@ export function Group() {
                                     <TouchableOpacity onPress={() => handleChoosePlant(1)} disabled={plantVectorChoices && plantVectorChoices.length >= 4 ? false : true}>
                                         <Box className='flex-col flex justify-center align-middle items-center w-40 h-auto'>
 
-                                            <Box className='w-40 h-40'>
-                                            {plantVectorChoices ? <SvgUri uri={plantVectorChoices[1]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="small" color={colors.gray[500]} />}
+                                            <Box className='flex w-40 h-40 justify-center'>
+                                            {plantVectorChoices.length > 0 ? <SvgUri uri={plantVectorChoices[1]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="large" color={'#788478'} />}
                                             </Box>
-                                            <Heading size='lg' className="font-bold text-neutral-300 pt-2">
-                                                {plantNameChoices[1]}
-                                            </Heading>
-                                            <Text size='lg' italic className="font-italic text-neutral-300">
-                                                {plantLatinNames[1]}
-                                            </Text>
+                                            {plantTextChoices.length > 0 ? (
+                                                <Box className='flex-col align-middle justify-center items-center'>
+                                                    <Heading size='lg' className="font-bold text-neutral-300 pt-2">
+                                                        {plantTextChoices[1]?.common}
+                                                    </Heading>
+                                                    <Text size='lg' italic className="font-italic text-neutral-300">
+                                                        {plantTextChoices[1]?.scientific}
+                                                    </Text>
+                                                </Box>
+                                            ) : (
+                                                <Box className='flex-col align-middle justify-center items-center gap-2 pb-4'>
+                                                    <SkeletonText _lines={1} className='h-4 w-32 bg-slightGreen'/>
+                                                    <SkeletonText _lines={1} className='h-4 w-20 bg-slightGreen'/>
+                                                </Box>
+                                            )}
                                         </Box>
                                     </TouchableOpacity>
                                 </View>
@@ -503,15 +692,24 @@ export function Group() {
                                     <TouchableOpacity onPress={() => handleChoosePlant(2)} disabled={plantVectorChoices && plantVectorChoices.length >= 4 ? false : true}>
                                         <Box className='flex-col flex justify-center align-middle items-center w-40 h-auto'>
 
-                                            <Box className='w-40 h-40'>
-                                            {plantVectorChoices ? <SvgUri uri={plantVectorChoices[2]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="small" color={colors.gray[500]} />}
+                                            <Box className='flex w-40 h-40 justify-center'>
+                                            {plantVectorChoices.length > 0 ? <SvgUri uri={plantVectorChoices[2]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="large" color={'#788478'} />}
                                             </Box>
-                                            <Heading size='lg' className="font-bold text-neutral-300 pt-2">
-                                                {plantNameChoices[2]}
-                                            </Heading>
-                                            <Text size='lg' className="font-italic text-neutral-300">
-                                                {plantLatinNames[2]}
-                                            </Text>
+                                            {plantTextChoices.length > 0 ? (
+                                                <Box className='flex-col align-middle justify-center items-center'>
+                                                    <Heading size='lg' className="font-bold text-neutral-300 pt-2">
+                                                        {plantTextChoices[2]?.common}
+                                                    </Heading>
+                                                    <Text size='lg' italic className="font-italic text-neutral-300">
+                                                        {plantTextChoices[2]?.scientific}
+                                                    </Text>
+                                                </Box>
+                                            ) : (
+                                                <Box className='flex-col align-middle justify-center items-center gap-2 pb-4'>
+                                                    <SkeletonText _lines={1} className='h-4 w-32 bg-slightGreen'/>
+                                                    <SkeletonText _lines={1} className='h-4 w-20 bg-slightGreen'/>
+                                                </Box>
+                                            )}
                                         </Box>
                                     </TouchableOpacity>
                                 </View>
@@ -519,20 +717,36 @@ export function Group() {
                                     <TouchableOpacity onPress={() => handleChoosePlant(3)} disabled={plantVectorChoices && plantVectorChoices.length >= 4 ? false : true}>
                                         <Box className='flex-col flex justify-center align-middle items-center w-40 h-auto'>
 
-                                            <Box className='w-40 h-40'>
-                                            {plantVectorChoices ? <SvgUri uri={plantVectorChoices[3]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="small" color={colors.gray[500]} />}
+                                            <Box className='flex w-40 h-40 justify-center'>
+                                            {plantVectorChoices.length > 0 ? <SvgUri uri={plantVectorChoices[3]} onError={(e) => console.log('Image failed to load', e)} className='w-40 h-40'/> : <Spinner size="large" color={'#788478'} />}
                                             </Box>
-                                            <Heading size='lg' className="font-bold text-neutral-300 pt-2">
-                                                {plantNameChoices[3]}
-                                            </Heading>
-                                            <Text size='lg' italic className="font-italic text-neutral-300">
-                                                {plantLatinNames[3]}
-                                            </Text>
+                                            {plantTextChoices.length > 0 ? (
+                                                <Box className='flex-col align-middle justify-center items-center'>
+                                                    <Heading size='lg' className="font-bold text-neutral-300 pt-2">
+                                                        {plantTextChoices[3]?.common}
+                                                    </Heading>
+                                                    <Text size='lg' italic className="font-italic text-neutral-300">
+                                                        {plantTextChoices[3]?.scientific}
+                                                    </Text>
+                                                </Box>
+                                            ) : (
+                                                <Box className='flex-col align-middle justify-center items-center gap-2 pb-4'>
+                                                    <SkeletonText _lines={1} className='h-4 w-32 bg-slightGreen'/>
+                                                    <SkeletonText _lines={1} className='h-4 w-20 bg-slightGreen'/>
+                                                </Box>
+                                            )}
                                         </Box>
                                     </TouchableOpacity>
                                 </View>
                             </View>
                         </Box>
+                    </View>
+                ) : generatingPlant ? (
+                    <View className='p-5 gap-4 pb-28'>
+                        <Heading size='2xl' className="font-regular text-neutral-300">
+                            Generating plant...
+                        </Heading>
+                        <Spinner size="large" color={'#788478'} />
                     </View>
                 ) : currentPlant && hasGroups ? (
                     <Box className='flex flex-col items-center align-middle gap-4'>
@@ -554,7 +768,7 @@ export function Group() {
                         />
                         <Box>
                             {groups.length > 0 ? (
-                                <DaysOfTheWeek groupRef={groups[0]} />
+                                <DaysOfTheWeek groupRef={groups.at(-1)} />
                             ) : (
                                 <Text size='xl' className="font-regular text-neutral-300">
                                 Loading group information...
@@ -575,7 +789,7 @@ export function Group() {
                                 {plantLatinName}
                             </Text>
                         </Box>
-                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvedLogs.length} />
+                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvedLogs.length} totalLogs={groupLogs.length} />
 
                         <ScrollView className='w-96'>
                             <Box className='flex-col gap-2 pt-4'>
