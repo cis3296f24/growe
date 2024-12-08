@@ -1,5 +1,5 @@
-import React, { useState, useEffect, memo } from 'react';
-import { Image, View, TextInput, Button, StyleSheet, Dimensions, TouchableOpacity, ScrollViewBase } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useUser } from './UserContext';
 import { fetchApprovedLogs } from '../utils/log'
 import { DocumentReference, DocumentSnapshot, getDoc } from 'firebase/firestore';
@@ -9,19 +9,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import VerificationBar from './extra/VerificationBar';
 import FrequencyBar from './extra/FrequencyBar';
 import DaysOfTheWeek from './extra/DaysOfTheWeek';
-import Plant from '../assets/images/Plant.png';
 import UserProgress from './extra/UserProgress';
 import { getPlant, setPlant } from '@/utils/group';
-import { G } from 'react-native-svg';
 import { Box } from '@/components/ui/box';
 import { generateVectorAndUploadImage } from '@/utils/diffusion';
 import uuid from 'react-native-uuid';
 import { Spinner } from '@/components/ui/spinner';
-import colors, { current } from 'tailwindcss/colors';
+import colors from 'tailwindcss/colors';
 import { createPlant, getDecayDate, getCurrentGrowStateImage } from '@/utils/plant';
 import VotingModal from './VotingModal'
 import ProfilePic from '../assets/images/Avatar.png'
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native';
 import { Text } from '@/components/ui/text';
 import {
@@ -41,7 +38,6 @@ import { SvgUri } from 'react-native-svg';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from '@/utils/firebaseConfig';
 import PlantWithGlow from './extra/PlantWithGlow';
-import { set } from 'zod';
 
 const { width, height } = Dimensions.get('window');
 
