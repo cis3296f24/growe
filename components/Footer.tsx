@@ -6,16 +6,17 @@ import Group from '../assets/icons/group.svg';
 import Garden from '../assets/icons/garden.svg';
 import { usePathname } from 'expo-router';
 import { useUser } from './UserContext';
-import { checkUserHasGroup } from '../utils/group';
+import { getPlant } from '../utils/group';
 import { User } from 'firebase/auth';
 import { Box } from '@/components/ui/box';
+import { DocumentReference } from 'firebase/firestore';
 
 export default function Footer() {
   const router = useRouter();
   const [selected, setSelected] = useState('home');
   const pathname = usePathname();
   const { user } = useUser();
-  const [hasGroup, setHasGroup] = useState(false);
+  const [hasPlant, setHasPlant] = useState(false);
 
   useEffect(() => {
     console.log(pathname);
@@ -23,20 +24,20 @@ export default function Footer() {
   }, [pathname]);
 
   useEffect(() => {
-    const checkForGroup = async (user: User) => {
+    const checkForPlant = async (user: User) => {
       if (user) {
-        const result = await checkUserHasGroup(user)
+        const result = await getPlant(user)
         if (result) {
-          setHasGroup(true);
+          setHasPlant(true);
         } else {
-          setHasGroup(false);
+          setHasPlant(false);
         }
       }
     }
     if (user) {
-      checkForGroup(user);
+      checkForPlant(user);
     } else {
-      setHasGroup(false);
+      setHasPlant(false);
     }
   });
 
@@ -50,8 +51,8 @@ export default function Footer() {
       <TouchableOpacity onPress={() => handlePress('home')} disabled={selected === 'home'}>
         <Garden height={30} width={30} color={selected === 'home' ? '#ECFFEB' : '#B0C5AF'} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => handlePress('log')} disabled={selected === 'log' || !hasGroup}>
-        {hasGroup ? (
+      <TouchableOpacity onPress={() => handlePress('log')} disabled={selected === 'log' || !hasPlant}>
+        {hasPlant ? (
           <Log height={30} width={30} color={selected === 'log' ? '#ECFFEB' : '#B0C5AF'} />
         ) : (
           <Log height={30} width={30} color={'#757C75'} />
