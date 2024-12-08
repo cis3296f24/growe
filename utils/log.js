@@ -114,3 +114,33 @@ export const fetchUserLogs = async (userRef) => {
     return [];
   }
 };
+
+export const fetchGroupLogs = async (groupRef) => {
+  try {
+    // Ensure groupRef is valid
+    if (!groupRef) {
+      throw new Error("Group reference is null or undefined.");
+    }
+
+    // Create a query to fetch logs where the group is groupRef
+    const logsCollection = collection(db, "logs");
+    const logsQuery = query(logsCollection, where("group", "==", groupRef));
+
+    // Execute the query
+    const groupLogsSnapshot = await getDocs(logsQuery);
+
+    // Log the snapshot size
+    //console.log("Group logs snapshot size:", groupLogsSnapshot.size);
+
+    // Convert the snapshot to document references
+    const groupLogs = groupLogsSnapshot.docs.map(doc => doc.ref);
+
+    // Log the group logs
+    //console.log("Group logs:", groupLogs.length);
+
+    return groupLogs;
+  } catch (error) {
+    console.error("Error fetching group logs:", error);
+    return [];
+  }
+}
