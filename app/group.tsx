@@ -1,16 +1,10 @@
-import { Text, View } from "react-native";
 import { Group } from '../components/Group';
+import { Box } from '@/components/ui/box';
 
 export default function GroupLayout() {
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
+    <Box className="flex-1 justify-center items-center">
       <Group />
-    </View>
+    </Box>
   );
 }
