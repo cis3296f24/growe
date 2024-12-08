@@ -3,20 +3,21 @@ import { db } from "../utils/firebaseConfig";
 import {
     Modal,
     View,
-    Text,
     StyleSheet,
     TouchableOpacity,
     Image,
     ImageSourcePropType,
 } from 'react-native';
-import ThumbsDown from '../assets/icons/ThumbsDown.png';
-import ThumbsUp from '../assets/icons/ThumbsUp.png';
-import Unsure from '../assets/icons/Unsure.png';
+import { Box } from '@/components/ui/box';
+import { Text } from '@/components/ui/text';
+import { useFonts } from 'expo-font';
+import ThumbsDown from '@/assets/icons/thumbsDown.svg';
+import ThumbsUp from '@/assets/icons/thumbsUp.svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { updateDoc, arrayUnion, getDoc, DocumentReference, DocumentData, query, where, increment, doc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useUser } from './UserContext';
-
+import { Heading } from '@/components/ui/heading';
 
 interface ModalComponentProps {
     visible: boolean;
@@ -40,22 +41,15 @@ const VotingModal: React.FC<ModalComponentProps> = ({
     const currentUser = auth.currentUser;
     const [image, setImage] = useState(null)
     const { user } = useUser();
-    let votesNeeded = divideAndRoundDown(totalMembers)
-
-    function divideAndRoundDown(num: number) {
-        if (num % 2 !== 0) {
-            // If the number is odd, subtract 1 before dividing
-            return Math.floor(num / 2);
-        }
-        // If the number is even, divide normally
-        return num / 2;
-    }
+    const [fontsLoaded] = useFonts({
+        "SF-Pro-Rounded-Regular": require("../assets/fonts/SF-Pro-Rounded-Regular.ttf"),
+        "SF-Pro-Rounded-Bold": require("../assets/fonts/SF-Pro-Rounded-Bold.ttf"),
+        "cmunci": require("../assets/fonts/cmunci.ttf"),
+      });
 
     useEffect(() => {
         if (logRef) {
             getImageFromLogRef();
-        } else {
-            // console.warn("logRef is null or undefined.");
         }
     }, [logRef]); // Dependency array to only run when logRef changes
 
@@ -189,7 +183,7 @@ const VotingModal: React.FC<ModalComponentProps> = ({
         // @ts-ignore
         const userRef = doc(db, 'users', user.uid);
         try {
-            // Update the Firestore document by adding the user's ID to voteDeny
+            // Update the Firestore document by adding the userref to voteDeny
             await updateDoc(logRef, {
                 voteDeny: arrayUnion(userRef),
             });
@@ -209,33 +203,30 @@ const VotingModal: React.FC<ModalComponentProps> = ({
             onRequestClose={() => onClose('not sure')}
         >
             <LinearGradient colors={['#8E9F8D', '#596558']} style={styles.modalOverlay}>
-                <View style={styles.modalContainer}>
+                {/* add width 90% and height 80% to the tailwind*/}
+                <Box className='flex flex-col justify-between items-center w-auto h-auto p-20 gap-10'>
                     {/* Profile Picture */}
-                    <Image source={profilePic} style={styles.profilePic} />
+                    
+                    <Image source={profilePic} className='rounded-full w-16 h-16'/>
 
                     {/* Question */}
-                    <Text style={styles.question}>{question}</Text>
+                    <Heading size='xl' className='font-bold text-center text-white'>{question}</Heading>
 
                     {/* Main Image */}
-                    <Image source={image ? { uri: image } : undefined} style={styles.mainImage} />
-
-
-
-
+                    <Box className='bg-primaryGreen p-2 rounded-3xl'>
+                    <Image source={image ? { uri: image } : undefined} className='object-contain rounded-3xl' width={300} height={400}/>
+                    </Box>
                     {/* Buttons */}
-                    <View style={styles.buttonContainer}>
+                    <View className='flex-row justify-between w-full'>
                         <TouchableOpacity onPress={handleDownvote}>
-                            <Image style={styles.buttons} source={ThumbsDown} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => onClose('not sure')}>
-                            <Image style={styles.buttons} source={Unsure} />
+                            <ThumbsDown width={50} height={50} />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleUpvote}>
                             {/* <TouchableOpacity onPress={() => console.log(votesNeeded)}> */}
-                            <Image style={styles.buttons} source={ThumbsUp} />
+                            <ThumbsUp width={50} height={50} />
                         </TouchableOpacity>
                     </View>
-                </View>
+                </Box>
             </LinearGradient>
         </Modal>
     );
@@ -246,45 +237,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    modalContainer: {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        width: '90%',
-        height: '80%',
-        padding: 20,
-        backgroundColor: 'white',
-        borderRadius: 20,
-        alignItems: 'center',
-    },
-    profilePic: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        marginBottom: 10,
-    },
-    question: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    buttons: {
-        width: 40,
-        height: 40,
-    },
-    mainImage: {
-        width: '100%',
-        height: 200,
-        borderRadius: 15,
-        marginBottom: 20,
-        objectFit: "contain"
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
     },
 });
 
