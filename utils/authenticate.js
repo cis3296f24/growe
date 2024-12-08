@@ -1,8 +1,9 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile} from 'firebase/auth';
 //@ts-ignore
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { addUser } from './user';
 import { auth, db } from './firebaseConfig';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 
 // Sign Up Function

@@ -9,8 +9,8 @@ import {
   withStyleContext,
   useStyleContext,
 } from '@gluestack-ui/nativewind-utils/withStyleContext';
-const SCOPE = 'AVATAR';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+const SCOPE = 'AVATAR';
 
 const UIAvatar = createAvatar({
   Root: withStyleContext(View, SCOPE),
