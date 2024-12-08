@@ -1,50 +1,67 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import Avatar from '../../assets/images/Avatar.png';
-import colors, { current } from 'tailwindcss/colors';
 import { Box } from '@/components/ui/box';
 
 interface UserProgressProps {
-  frequency: number; // Total votes needed to fill the tube
-  totalVotes: number; // Votes already completed
+  frequency: number;        // Total votes needed to fill the tube
+  approvedUserLogs: number; // Total approved logs
+  totalUserLogs: number;    // Total logs
 }
 
-const UserProgress: React.FC<UserProgressProps> = ({ frequency, totalVotes }) => {
-  const totalCells = frequency; // Fixed number of normal cells
-  const excessVotes = totalVotes > frequency ? totalVotes - frequency : 0; // Calculate excess votes
+const UserProgress: React.FC<UserProgressProps> = ({ frequency, approvedUserLogs, totalUserLogs }) => {
+  // Determine how many cells to render
+  const totalCells = Math.max(frequency, totalUserLogs);
 
   return (
-    <Box className='flex-row items-center gap-2 w-full'>
+    <Box className='flex-row items-center gap-2 w-full px-4'>
       {/* Avatar */}
       <Box className='pr-1'>
         <Image source={Avatar} className='h-12 w-12 rounded-full' />
       </Box>
 
-      {/* Progress Bar with Outer Tube */}
+      {/* Progress Bar */}
       <Box className='flex-1'>
-        <Box className='flex-row bg-[#92A491] rounded-full h-5 items-center justify-between p-2'>
-          {/* Render normal cells */}
+        <Box className='flex-row bg-[#92A491] rounded-full h-6 items-center justify-between p-1'>
           {Array.from({ length: totalCells }).map((_, index) => {
-            const isFilled = index < totalVotes;
+            const isWithinFrequency = index < frequency;
+            const isApproved = index < approvedUserLogs;
+            const isPending = index >= approvedUserLogs && index < totalUserLogs;
+
+            let cellColor = '#92A491'; // default (unfilled)
+            let cellStyle: any = [styles.cell];
+
+            if (isApproved) {
+              // Approved cell
+              if (isWithinFrequency) {
+                // Approved within frequency
+                cellColor = '#BED3BD';
+              } else {
+                // Approved beyond frequency
+                cellColor = '#FFF8AA';
+              }
+            } else if (isPending) {
+              // Pending cell
+              if (isWithinFrequency) {
+                // Pending within frequency (greenish cell but with a greenish glow)
+                cellColor = '#BED3BD';
+                cellStyle.push(styles.pendingGlowGreen);
+              } else {
+                // Pending beyond frequency (gold cell with gold glow)
+                cellColor = '#FFF8AA';
+                cellStyle.push(styles.pendingGlowGold);
+              }
+            }
+
+            cellStyle.push({ backgroundColor: cellColor });
 
             return (
-              <Box
-                key={`normal-${index}`}
-                style={[
-                  styles.cell,
-                  isFilled && styles.filledCell, // Highlight filled cells
-                ]}
+              <View
+                key={index}
+                style={cellStyle}
               />
             );
           })}
-
-          {/* Render excess cells */}
-          {Array.from({ length: excessVotes }).map((_, index) => (
-            <Box
-              key={`excess-${index}`}
-              style={[styles.cell, styles.goldCell]} // Excess cells are gold
-            />
-          ))}
         </Box>
       </Box>
     </Box>
@@ -53,17 +70,31 @@ const UserProgress: React.FC<UserProgressProps> = ({ frequency, totalVotes }) =>
 
 const styles = StyleSheet.create({
   cell: {
-    flex: 1, // Ensures cells evenly distribute space
+    flex: 1,
     height: '100%',
-    backgroundColor: '#92A491', // Default unfilled cell color
     borderRadius: 10,
-    marginHorizontal: 1, // Reduced space between cells
+    marginHorizontal: 1,
   },
-  filledCell: {
-    backgroundColor: '#BED3BD', // Color for filled cells
+  // Glow styles for pending cells within frequency
+  pendingGlowGreen: {
+    opacity: 0.7,
+    // iOS shadow
+    shadowColor: '#BED3BD',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    // For Android, try elevation or background layering tricks
+    elevation: 4,
   },
-  goldCell: {
-    backgroundColor: 'gold', // Color for excess cells
+  // Glow styles for pending cells beyond frequency
+  pendingGlowGold: {
+    // iOS shadow
+    opacity: 0.7,
+    shadowColor: '#FFF8AA',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });
 

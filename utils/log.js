@@ -1,5 +1,4 @@
-import { Timestamp, addDoc, collection, doc, getDoc } from "firebase/firestore";
-import { updateDoc, arrayUnion } from "firebase/firestore";
+import { Timestamp, addDoc, collection, doc, getDoc, getDocs, query, where, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { checkUserHasGroup } from "@/utils/group";
 
@@ -82,6 +81,36 @@ export const fetchApprovedLogs = async (groupRef) => {
     return filteredLogs;
   } catch (error) {
     console.error("Error fetching approved logs:", error);
+    return [];
+  }
+};
+
+export const fetchUserLogs = async (userRef) => {
+  try {
+    // Ensure userRef is valid
+    if (!userRef) {
+      throw new Error("User reference is null or undefined.");
+    }
+
+    // Create a query to fetch logs where the author is userRef
+    const logsCollection = collection(db, "logs");
+    const logsQuery = query(logsCollection, where("author", "==", userRef));
+
+    // Execute the query
+    const userLogsSnapshot = await getDocs(logsQuery);
+
+    // Log the snapshot size
+    //console.log("User logs snapshot size:", userLogsSnapshot.size);
+
+    // Convert the snapshot to an array of log data
+    const userLogs = userLogsSnapshot.docs.map(doc => doc.data());
+
+    // Log the user logs
+    //console.log("User logs:", userLogs.length);
+
+    return userLogs;
+  } catch (error) {
+    console.error("Error fetching user logs:", error);
     return [];
   }
 };
