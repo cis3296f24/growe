@@ -22,6 +22,7 @@ module.exports = {
         secondaryGreen: '#BED3BD',
         baseGreen: '#4F584F',
         highlightGreen: '#ECFFEB',
+        slightGreen: '#788478',
         primary: {
           0: 'rgb(var(--color-primary-0)/<alpha-value>)',
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',
