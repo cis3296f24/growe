@@ -1,15 +1,26 @@
 import { collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, QuerySnapshot, DocumentSnapshot, DocumentReference } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
-export const createPlant = async (growState = 0, growStateImageUrls, plantName, plantLatinName, decayAt, isOwned) => {
+export const createPlant = async (growState = 0, growStateImageUrls, decayAt, isOwned, common, scientific, family, genus, species, habitat, region, uses, description, habit, flowering, edible, toxicity) => {
     const plantRef = collection(db, 'plants');
     const plantDoc = {
         growState: growState,
         growStateImageUrls: growStateImageUrls,
-        plantName: plantName,
-        plantLatinName: plantLatinName,
         decayAt: decayAt,
         isOwned: isOwned,
+        common: common,
+        scientific: scientific,
+        family: family,
+        genus: genus,
+        species: species,
+        habitat: habitat,
+        region: region,
+        uses: uses,
+        description: description,
+        habit: habit,
+        flowering: flowering,
+        edible: edible,
+        toxicity: toxicity
     };
     const newPlantDoc = await addDoc(plantRef, plantDoc);
     const plantDocRef = doc(db, 'plants', newPlantDoc.id);
