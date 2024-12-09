@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
+import { getPlant } from '@/utils/group'; // Import update function
+import { useUser } from '@/components/UserContext';
+import { updatePlantGrowState } from '@/utils/plant';
 
 interface VerificationProgressProps {
   frequency?: number;    // Frequency value (cells per user)
@@ -17,6 +20,23 @@ const VerificationProgress: React.FC<VerificationProgressProps> = ({
   const totalNeeded = frequency * totalUsers;
   const stages = 6; // Fixed number of plant stages
   const logsPerStage = totalNeeded > 0 ? totalNeeded / stages : 0;
+  const { user } = useUser();
+
+  useEffect(() => {
+    const updateGrowState = async () => {
+      if (totalNeeded === 0) return;
+
+      const fullStagesCompleted = Math.floor(approvedLogs / logsPerStage);
+      const growState = Math.min(fullStagesCompleted, 5); // Ensure growState is between 0 and 5
+
+      const plant = await getPlant(user);
+      if (plant) {
+        await updatePlantGrowState(plant, growState);
+      }
+    };
+
+    updateGrowState();
+  }, [approvedLogs, totalNeeded, logsPerStage, user]);
 
   if (totalNeeded === 0) {
     return <Text>No data available</Text>;
