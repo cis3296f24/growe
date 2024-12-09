@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, View, Image } from "react-native";
-import Svg, { Path } from "react-native-svg";
+import { SvgUri } from 'react-native-svg';
 import GrassSVG from '../assets/terrain/GrassSVG.svg';
 import BushSVG from '../assets/terrain/BushSVG.svg';
 import DirtSVG from '../assets/terrain/DirtSVG.svg';
@@ -17,11 +17,11 @@ type Cell = {
 
 type Grid = Cell[][];
 
-export default function PlantGrid() {
+export default function ProceduralPlatform() {
     const [gridSize, setGridSize] = useState(3);
     const [grid, setGrid] = useState<Grid>([]);
     const { user } = useUser();
-    const [plantImageUrls, setPlantImageUrls] = useState<string[]>(['https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fd4c7ced8-bab7-4a12-b5e0-5423271ea60c-Bird%20of%20Paradise-fruiting-1733687584833.svg?alt=media&token=8e203404-ea95-4ac9-8cdd-3c1e5886230f', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fd4c7ced8-bab7-4a12-b5e0-5423271ea60c-Bird%20of%20Paradise-fruiting-1733687584833.svg?alt=media&token=8e203404-ea95-4ac9-8cdd-3c1e5886230f']);
+    const [plantImageUrls, setPlantImageUrls] = useState<string[]>([]);
 
     const BLOCK_TYPES = [
         { type: 'grass_block', plantable: true },
@@ -68,10 +68,11 @@ export default function PlantGrid() {
         return newGrid;
     };
 
-    const plantPlants = (grid: Grid): Grid => {
-        let updatedGrid = [...grid];
-        let plantsToPlant = [...plantImageUrls];
-        while (plantsToPlant.length > 0) {
+    const plantPlants = (grid: Grid, plantsToPlant: string[]): { updatedGrid: Grid; remainingPlants: string[] } => {
+        let updatedGrid = grid.map(row => row.map(cell => ({ ...cell })));
+        let remainingPlants = [...plantsToPlant];
+
+        while (remainingPlants.length > 0) {
             const availableCells: { row: number; col: number }[] = [];
             updatedGrid.forEach((row, r) => {
                 row.forEach((cell, c) => {
@@ -89,18 +90,18 @@ export default function PlantGrid() {
                 continue;
             }
 
-            for (let i = 0; i < availableCells.length && plantsToPlant.length > 0; i++) {
+            for (let i = 0; i < availableCells.length && remainingPlants.length > 0; i++) {
                 const { row, col } = availableCells[i];
                 updatedGrid[row][col] = {
                     ...updatedGrid[row][col],
                     planted: true,
-                    plantImageUrl: plantsToPlant.shift(),
+                    plantImageUrl: remainingPlants.shift(),
                 };
             }
 
             break;
         }
-        return updatedGrid;
+        return { updatedGrid, remainingPlants };
     };
 
     useEffect(() => {
@@ -136,6 +137,7 @@ export default function PlantGrid() {
                 console.error('Error fetching garden for user', user, error);
                 const initialGrid = generateGrid(4, null);
                 setGrid(initialGrid);
+                //setPlantImageUrls(['https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fd4c7ced8-bab7-4a12-b5e0-5423271ea60c-Bird%20of%20Paradise-fruiting-1733687584833.svg?alt=media&token=8e203404-ea95-4ac9-8cdd-3c1e5886230f', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fd4c7ced8-bab7-4a12-b5e0-5423271ea60c-Bird%20of%20Paradise-fruiting-1733687584833.svg?alt=media&token=8e203404-ea95-4ac9-8cdd-3c1e5886230f']);
             }
         };
         fetchGarden(user);
@@ -144,9 +146,13 @@ export default function PlantGrid() {
     useEffect(() => {
         if (plantImageUrls.length > 0) {
             let updatedGrid = grid;
+            let plantsToPlant = [...plantImageUrls];
             do {
-                updatedGrid = plantPlants(updatedGrid);
-            } while (plantImageUrls.length > 0);
+                const result = plantPlants(updatedGrid, plantsToPlant);
+                updatedGrid = result.updatedGrid;
+                plantsToPlant = result.remainingPlants;
+                setPlantImageUrls(plantsToPlant);
+            } while (plantsToPlant.length > 0);
             setGrid(updatedGrid);
             // Save the new grid
             if (user) {
@@ -185,8 +191,8 @@ export default function PlantGrid() {
                         >
                             <BlockSVG blockType={cell.type} />
                             {cell.planted && cell.plantImageUrl && (
-                                <Image
-                                    source={{ uri: cell.plantImageUrl }}
+                                <SvgUri
+                                    uri={cell.plantImageUrl}
                                     style={styles.plantImage}
                                 />
                             )}
@@ -217,9 +223,9 @@ const styles = StyleSheet.create({
     },
     plantImage: {
         position: 'absolute',
-        width: 60,
-        height: 60,
-        top: 0,
-        left: 0,
+        width: 80,
+        height: 80,
+        bottom: 22,
+        left: 10,
     },
 });

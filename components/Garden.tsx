@@ -5,14 +5,13 @@ import {
     StyleSheet,
     Image,
     TouchableOpacity,
-    Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from './UserContext';
 import { DocumentReference } from 'firebase/firestore';
 import { checkUserHasGroup } from '../utils/group';
-import PlantGrid from '@/components/PlantGrid';
+import PlantGrid from '../components/Platform';
 import GardenLocalImage from '../assets/images/Garden.png'; // Local image
 
 export function Garden() {
