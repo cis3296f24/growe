@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, SafeAreaView } from 'react-native';
-import { signUp, login, logout, checkUsernameExists, checkEmailExists, resetPassword } from '../utils/authenticate';
+import { signUp, login, logout, checkUsernameExists, checkEmailExists, resetPassword } from '@/utils/authenticate';
 import { User } from 'firebase/auth';
 import Logo from '../assets/icons/logo.svg';
 import { useRouter } from 'expo-router';

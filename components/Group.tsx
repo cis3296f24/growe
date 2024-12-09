@@ -41,7 +41,7 @@ import { auth } from '@/utils/firebaseConfig';
 import PlantWithGlow from './extra/PlantWithGlow';
 import { Skeleton, SkeletonText } from '@/components/ui/skeleton';
 import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
-import { set } from 'zod';
+import { createGarden, getGarden } from '@/utils/garden';
 
 const { width, height } = Dimensions.get('window');
 
@@ -402,14 +402,15 @@ export function Group() {
         console.log("a;lskdjfa;lskdjf;lksadjf");
 
 
-        const newUserGroup = await createGroup(user, groupName, habit, frequency);
+        const newUserGroupRef = await createGroup(user, groupName, habit, frequency);
+        const gardenRef = await createGarden(newUserGroupRef)
 
-        if (!newUserGroup) {
+        if (!newUserGroupRef) {
             setError('Failed to create group');
             return;
         }
 
-        setGroups([newUserGroup]);
+        setGroups([newUserGroupRef]);
         setHasGroups(true);
         await fetchGroups();
     };
@@ -637,6 +638,15 @@ export function Group() {
 
     const handleChooseNewPlant = async () => {
         try {
+            const gardenRef = await getGarden(groups.at(-1));
+            if (!gardenRef) {
+                console.error('Garden reference is not available.');
+                return;
+            }
+            await updateDoc(gardenRef, {
+                plants: arrayUnion(currentPlant),
+            });
+
             const groupRef = groups.at(-1);
             if (!groupRef) {
                 console.error('Group reference is not available.');
