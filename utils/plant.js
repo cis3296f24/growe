@@ -83,3 +83,15 @@ export const getCurrentGrowStateImage = async (plantRef) => {
   const growStateImageUrls = plantData.growStateImageUrls;
   return growStateImageUrls[growState];
 }
+
+export const updatePlantGrowState = async (plantRef, growState) => {
+  const plantDoc = await getDoc(plantRef);
+  const plantData = plantDoc.data();
+  const growStateImageUrls = plantData.growStateImageUrls;
+  if (growState >= growStateImageUrls.length) {
+    throw new Error('Invalid Grow State');
+  }
+  await updateDoc(plantRef, { growState: growState });
+  console.log('Plant grow state updated to:', growState);
+  return growState;
+}

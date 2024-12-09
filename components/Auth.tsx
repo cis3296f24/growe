@@ -141,11 +141,7 @@ export function Auth() {
     <View style={styles.container}>
       <Logo width={50} height={50} style={styles.icon} />
       {user ? (
-        <View style={styles.userContainer}>
-          <Text style={styles.welcomeText}>welcome {username ?? 'user'}.</Text>
-          <Button title="logout" onPress={handleLogout} />
-          <Button title="go to groups" onPress={() => router.push(`./group`)} />
-        </View>
+        <View style={styles.userContainer}/>
       ) : (
         <View>
           {step === 'login-email' && (

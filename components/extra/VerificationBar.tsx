@@ -1,6 +1,8 @@
-import React from 'react';
-import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
+import { getPlant } from '@/utils/group'; // Import update function
+import { useUser } from '@/components/UserContext';
+import { updatePlantGrowState } from '@/utils/plant';
 
 interface VerificationProgressProps {
   frequency?: number;    // Frequency value (cells per user)
@@ -18,15 +20,32 @@ const VerificationProgress: React.FC<VerificationProgressProps> = ({
   const totalNeeded = frequency * totalUsers;
   const stages = 6; // Fixed number of plant stages
   const logsPerStage = totalNeeded > 0 ? totalNeeded / stages : 0;
+  const { user } = useUser();
+
+  useEffect(() => {
+    const updateGrowState = async () => {
+      if (totalNeeded === 0) return;
+
+      const fullStagesCompleted = Math.floor(approvedLogs / logsPerStage);
+      const growState = Math.min(fullStagesCompleted, 5); // Ensure growState is between 0 and 5
+
+      const plant = await getPlant(user);
+      if (plant) {
+        await updatePlantGrowState(plant, growState);
+      }
+    };
+
+    updateGrowState();
+  }, [approvedLogs, totalNeeded, logsPerStage, user]);
 
   if (totalNeeded === 0) {
     return <Text>No data available</Text>;
   }
 
   return (
-    <View className="justify-center items-center">
+    <View style={styles.container}>
       {/* Outer tube */}
-      <View className="flex-row bg-[#92A491] rounded-full h-5 w-80 overflow-hidden items-center justify-center p-1">
+      <View style={styles.outerTube}>
         {Array.from({ length: stages }).map((_, index) => {
           // Calculate how many logs fall into this cell
           const cellStart = index * logsPerStage;
@@ -48,45 +67,30 @@ const VerificationProgress: React.FC<VerificationProgressProps> = ({
 
           if (totalFraction > 0) {
             // The cell is partially or fully filled
-            // If fully filled (totalFraction === 1), just solid color (#BED3BD)
-            // If partially filled (totalFraction < 1), show a gradient from #BED3BD to #92A491
-            const cellWidth = 0; // We'll use flex:1, so we rely on parent layout for sizing
-            const gradientColors: [string, string] = totalFraction < 1
-              ? ['#BED3BD', '#92A491'] // partial fill gradient
-              : ['#BED3BD', '#BED3BD']; // full fill (no gradient visually, same color start & end)
+            const fillWidthPercent = totalFraction * 100;
 
             cellContent = (
-              <View style={StyleSheet.absoluteFill}>
-                <LinearGradient
-                  colors={gradientColors}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={[
-                    styles.fillContainer,
-                    { flex: totalFraction }, // fill up to the fraction
-                  ]}
-                >
-                  {/* Approved portion: solid fill (no glow) */}
-                  {approvedFraction > 0 && (
-                    <View
-                      style={[
-                        styles.innerSegment,
-                        { flex: approvedFraction / totalFraction }, // proportion of the filled area
-                      ]}
-                    />
-                  )}
+              <View style={[styles.fillContainer, { width: `${fillWidthPercent}%` }]}>
+                {/* Approved portion */}
+                {approvedFraction > 0 && (
+                  <View
+                    style={[
+                      styles.innerSegment,
+                      { flex: approvedFraction / totalFraction },
+                    ]}
+                  />
+                )}
 
-                  {/* Pending portion: if any, has a glow */}
-                  {pendingFraction > 0 && (
-                    <View
-                      style={[
-                        styles.innerSegment,
-                        styles.pendingGlow,
-                        { flex: pendingFraction / totalFraction },
-                      ]}
-                    />
-                  )}
-                </LinearGradient>
+                {/* Pending portion */}
+                {pendingFraction > 0 && (
+                  <View
+                    style={[
+                      styles.innerSegment,
+                      styles.pendingGlow,
+                      { flex: pendingFraction / totalFraction },
+                    ]}
+                  />
+                )}
               </View>
             );
           }
@@ -106,23 +110,40 @@ const VerificationProgress: React.FC<VerificationProgressProps> = ({
 };
 
 const styles = StyleSheet.create({
+  container: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  outerTube: {
+    flexDirection: 'row',
+    backgroundColor: '#92A491',
+    borderRadius: 50,
+    height: 20,
+    width: 320,
+    overflow: 'hidden',
+    padding: 2,
+  },
   cellOuter: {
     flex: 1,
     marginHorizontal: 1,
-    position: 'relative',
   },
   cell: {
     flex: 1,
-    backgroundColor: '#92A491', // default background
+    backgroundColor: '#92A491',
     borderRadius: 50,
     overflow: 'hidden',
+    position: 'relative',
   },
   fillContainer: {
     flexDirection: 'row',
     height: '100%',
+    backgroundColor: '#BED3BD',
+    position: 'absolute',
+    left: 0,
+    top: 0,
   },
   innerSegment: {
-    backgroundColor: '#BED3BD', // approved/pending base color
+    backgroundColor: '#BED3BD',
   },
   pendingGlow: {
     // Add glow/shadow for pending portion
