@@ -1,4 +1,4 @@
-import { Timestamp, addDoc, collection, doc, getDoc, getDocs, query, where, updateDoc, arrayUnion } from "firebase/firestore";
+import { Timestamp, addDoc, collection, doc, getDoc, getDocs, query, where, updateDoc, arrayUnion, deleteDoc } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { checkUserHasGroup } from "@/utils/group";
 
@@ -112,6 +112,52 @@ export const fetchUserLogs = async (userRef) => {
   } catch (error) {
     console.error("Error fetching user logs:", error);
     return [];
+  }
+};
+
+export const clearAllLogs = async (userRef, groupRef) => {
+  try {
+    // Ensure userRef is valid
+    if (!userRef) {
+      throw new Error("User reference is null or undefined.");
+    }
+
+    // clear the group document's approvedLogs field
+    await updateDoc(groupRef, {
+      approvedLogs: [],
+    });
+
+    // clear the user document's approvedLogs field
+    await updateDoc(userRef, {
+      approvedLogs: [],
+    });
+
+    // Create a query to fetch logs where the author is userRef
+    const logsCollection = collection(db, "logs");
+    const logsQuery = query(logsCollection, where("author", "==", userRef));
+
+    // Execute the query
+    const userLogsSnapshot = await getDocs(logsQuery);
+
+    // Log the snapshot size
+    //console.log("User logs snapshot size:", userLogsSnapshot.size);
+
+    // Convert the snapshot to an array of log references
+    const userLogs = userLogsSnapshot.docs.map(doc => doc.ref);
+
+    // Log the user logs
+    //console.log("User logs:", userLogs.length);
+
+    // Delete each log reference
+    await Promise.all(userLogs.map(async (logRef) => {
+      await deleteDoc(logRef);
+    }));
+
+    return true;
+  }
+  catch (error) {
+    console.error("Error clearing user logs:", error);
+    return false;
   }
 };
 
