@@ -13,6 +13,8 @@ import { DocumentReference } from 'firebase/firestore';
 import { checkUserHasGroup } from '../utils/group';
 import PlantGrid from '../components/Platform';
 import GardenLocalImage from '../assets/images/Garden.png'; // Local image
+import { Box } from '@/components/ui/box';
+import { Heading } from '@/components/ui/heading';
 
 export function Garden() {
     const router = useRouter();
@@ -35,8 +37,6 @@ export function Garden() {
         fetchGroups();
     }, [user]);
 
-
-
        return (
         <LinearGradient
             colors={['#8E9F8D', '#596558']}
@@ -44,7 +44,12 @@ export function Garden() {
             end={{ x: 0, y: 1 }}
             style={{ width: "100%", height: "100%" }}
         >
-            <PlantGrid />
+            <Box className='flex-col justify-center items-center align-middle translate-y-[100]'>
+                <Heading className='text-center text-white translate-y-[75]' size='2xl'>{`Hi ${user?.displayName?.charAt(0).toUpperCase()}${user?.displayName?.slice(1)}`}</Heading>
+                <Box className='flex-col justify-center items-center align-middle translate-y-[-150]'>
+                    <PlantGrid />
+                </Box>
+            </Box>
         </LinearGradient>
     );
 }
