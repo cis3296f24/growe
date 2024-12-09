@@ -5,12 +5,14 @@ import {
     StyleSheet,
     Image,
     TouchableOpacity,
+    Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from './UserContext';
 import { DocumentReference } from 'firebase/firestore';
 import { checkUserHasGroup } from '../utils/group';
+import PlantGrid from '../components/Platform';
 import GardenLocalImage from '../assets/images/Garden.png'; // Local image
 
 export function Garden() {
@@ -34,35 +36,16 @@ export function Garden() {
         fetchGroups();
     }, [user]);
 
-    return (
+
+
+       return (
         <LinearGradient
             colors={['#8E9F8D', '#596558']}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={{ width: "100%", height: "100%" }}
         >
-            {hasGroups ? (
-                <View style={styles.container}>
-                    <Image
-                        source={GardenLocalImage} // Always use the local image
-                        style={styles.gardenImage}
-                        resizeMode="cover"
-                    />
-                    <Text style={styles.text}>Welcome to Your Garden!</Text>
-                </View>
-            ) : (
-                <View style={styles.noGroupContainer}>
-                    <Text style={styles.noGroupText}>
-                        You need to be in a group to start a garden!
-                    </Text>
-                    <TouchableOpacity
-                        style={styles.button}
-                        onPress={() => router.push({ pathname: '/group', params: {} })}
-                    >
-                        <Text style={styles.buttonText}>Go to Groups</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
+            <PlantGrid />
         </LinearGradient>
     );
 }
