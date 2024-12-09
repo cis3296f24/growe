@@ -222,6 +222,14 @@ export async function vectorize(imageUrl) {
  */
 export async function generateVectorAndUploadImage(prompt, imageFilePath, svgFilePath) {
   try {
+    // Step 0: If SVG already exists, return its download URL
+    const svgRef = ref(storage, svgFilePath);
+    const svgExists = await svgRef.getDownloadURL();
+    if (svgExists) {
+      console.log('SVG already exists:', svgExists);
+      return svgExists;
+    }
+
     // Step 1: Generate and upload the image, getting its download URL
     const imageDownloadUrl = await generateAndUploadImage(prompt, imageFilePath);
 

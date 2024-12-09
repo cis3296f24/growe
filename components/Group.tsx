@@ -446,8 +446,8 @@ export function Group() {
             const plantStagesPromises = plantStages.map(async (stage) => {
                 const downloadURL = await generateVectorAndUploadImage(
                     `isolated ${plantTextChoices[plantChoiceIndex].common} plant at the ${stage} growth stage, white background, isometric perspective, flat vector art style`,
-                    `plants/${uuid.v4()}-${plantTextChoices[plantChoiceIndex].common}-${stage}-${Date.now()}.png`,
-                    `plants/${uuid.v4()}-${plantTextChoices[plantChoiceIndex].common}-${stage}-${Date.now()}.svg`
+                    `plants/${plantTextChoices[plantChoiceIndex].common}-${stage}.png`,
+                    `plants/${plantTextChoices[plantChoiceIndex].common}-${stage}.svg`
                 );
                 return downloadURL;
             });
@@ -520,8 +520,8 @@ export function Group() {
                 console.log(`Generating vector for: ${plantChoice.common}`);
                 const downloadURL = await generateVectorAndUploadImage(
                     `isolated ${plantChoice.common} plant at the fruiting growth stage, white background, isometric perspective, flat vector art style`,
-                    `plants/${uuid.v4()}-${plantChoice.common}-${'fruiting'}-${Date.now()}.png`,
-                    `plants/${uuid.v4()}-${plantChoice.common}-${'fruiting'}-${Date.now()}.svg`,
+                    `plants/${plantChoice.common}-${'fruiting'}.png`,
+                    `plants/${plantChoice.common}-${'fruiting'}.svg`,
                 );
                 return downloadURL;
             });
