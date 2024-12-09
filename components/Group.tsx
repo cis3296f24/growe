@@ -41,6 +41,7 @@ import { auth } from '@/utils/firebaseConfig';
 import PlantWithGlow from './extra/PlantWithGlow';
 import { Skeleton, SkeletonText } from '@/components/ui/skeleton';
 import { array, set } from 'zod';
+import { createGarden } from '@/utils/garden';
 
 const { width, height } = Dimensions.get('window');
 
@@ -400,14 +401,15 @@ export function Group() {
         console.log("a;lskdjfa;lskdjf;lksadjf");
 
 
-        const newUserGroup = await createGroup(user, groupName, habit, frequency);
+        const newUserGroupRef = await createGroup(user, groupName, habit, frequency);
+        const gardenRef = await createGarden(newUserGroupRef)
 
-        if (!newUserGroup) {
+        if (!newUserGroupRef) {
             setError('Failed to create group');
             return;
         }
 
-        setGroups([newUserGroup]);
+        setGroups([newUserGroupRef]);
         setHasGroups(true);
         await fetchGroups();
     };

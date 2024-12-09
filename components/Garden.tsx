@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from './UserContext';
 import { DocumentReference } from 'firebase/firestore';
 import { checkUserHasGroup } from '../utils/group';
-import PlantGrid from '../components/Platform';
+import PlantGrid from '@/components/PlantGrid';
 import GardenLocalImage from '../assets/images/Garden.png'; // Local image
 
 export function Garden() {
