@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useUser } from './UserContext';
-import { fetchApprovedLogs, fetchUserLogs, fetchGroupLogs } from '@/utils/log'
+import { fetchApprovedLogs, fetchUserLogs, fetchGroupLogs, clearAllLogs } from '@/utils/log'
 import { arrayUnion, arrayRemove, DocumentReference, DocumentSnapshot, getDoc, updateDoc } from 'firebase/firestore';
 import { checkUserHasGroup, joinGroup, createGroup } from '@/utils/group';
 import { createChoices, getUndecidedChoices, getNewChoices } from '@/utils/choice';
@@ -83,6 +83,7 @@ interface PlantChoice {
 
 export function Group() {
 
+    const [isGrown, setIsGrown] = useState(false);
     const [step, setStep] = useState<'initial' | 'name-group' | 'create-habit' | 'set-frequency' | 'display-code' | 'enter-code'>('initial');
     const [generatingPlant, setGeneratingPlant] = useState(false);
     const [generatingPlantProgress, setGeneratingPlantProgress] = useState(0);
@@ -249,6 +250,8 @@ export function Group() {
             setCurrentPlant(plant);
             const plantData = await getDoc(plant);
             setPlantName(plantData.get('common'));
+            const isGrown = plantData.get('growState') === 5;
+            setIsGrown(isGrown);
             setPlantLatinName(plantData.get('scientific'));
             const currentVectorUri = await getCurrentGrowStateImage(plant);
             // console.log('currentVectorUri', currentVectorUri);
@@ -632,6 +635,28 @@ export function Group() {
         fetchUserProgress();
     }, [groupMembers, groups]); // Dependencies: re-run when groupMembers or groupRef change
 
+    const handleChooseNewPlant = async () => {
+        try {
+            const groupRef = groups.at(-1);
+            if (!groupRef) {
+                console.error('Group reference is not available.');
+                return;
+            }
+            await updateDoc(groupRef, {
+                plant: null,
+            });
+
+            // clear approvedLogs from each user
+            groupMembers.forEach(async (member) => {
+                await clearAllLogs(member, groupRef);
+            });
+            await checkPlant();
+            setIsGrown(false);
+        } catch (error) {
+            console.error('Error choosing new plant:', error);
+        }
+    }
+
     return (
         <LinearGradient
             colors={['#8E9F8D', '#596558']}
@@ -651,6 +676,48 @@ export function Group() {
                             </Progress>
                         </Box>
                     </View>
+                ) : isGrown ? (
+                    <Box className='flex flex-col items-center align-middle gap-4'>
+                        
+                        <Heading size='2xl' className="font-bold text-white">
+                        Your plant has grown!
+                        </Heading>
+                        <FrequencyBar
+                            frequency={frequency}
+                            code={groupCode}
+                        />
+                        <Box>
+                            {groups.length > 0 ? (
+                                <DaysOfTheWeek groupRef={groups.at(-1)} />
+                            ) : (
+                                <Text size='xl' className="font-regular text-neutral-300">
+                                Loading group information...
+                                </Text>
+                            )}
+                        </Box>
+                        <Box className='w-80 h-80'>
+                        <PlantWithGlow currentPlantVector={currentPlantVector} />
+                        </Box>
+                        <Box className='flex-row gap-1'>
+                            <Text size='xl' className="font-regular text-neutral-300">
+                                {plantName}
+                            </Text>
+                            <Text size='xl' className="font-regular text-neutral-300">
+                                |
+                            </Text>
+                            <Text size='xl' className="font-italic text-neutral-300">
+                                {plantLatinName}
+                            </Text>
+                        </Box>
+                        <VerificationBar frequency={frequency} totalUsers={groupMembers.length} approvedLogs={approvedLogs.length} totalLogs={groupLogs.length} />
+
+                        <Box className='p-14'>
+                            <ButtonGluestack className="bg-primaryGreen p-2 rounded-2xl w-64" size="xl" onPress={handleChooseNewPlant}>
+                                <ButtonText className='font-bold'>Choose a new plant</ButtonText>
+                            </ButtonGluestack>
+                        </Box>
+
+                    </Box>
                 ) : !currentPlant && hasGroups ? (
                     // {!plant && hasGroups ? (
                     <View className='p-5 gap-4 pb-28'>
