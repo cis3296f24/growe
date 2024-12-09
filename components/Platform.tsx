@@ -134,7 +134,7 @@ export default function ProceduralPlatform() {
                     setGrid(initialGrid);
                 }
             } catch (error) {
-                console.error('Error fetching garden for user', user, error);
+                console.warn('Error fetching garden for user. Falling back to default.', user, error);
                 const initialGrid = generateGrid(4, null);
                 setGrid(initialGrid);
                 //setPlantImageUrls(['https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fd4c7ced8-bab7-4a12-b5e0-5423271ea60c-Bird%20of%20Paradise-fruiting-1733687584833.svg?alt=media&token=8e203404-ea95-4ac9-8cdd-3c1e5886230f', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fd4c7ced8-bab7-4a12-b5e0-5423271ea60c-Bird%20of%20Paradise-fruiting-1733687584833.svg?alt=media&token=8e203404-ea95-4ac9-8cdd-3c1e5886230f']);
