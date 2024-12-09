@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
-import Avatar from '../../assets/images/Avatar.png';
 import { Box } from '@/components/ui/box';
+import Profile from '@/assets/icons/profile.svg';
+import { Icon } from '@/components/ui/icon';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 
 interface UserProgressProps {
   frequency: number;        // Total votes needed to fill the tube
@@ -17,7 +19,9 @@ const UserProgress: React.FC<UserProgressProps> = ({ frequency, approvedUserLogs
     <Box className='flex-row items-center gap-2 w-full px-4'>
       {/* Avatar */}
       <Box className='pr-1'>
-        <Image source={Avatar} className='h-12 w-12 rounded-full' />
+        <Avatar size="md" className='bg-primaryGreen'>
+          <Icon as={Profile} size="lg" className="text-white" />
+        </Avatar>
       </Box>
 
       {/* Progress Bar */}

@@ -13,32 +13,20 @@ import {
 } from '@/components/ui/menu';
 import { Icon } from '@/components/ui/icon';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
-import { auth } from '@/utils/firebaseConfig';
 import { getAuth, updateProfile } from 'firebase/auth';
 import { doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db } from '@/utils/firebaseConfig';
+import { db, auth } from '@/utils/firebaseConfig';
 import { useRouter } from 'expo-router';
-
-// Dynamically generated avatar fallback
-const DynamicDefaultAvatar = ({ size }: { size: number }) => (
-    <Svg height={size} width={size} viewBox="0 0 100 100">
-        <Circle cx="50" cy="50" r="50" fill="#8F9C8F" />
-        <Circle cx="50" cy="35" r="15" fill="#FFDAB9" />
-        <Path d="M45 50 L55 50 L55 60 L45 60 Z" fill="#FFDAB9" />
-        <Path d="M30 60 C30 50, 70 50, 70 60 L70 80 L30 80 Z" fill="#4682B4" />
-    </Svg>
-);
 
 export default function Header() {
     const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const router = useRouter();
-    const authInstance = getAuth();
 
     useEffect(() => {
         const fetchUserProfile = async () => {
-            const currentUser = authInstance.currentUser;
+            const currentUser = auth.currentUser;
             if (currentUser) {
                 setProfileImageUrl(currentUser.photoURL || null);
             }
@@ -87,7 +75,7 @@ export default function Header() {
     };
 
     const uploadImage = async (uri: string) => {
-        const currentUser = authInstance.currentUser;
+        const currentUser = auth.currentUser;
         if (!currentUser) {
             Alert.alert('Error', 'No user is logged in.');
             return null;
@@ -111,7 +99,7 @@ export default function Header() {
     };
 
     const updateUserProfileImage = async (downloadURL: string) => {
-        const currentUser = authInstance.currentUser;
+        const currentUser = auth.currentUser;
         if (!currentUser) {
             Alert.alert('Error', 'No user is logged in.');
             return;
@@ -147,11 +135,11 @@ export default function Header() {
                     disabledKeys={['Settings']}
                     trigger={({ ...triggerProps }) => (
                         <TouchableOpacity {...triggerProps}>
-                            <Avatar size="md">
+                            <Avatar size="md" className='bg-primaryGreen'>
                                 {profileImageUrl ? (
                                     <AvatarImage source={{ uri: profileImageUrl }} />
                                 ) : (
-                                    <DynamicDefaultAvatar size={40} />
+                                    <Icon as={Profile} size="lg" className="text-white" />
                                 )}
                             </Avatar>
                         </TouchableOpacity>
@@ -167,16 +155,6 @@ export default function Header() {
                             Change Avatar
                         </MenuItemLabel>
                     </MenuItem>
-                    <MenuItem
-                        key="View Profile"
-                        textValue="View Profile"
-                        onPress={() => setModalVisible(true)}
-                    >
-                        <Icon as={Profile} size="lg" className="mr-3 text-white" />
-                        <MenuItemLabel size="lg" className="text-white">
-                            View Profile
-                        </MenuItemLabel>
-                    </MenuItem>
                     <MenuItem key="Log Out" textValue="Log Out" onPress={handleLogOut}>
                         <Icon as={LogOut} size="lg" className="mr-3 text-white" />
                         <MenuItemLabel size="lg" className="text-white">
@@ -185,34 +163,6 @@ export default function Header() {
                     </MenuItem>
                 </Menu>
             </Box>
-
-            {/* Profile Modal */}
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        {profileImageUrl ? (
-                            <Image
-                                source={{ uri: profileImageUrl }}
-                                style={styles.profileImage}
-                                resizeMode="contain"
-                            />
-                        ) : (
-                            <DynamicDefaultAvatar size={100} />
-                        )}
-                        <TouchableOpacity
-                            style={styles.closeButton}
-                            onPress={() => setModalVisible(false)}
-                        >
-                            <Text style={styles.closeButtonText}>Close</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
         </Box>
     );
 }
