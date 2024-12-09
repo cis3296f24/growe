@@ -99,9 +99,6 @@ export function Group() {
     const [groupMemberNames, setGroupMemberNames] = useState<string[]>([]);
     const [currentPlant, setCurrentPlant] = useState<DocumentReference | null>(null);
     const [currentPlantVector, setCurrentPlantVector] = useState<string | null>(null);
-    //const [plantVectorChoices, setPlantVectorChoices] = useState<string[] | null>(['https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2F430ae251-c653-4344-b5cc-6c621369227c-Moonflower-fruiting-1733596102842.svg?alt=media&token=5374210e-51a6-4356-b7b9-461a0a72ccef', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fcc2f0b19-f433-4f32-b6e0-e1a246ccf6fb-Dragon\'s%20Breath-fruiting-1733595662059.svg?alt=media&token=56583be4-f4e2-4bc1-8b6f-c1c1b1c2da68', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fcaf08d02-91c6-40fc-b0fc-66f9fa97a3b3-Triffid-fruiting-1733595667080.svg?alt=media&token=354d7407-5659-4a6e-ac66-be8d41ef9be0', 'https://firebasestorage.googleapis.com/v0/b/growe-5d9d1.firebasestorage.app/o/plants%2Fc00eb46b-93e0-474c-b1fc-f0374817de69-Dragonleaf-fruiting-1733595477033.svg?alt=media&token=50e9406b-03e5-40bd-8752-dec9f420a62c']);
-    //const [plantNameChoices, setPlantNameChoices] = useState<string[]>(['Lunar Ephemeral', 'Dragon\'s Breath', 'Triffid', 'Dragonleaf']);
-    //const [plantLatinNames, setPlantLatinNames] = useState<string[]>(['Ipomoea alba', 'Dracaena draco', 'Dionaea muscipula', 'Dracaena marginata']);
     const [plantVectorChoices, setPlantVectorChoices] = useState<string[]>([]);
     const [plantTextChoices, setPlantTextChoices] = useState<PlantTextChoice[]>([]);
     const [plantChoicesRef, setPlantChoicesRef] = useState<DocumentReference | null>(null);
