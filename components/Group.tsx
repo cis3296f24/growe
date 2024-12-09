@@ -40,7 +40,8 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from '@/utils/firebaseConfig';
 import PlantWithGlow from './extra/PlantWithGlow';
 import { Skeleton, SkeletonText } from '@/components/ui/skeleton';
-import { array, set } from 'zod';
+import { Progress, ProgressFilledTrack } from '@/components/ui/progress';
+import { set } from 'zod';
 
 const { width, height } = Dimensions.get('window');
 
@@ -84,6 +85,7 @@ export function Group() {
 
     const [step, setStep] = useState<'initial' | 'name-group' | 'create-habit' | 'set-frequency' | 'display-code' | 'enter-code'>('initial');
     const [generatingPlant, setGeneratingPlant] = useState(false);
+    const [generatingPlantProgress, setGeneratingPlantProgress] = useState(0);
     const [groups, setGroups] = useState<DocumentReference[]>([]);
     const [hasGroups, setHasGroups] = useState<boolean | null>(null);
     const { user } = useUser();
@@ -436,6 +438,8 @@ export function Group() {
 
     const handleChoosePlant = async (plantChoiceIndex: number) => {
 
+        setGeneratingPlant(true);
+
         const plantStages = ['sprouting', 'seedling', 'vegetating', 'budding', 'flowering'];
 
         try {
@@ -448,8 +452,12 @@ export function Group() {
                 return downloadURL;
             });
 
+            setGeneratingPlantProgress(20);
+
             const plantStageImages = await Promise.all(plantStagesPromises);
             const currentDate = new Date();
+
+            setGeneratingPlantProgress(40);
 
             // get choices ref and the chosen plant ref inside the choices ref
 
@@ -464,6 +472,8 @@ export function Group() {
                 decided: arrayUnion(groups.at(-1)),
             });
 
+            setGeneratingPlantProgress(60);
+
             const choicesDoc = await getDoc(plantChoicesRef)
 
             if (!choicesDoc.exists()) {
@@ -476,15 +486,21 @@ export function Group() {
             const newDecayDate = getDecayDate(currentDate);
 
             await updateDoc(plantDocRef, {
-                growStateImageUrls: [ ...plantStageImages, ...plantVectorChoices[plantChoiceIndex]],
+                growStateImageUrls: [ ...plantStageImages, plantVectorChoices[plantChoiceIndex]],
                 decayAt: newDecayDate,
             });
+
+            setGeneratingPlantProgress(80);
 
             const groupDocRef = groups.at(-1);
             await setPlant(groupDocRef, plantDocRef);
             setCurrentPlant(plantDocRef);
             await fetchGroups();
             await checkPlant();
+
+            setGeneratingPlantProgress(100);
+
+            setGeneratingPlant(false);
         } catch (error) {
             console.error('Error choosing plant:', error);
         }
@@ -591,10 +607,10 @@ export function Group() {
         }
     }
 
-    const handleModalClose = (userResponse: string) => {
+    const handleModalClose = async (userResponse: string) => {
         setModalVisible(false);
         setResponse(userResponse);
-        grabVotes()
+        await grabVotes();
     };
 
     useEffect(() => {
@@ -624,7 +640,18 @@ export function Group() {
             style={{ width: "100%", height: "100%" }}
         >
             <View style={styles.container}>
-                {!currentPlant && hasGroups ? (
+                {generatingPlant ? (
+                    <View className='p-5 gap-4 pb-28'>
+                        <Heading size='2xl' className="font-bold text-neutral-300">
+                            Generating Plant...
+                        </Heading>
+                        <Box className='flex-col align-middle justify-center items-center'>
+                            <Progress className='bg-primaryGreen' value={generatingPlantProgress} size="2xl" orientation="horizontal">
+                                <ProgressFilledTrack className='bg-neutral-300'/>
+                            </Progress>
+                        </Box>
+                    </View>
+                ) : !currentPlant && hasGroups ? (
                     // {!plant && hasGroups ? (
                     <View className='p-5 gap-4 pb-28'>
                         <Heading size='2xl' className="font-regular text-neutral-300">
@@ -738,13 +765,6 @@ export function Group() {
                             </View>
                         </Box>
                     </View>
-                ) : generatingPlant ? (
-                    <View className='p-5 gap-4 pb-28'>
-                        <Heading size='2xl' className="font-regular text-neutral-300">
-                            Generating plant...
-                        </Heading>
-                        <Spinner size="large" color={'#788478'} />
-                    </View>
                 ) : currentPlant && hasGroups ? (
                     <Box className='flex flex-col items-center align-middle gap-4'>
                         <VotingModal
@@ -756,7 +776,7 @@ export function Group() {
                             totalMembers={groupMembers.length}
                         />
                         
-                        <Heading size='2xl' className="font-bold text-white pt-16">
+                        <Heading size='2xl' className="font-bold text-white pt-12">
                         {habit}
                         </Heading>
                         <FrequencyBar
