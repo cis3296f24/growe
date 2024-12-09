@@ -14,7 +14,7 @@ import { useFonts } from 'expo-font';
 import ThumbsDown from '@/assets/icons/thumbsDown.svg';
 import ThumbsUp from '@/assets/icons/thumbsUp.svg';
 import { LinearGradient } from 'expo-linear-gradient';
-import { updateDoc, arrayUnion, getDoc, DocumentReference, DocumentData, query, where, increment, doc } from 'firebase/firestore';
+import { updateDoc, arrayUnion, getDoc, DocumentReference, DocumentData, query, where, increment, doc, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useUser } from './UserContext';
 import { Heading } from '@/components/ui/heading';
@@ -27,7 +27,6 @@ interface ModalComponentProps {
     logRef?: DocumentReference<DocumentData, DocumentData> | null;
     totalMembers: number
 }
-
 
 const VotingModal: React.FC<ModalComponentProps> = ({
     visible,
@@ -188,9 +187,54 @@ const VotingModal: React.FC<ModalComponentProps> = ({
                 voteDeny: arrayUnion(userRef),
             });
             console.log(`User ${currentUser.uid} added to voteDeny.`);
+
+            // Fetch the updated document to check the total votes
+            const updatedDoc = await getDoc(logRef);
+
+            if (updatedDoc.exists()) {
+                const data = updatedDoc.data();
+
+                const voteDeny = Array.isArray(data.voteDeny) ? data.voteDeny : [];
+                const authorRef = data.author; // Author reference from the log document
+
+                if (!authorRef) {
+                    console.warn('No author reference found in the log document.');
+                    return;
+                }
+
+                // Calculate the required majority
+                const requiredMajority = Math.floor(totalMembers / 2);
+                console.log(`Required majority: ${requiredMajority}`);
+                console.log(`Current voteDeny count: ${voteDeny.length}`);
+
+                // Check if the total votes meet or exceed the majority
+                if (voteDeny.length >= requiredMajority) {
+                    console.log('Majority has been reached for voteDeny!');
+
+                    try {
+                        // Remove the logRef from the author's logs field
+                        await updateDoc(authorRef, {
+                            logs: arrayRemove(logRef),
+                        });
+
+                        // Remove the actual log document from the logs collection
+                        await deleteDoc(logRef);
+
+                        console.log('Log removed from author\'s logs and deleted from logs collection.');
+                    } catch (error) {
+                        //@ts-ignore
+                        console.error('Error removing log from author\'s logs or deleting log document:', error.message, error.code);
+                    }
+                } else {
+                    console.log('Majority has not been reached yet.');
+                }
+            } else {
+                console.warn('Log document does not exist.');
+            }
+
             onClose('no'); // Notify parent of successful downvote
         } catch (error) {
-            console.error('Error adding downvote:', error);
+            console.error('Error adding downvote or checking majority:', error);
         }
     };
 
