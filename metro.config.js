@@ -2,25 +2,29 @@ const { getDefaultConfig } = require("expo/metro-config");
 const path = require("path");
 const { withNativeWind } = require("nativewind/metro");
 
-// Get directory path
 const dirname = __dirname;
 
 module.exports = (() => {
-  const config = getDefaultConfig(path.resolve(dirname), {
-    isCSSEnabled: true,
-  });
+    const config = getDefaultConfig(dirname, {
+        isCSSEnabled: true,
+    });
 
-  const { transformer, resolver } = config;
+    const { transformer, resolver } = config;
 
-  config.transformer = {
-    ...transformer,
-    babelTransformerPath: require.resolve("react-native-svg-transformer/expo")
-  };
-  config.resolver = {
-    ...resolver,
-    assetExts: resolver.assetExts.filter((ext) => ext !== "svg"),
-    sourceExts: [...resolver.sourceExts, "svg", "css"]
-  };
+    // Configure SVG and CSS support
+    config.transformer = {
+        ...transformer,
+        babelTransformerPath: require.resolve("react-native-svg-transformer/expo"),
+    };
 
-  return withNativeWind(config, { input: path.resolve(dirname, "global.css") });
+    config.resolver = {
+        ...resolver,
+        assetExts: resolver.assetExts.filter((ext) => ext !== "svg"),
+        sourceExts: [...resolver.sourceExts, "svg", "css"],
+    };
+
+    // Integrate NativeWind
+    return withNativeWind(config, {
+        input: path.resolve(dirname, "global.css"),
+    });
 })();

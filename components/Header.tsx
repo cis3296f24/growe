@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { TouchableOpacity, Alert, Modal, View, Text, StyleSheet, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Svg, Circle, Path } from 'react-native-svg';
 import Logo from '@/assets/icons/logo.svg';
-import DefaultAvatar from '@/assets/images/Avatar.png';
 import LogOut from '@/assets/icons/logOut.svg';
 import Profile from '@/assets/icons/profile.svg';
 import { Box } from '@/components/ui/box';
@@ -10,15 +10,9 @@ import {
     Menu,
     MenuItem,
     MenuItemLabel,
-    MenuSeparator,
 } from '@/components/ui/menu';
 import { Icon } from '@/components/ui/icon';
-import {
-    Avatar,
-    AvatarBadge,
-    AvatarFallbackText,
-    AvatarImage,
-} from '@/components/ui/avatar';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { auth } from '@/utils/firebaseConfig';
 import { getAuth, updateProfile } from 'firebase/auth';
 import { doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
@@ -26,17 +20,27 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '@/utils/firebaseConfig';
 import { useRouter } from 'expo-router';
 
+// Dynamically generated avatar fallback
+const DynamicDefaultAvatar = ({ size }: { size: number }) => (
+    <Svg height={size} width={size} viewBox="0 0 100 100">
+        <Circle cx="50" cy="50" r="50" fill="#8F9C8F" />
+        <Circle cx="50" cy="35" r="15" fill="#FFDAB9" />
+        <Path d="M45 50 L55 50 L55 60 L45 60 Z" fill="#FFDAB9" />
+        <Path d="M30 60 C30 50, 70 50, 70 60 L70 80 L30 80 Z" fill="#4682B4" />
+    </Svg>
+);
+
 export default function Header() {
     const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+    const [modalVisible, setModalVisible] = useState(false);
     const router = useRouter();
     const authInstance = getAuth();
 
-    // Fetch the user's profile image on component mount
     useEffect(() => {
         const fetchUserProfile = async () => {
             const currentUser = authInstance.currentUser;
             if (currentUser) {
-                setProfileImageUrl(currentUser.photoURL || null); // Load the photoURL
+                setProfileImageUrl(currentUser.photoURL || null);
             }
         };
 
@@ -114,10 +118,8 @@ export default function Header() {
         }
 
         try {
-            // Update Firebase Auth profile
             await updateProfile(currentUser, { photoURL: downloadURL });
 
-            // Update Firestore user document
             const userRef = doc(db, 'users', currentUser.uid);
             const userDoc = await getDoc(userRef);
             if (userDoc.exists()) {
@@ -143,22 +145,17 @@ export default function Header() {
                     placement="top"
                     offset={5}
                     disabledKeys={['Settings']}
-                    trigger={({ ...triggerProps }) => {
-                        return (
-                            <TouchableOpacity {...triggerProps}>
-                                <Avatar size="md">
-                                    <AvatarFallbackText>User</AvatarFallbackText>
-                                    <AvatarImage
-                                        source={
-                                            profileImageUrl
-                                                ? { uri: profileImageUrl }
-                                                : DefaultAvatar
-                                        }
-                                    />
-                                </Avatar>
-                            </TouchableOpacity>
-                        );
-                    }}
+                    trigger={({ ...triggerProps }) => (
+                        <TouchableOpacity {...triggerProps}>
+                            <Avatar size="md">
+                                {profileImageUrl ? (
+                                    <AvatarImage source={{ uri: profileImageUrl }} />
+                                ) : (
+                                    <DynamicDefaultAvatar size={40} />
+                                )}
+                            </Avatar>
+                        </TouchableOpacity>
+                    )}
                 >
                     <MenuItem
                         key="Change Avatar"
@@ -170,6 +167,16 @@ export default function Header() {
                             Change Avatar
                         </MenuItemLabel>
                     </MenuItem>
+                    <MenuItem
+                        key="View Profile"
+                        textValue="View Profile"
+                        onPress={() => setModalVisible(true)}
+                    >
+                        <Icon as={Profile} size="lg" className="mr-3 text-white" />
+                        <MenuItemLabel size="lg" className="text-white">
+                            View Profile
+                        </MenuItemLabel>
+                    </MenuItem>
                     <MenuItem key="Log Out" textValue="Log Out" onPress={handleLogOut}>
                         <Icon as={LogOut} size="lg" className="mr-3 text-white" />
                         <MenuItemLabel size="lg" className="text-white">
@@ -178,6 +185,65 @@ export default function Header() {
                     </MenuItem>
                 </Menu>
             </Box>
+
+            {/* Profile Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        {profileImageUrl ? (
+                            <Image
+                                source={{ uri: profileImageUrl }}
+                                style={styles.profileImage}
+                                resizeMode="contain"
+                            />
+                        ) : (
+                            <DynamicDefaultAvatar size={100} />
+                        )}
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <Text style={styles.closeButtonText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </Box>
     );
 }
+
+const styles = StyleSheet.create({
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        width: 300,
+        padding: 20,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    profileImage: {
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        marginBottom: 20,
+    },
+    closeButton: {
+        backgroundColor: '#8F9C8F',
+        padding: 10,
+        borderRadius: 5,
+    },
+    closeButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+});
