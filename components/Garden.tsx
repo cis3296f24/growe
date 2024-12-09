@@ -15,6 +15,7 @@ import PlantGrid from '../components/Platform';
 import GardenLocalImage from '../assets/images/Garden.png'; // Local image
 import { Box } from '@/components/ui/box';
 import { Heading } from '@/components/ui/heading';
+import { Svg, Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
 
 export function Garden() {
     const router = useRouter();
@@ -44,10 +45,31 @@ export function Garden() {
             end={{ x: 0, y: 1 }}
             style={{ width: "100%", height: "100%" }}
         >
-            <Box className='flex-col justify-center items-center align-middle translate-y-[100]'>
-                <Heading className='text-center text-white translate-y-[75]' size='2xl'>{`Hi ${user?.displayName?.charAt(0).toUpperCase()}${user?.displayName?.slice(1)}`}</Heading>
-                <Box className='flex-col justify-center items-center align-middle translate-y-[-150]'>
-                    <PlantGrid />
+            <Box className='flex-col justify-center items-center align-middle translate-y-[200]'>
+                <Heading className='text-center text-white translate-y-[-50]' size='2xl'>{`Hi ${user?.displayName?.charAt(0).toUpperCase()}${user?.displayName?.slice(1)}`}</Heading>
+                <Box className='justify-center items-center'>
+                    <Box className='w-80 h-80 relative items-center justify-center'>
+                        <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+                            <Defs>
+                            <RadialGradient
+                                id="radialGradient"
+                                cx="50%"
+                                cy="50%"
+                                r="50%"
+                                fx="50%"
+                                fy="50%"
+                            >
+                                {/* Adjust these stops to get the desired glow effect */}
+                                <Stop offset="0%" stopColor="rgb(190,211,189)" stopOpacity={0.75} />
+                                <Stop offset="100%" stopColor="#6B796A" stopOpacity={0} /> 
+                            </RadialGradient>
+                            </Defs>
+                            {/* A rectangle covering the whole area, filled by the radial gradient */}
+                            <Rect x="0" y="0" width="100%" height="100%" fill="url(#radialGradient)" />
+                        </Svg>
+                    
+                        <PlantGrid />
+                    </Box>
                 </Box>
             </Box>
         </LinearGradient>
