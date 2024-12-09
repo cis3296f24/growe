@@ -30,7 +30,7 @@ export async function generatePlantInfo() {
             messages: [
                 {
                     role: "system",
-                    content: `Return details about a plant, either real or fictional, in the following JSON format:
+                    content: `Return details about a random real plant, in the following JSON format:
                 {
                 "common": "<Common name of the plant>",
                 "scientific": "<Scientific name of the plant>",

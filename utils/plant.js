@@ -1,15 +1,26 @@
 import { collection, getDocs, query, where, doc, addDoc, updateDoc, getDoc, QuerySnapshot, DocumentSnapshot, DocumentReference } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
-export const createPlant = async (growState = 0, growStateImageUrls, plantName, plantLatinName, decayAt, isOwned) => {
+export const createPlant = async (growState = 0, growStateImageUrls, decayAt, isOwned, common, scientific, family, genus, species, habitat, region, uses, description, habit, flowering, edible, toxicity) => {
     const plantRef = collection(db, 'plants');
     const plantDoc = {
         growState: growState,
         growStateImageUrls: growStateImageUrls,
-        plantName: plantName,
-        plantLatinName: plantLatinName,
         decayAt: decayAt,
         isOwned: isOwned,
+        common: common,
+        scientific: scientific,
+        family: family,
+        genus: genus,
+        species: species,
+        habitat: habitat,
+        region: region,
+        uses: uses,
+        description: description,
+        habit: habit,
+        flowering: flowering,
+        edible: edible,
+        toxicity: toxicity
     };
     const newPlantDoc = await addDoc(plantRef, plantDoc);
     const plantDocRef = doc(db, 'plants', newPlantDoc.id);
@@ -71,4 +82,16 @@ export const getCurrentGrowStateImage = async (plantRef) => {
   const growState = plantData.growState;
   const growStateImageUrls = plantData.growStateImageUrls;
   return growStateImageUrls[growState];
+}
+
+export const updatePlantGrowState = async (plantRef, growState) => {
+  const plantDoc = await getDoc(plantRef);
+  const plantData = plantDoc.data();
+  const growStateImageUrls = plantData.growStateImageUrls;
+  if (growState >= growStateImageUrls.length) {
+    throw new Error('Invalid Grow State');
+  }
+  await updateDoc(plantRef, { growState: growState });
+  console.log('Plant grow state updated to:', growState);
+  return growState;
 }

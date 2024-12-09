@@ -4,4 +4,8 @@ module.exports = {
   env: {
     node: true,
   },
+  rules: {
+    'react-native/no-inline-styles': 'warn', // Warn against inline styles
+    // Add other custom rules as needed
+  },
 };
