@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Button, StyleSheet, Text, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, TouchableOpacity, Alert, Image, StyleSheet } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { storage } from "../utils/firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -7,7 +7,23 @@ import uuid from 'react-native-uuid';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useUser } from './UserContext';
 import { createLogEntry } from '../utils/log'; 
-
+import { Box } from '@/components/ui/box';
+import { Text } from '@/components/ui/text';
+import { useFonts } from 'expo-font';
+import {
+    Button,
+    ButtonText,
+    ButtonSpinner,
+    ButtonIcon,
+    ButtonGroup,
+} from '@/components/ui/button';
+import { Heading } from '@/components/ui/heading';
+import { LinearGradient } from 'expo-linear-gradient';
+import Shutter from '@/assets/icons/shutter.svg';
+import FlipCamera from '@/assets/icons/flipCamera.svg';
+import FlashOn from '@/assets/icons/flashOn.svg';
+import FlashOff from '@/assets/icons/flashOff.svg';
+import FlashAuto from '@/assets/icons/flashAuto.svg';
 
 export default function Camera() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -16,6 +32,13 @@ export default function Camera() {
   const cameraRef = useRef<CameraView>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState<boolean>(false);
+  const [fontsLoaded] = useFonts({
+    "SF-Pro-Rounded-Regular": require("../assets/fonts/SF-Pro-Rounded-Regular.ttf"),
+    "SF-Pro-Rounded-Bold": require("../assets/fonts/SF-Pro-Rounded-Bold.ttf"),
+    "cmunci": require("../assets/fonts/cmunci.ttf"),
+  });
+  // cycle flash
+  const [flash, setFlash] = useState(2);
 
   if (!permission) {
     return <View />;
@@ -23,11 +46,30 @@ export default function Camera() {
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.message}>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="Grant permission" />
-      </View>
+      <LinearGradient
+      colors={['#8E9F8D', '#596558']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={{ width: "100%", height: "100%" }}
+      >
+        <Box className='flex-1 justify-center items-center gap-2'>
+          <Heading className='text-center pb-2 font-regular text-white' size='xl'>We need to use the camera.</Heading>
+          <Button className="bg-primaryGreen w-auto rounded-2xl" size="xl" variant="solid" action="primary" onPress={requestPermission}>
+            <ButtonText className='font-bold'>Grant Permission</ButtonText>
+          </Button>
+        </Box>
+      </LinearGradient>
     );
+  }
+
+  const cycleFlash = () => {
+    if (flash === 0) {
+      setFlash(1);
+    } else if (flash === 1) {
+      setFlash(2);
+    } else {
+      setFlash(0);
+    }
   }
 
   const toggleCameraFacing = () => {
@@ -93,37 +135,55 @@ export default function Camera() {
     setPhotoUri(null); 
   };
 
-  
-
   return (
     <View style={styles.container}>
       {isPreviewVisible && photoUri ? (
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: photoUri }} style={styles.previewImage} />
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button} onPress={retakePicture}>
-              <Text style={styles.text}>Retake</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={uploadPicture}>
-              <Text style={styles.text}>Keep</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : (
-        <CameraView
-          style={styles.camera}
-          facing={facing}
-          ref={cameraRef}
+        <LinearGradient
+        colors={['#8E9F8D', '#596558']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={{ width: "100%", height: "100%" }}
         >
-          <View style={styles.bottomButtonContainer}>
-            <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-              <Text style={styles.text}>Flip Camera</Text>
+          <Box className='flex-1 pb-32 gap-8'>
+            <Image source={{ uri: photoUri }} className='flex-1' />
+            <Box className='flex-row justify-evenly'>
+              <Button className="bg-primaryGreen w-32 rounded-2xl" size="xl" variant="solid" action="primary" onPress={retakePicture}>
+                <ButtonText className='font-bold'>Retake</ButtonText>
+              </Button>
+              <Button className="bg-primaryGreen w-32 rounded-2xl" size="xl" variant="solid" action="primary" onPress={uploadPicture}>
+                <ButtonText className='font-bold'>Keep</ButtonText>
+              </Button>
+            </Box>
+          </Box>
+        </LinearGradient>
+      ) : (
+        <LinearGradient
+        colors={['#8E9F8D', '#596558']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={{ width: "100%", height: "100%" }}
+        >
+        <Box className='flex-1 pb-32 gap-8'>
+          <CameraView
+            style={styles.camera}
+            facing={facing}
+            ref={cameraRef}
+            flash={flash === 0 ? 'off' : flash === 1 ? 'on' : 'auto'}
+          >
+          </CameraView>
+          <Box className='flex-row items-center px-10 justify-between'>
+            <TouchableOpacity className='rounded-full bg-primaryGreen p-2' onPress={cycleFlash}>
+              {flash === 0 ? <FlashOff height={30} width={30}/> : flash === 1 ? <FlashOn height={30} width={30}/> : <FlashAuto height={30} width={30}/>}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={takePictureAndShowPreview}>
-              <Text style={styles.text}>Take Photo</Text>
+            <TouchableOpacity className='rounded-full bg-primaryGreen p-2' onPress={takePictureAndShowPreview}>
+              <Shutter height={50} width={50}/>
             </TouchableOpacity>
-          </View>
-        </CameraView>
+            <TouchableOpacity className='rounded-full bg-primaryGreen p-2' onPress={toggleCameraFacing}>
+              <FlipCamera height={30} width={30}/>
+            </TouchableOpacity>
+          </Box>
+        </Box>
+        </LinearGradient>
       )}
     </View>
   );
@@ -140,6 +200,7 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+
   },
   previewContainer: {
     flex: 1,
@@ -148,9 +209,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   previewImage: {
-    width: '100%',
-    height: '80%',
-    resizeMode: 'contain',
+    flex: 1,
   },
   buttonContainer: {
     flexDirection: 'row',

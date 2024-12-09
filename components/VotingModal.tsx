@@ -3,20 +3,21 @@ import { db } from "../utils/firebaseConfig";
 import {
     Modal,
     View,
-    Text,
     StyleSheet,
     TouchableOpacity,
     Image,
     ImageSourcePropType,
 } from 'react-native';
-import ThumbsDown from '../assets/icons/ThumbsDown.png';
-import ThumbsUp from '../assets/icons/ThumbsUp.png';
-import Unsure from '../assets/icons/Unsure.png';
+import { Box } from '@/components/ui/box';
+import { Text } from '@/components/ui/text';
+import { useFonts } from 'expo-font';
+import ThumbsDown from '@/assets/icons/thumbsDown.svg';
+import ThumbsUp from '@/assets/icons/thumbsUp.svg';
 import { LinearGradient } from 'expo-linear-gradient';
-import { updateDoc, arrayUnion, getDoc, DocumentReference, DocumentData, query, where, increment, doc } from 'firebase/firestore';
+import { updateDoc, arrayUnion, getDoc, DocumentReference, DocumentData, query, where, increment, doc, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useUser } from './UserContext';
-
+import { Heading } from '@/components/ui/heading';
 
 interface ModalComponentProps {
     visible: boolean;
@@ -26,7 +27,6 @@ interface ModalComponentProps {
     logRef?: DocumentReference<DocumentData, DocumentData> | null;
     totalMembers: number
 }
-
 
 const VotingModal: React.FC<ModalComponentProps> = ({
     visible,
@@ -40,22 +40,15 @@ const VotingModal: React.FC<ModalComponentProps> = ({
     const currentUser = auth.currentUser;
     const [image, setImage] = useState(null)
     const { user } = useUser();
-    let votesNeeded = divideAndRoundDown(totalMembers)
-
-    function divideAndRoundDown(num: number) {
-        if (num % 2 !== 0) {
-            // If the number is odd, subtract 1 before dividing
-            return Math.floor(num / 2);
-        }
-        // If the number is even, divide normally
-        return num / 2;
-    }
+    const [fontsLoaded] = useFonts({
+        "SF-Pro-Rounded-Regular": require("../assets/fonts/SF-Pro-Rounded-Regular.ttf"),
+        "SF-Pro-Rounded-Bold": require("../assets/fonts/SF-Pro-Rounded-Bold.ttf"),
+        "cmunci": require("../assets/fonts/cmunci.ttf"),
+      });
 
     useEffect(() => {
         if (logRef) {
             getImageFromLogRef();
-        } else {
-            // console.warn("logRef is null or undefined.");
         }
     }, [logRef]); // Dependency array to only run when logRef changes
 
@@ -189,14 +182,59 @@ const VotingModal: React.FC<ModalComponentProps> = ({
         // @ts-ignore
         const userRef = doc(db, 'users', user.uid);
         try {
-            // Update the Firestore document by adding the user's ID to voteDeny
+            // Update the Firestore document by adding the userref to voteDeny
             await updateDoc(logRef, {
                 voteDeny: arrayUnion(userRef),
             });
             console.log(`User ${currentUser.uid} added to voteDeny.`);
+
+            // Fetch the updated document to check the total votes
+            const updatedDoc = await getDoc(logRef);
+
+            if (updatedDoc.exists()) {
+                const data = updatedDoc.data();
+
+                const voteDeny = Array.isArray(data.voteDeny) ? data.voteDeny : [];
+                const authorRef = data.author; // Author reference from the log document
+
+                if (!authorRef) {
+                    console.warn('No author reference found in the log document.');
+                    return;
+                }
+
+                // Calculate the required majority
+                const requiredMajority = Math.floor(totalMembers / 2);
+                console.log(`Required majority: ${requiredMajority}`);
+                console.log(`Current voteDeny count: ${voteDeny.length}`);
+
+                // Check if the total votes meet or exceed the majority
+                if (voteDeny.length >= requiredMajority) {
+                    console.log('Majority has been reached for voteDeny!');
+
+                    try {
+                        // Remove the logRef from the author's logs field
+                        await updateDoc(authorRef, {
+                            logs: arrayRemove(logRef),
+                        });
+
+                        // Remove the actual log document from the logs collection
+                        await deleteDoc(logRef);
+
+                        console.log('Log removed from author\'s logs and deleted from logs collection.');
+                    } catch (error) {
+                        //@ts-ignore
+                        console.error('Error removing log from author\'s logs or deleting log document:', error.message, error.code);
+                    }
+                } else {
+                    console.log('Majority has not been reached yet.');
+                }
+            } else {
+                console.warn('Log document does not exist.');
+            }
+
             onClose('no'); // Notify parent of successful downvote
         } catch (error) {
-            console.error('Error adding downvote:', error);
+            console.error('Error adding downvote or checking majority:', error);
         }
     };
 
@@ -209,33 +247,30 @@ const VotingModal: React.FC<ModalComponentProps> = ({
             onRequestClose={() => onClose('not sure')}
         >
             <LinearGradient colors={['#8E9F8D', '#596558']} style={styles.modalOverlay}>
-                <View style={styles.modalContainer}>
+                {/* add width 90% and height 80% to the tailwind*/}
+                <Box className='flex flex-col justify-between items-center w-auto h-auto p-20 gap-10'>
                     {/* Profile Picture */}
-                    <Image source={profilePic} style={styles.profilePic} />
+                    
+                    <Image source={profilePic} className='rounded-full w-16 h-16'/>
 
                     {/* Question */}
-                    <Text style={styles.question}>{question}</Text>
+                    <Heading size='xl' className='font-bold text-center text-white'>{question}</Heading>
 
                     {/* Main Image */}
-                    <Image source={image ? { uri: image } : undefined} style={styles.mainImage} />
-
-
-
-
+                    <Box className='bg-primaryGreen p-2 rounded-3xl'>
+                    <Image source={image ? { uri: image } : undefined} className='object-contain rounded-3xl' width={300} height={400}/>
+                    </Box>
                     {/* Buttons */}
-                    <View style={styles.buttonContainer}>
+                    <View className='flex-row justify-between w-full'>
                         <TouchableOpacity onPress={handleDownvote}>
-                            <Image style={styles.buttons} source={ThumbsDown} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => onClose('not sure')}>
-                            <Image style={styles.buttons} source={Unsure} />
+                            <ThumbsDown width={50} height={50} />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleUpvote}>
                             {/* <TouchableOpacity onPress={() => console.log(votesNeeded)}> */}
-                            <Image style={styles.buttons} source={ThumbsUp} />
+                            <ThumbsUp width={50} height={50} />
                         </TouchableOpacity>
                     </View>
-                </View>
+                </Box>
             </LinearGradient>
         </Modal>
     );
@@ -246,45 +281,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    modalContainer: {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        width: '90%',
-        height: '80%',
-        padding: 20,
-        backgroundColor: 'white',
-        borderRadius: 20,
-        alignItems: 'center',
-    },
-    profilePic: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        marginBottom: 10,
-    },
-    question: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    buttons: {
-        width: 40,
-        height: 40,
-    },
-    mainImage: {
-        width: '100%',
-        height: 200,
-        borderRadius: 15,
-        marginBottom: 20,
-        objectFit: "contain"
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
     },
 });
 

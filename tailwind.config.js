@@ -22,6 +22,7 @@ module.exports = {
         secondaryGreen: '#BED3BD',
         baseGreen: '#4F584F',
         highlightGreen: '#ECFFEB',
+        slightGreen: '#788478',
         primary: {
           0: 'rgb(var(--color-primary-0)/<alpha-value>)',
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',
@@ -191,6 +192,7 @@ module.exports = {
         light: "SF-Pro-Rounded-Light",
         thin: "SF-Pro-Rounded-Thin",
         ultralight: "SF-Pro-Rounded-Ultralight",
+        italic: "cmunci",
       },
       fontWeight: {
         extrablack: '950',

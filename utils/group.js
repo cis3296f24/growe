@@ -32,6 +32,7 @@ export const createGroup = async (user, groupName, habit, frequency) => {
         garden: null,
         streak: 0,
         joinCode: joinCode,
+        plant: null,
     };
     const newGroupDoc = await addDoc(groupRef, groupDoc);
 
@@ -43,7 +44,8 @@ export const createGroup = async (user, groupName, habit, frequency) => {
 export const joinGroup = async (user, joinCode) => {
 
     // get user groups
-    const q = query(collection(db, 'groups'), where('joinCode', '==', joinCode));
+    // upper case
+    const q = query(collection(db, 'groups'), where('joinCode', '==', joinCode.toUpperCase()));
     const querySnapshot = await getDocs(q);
     if (querySnapshot.size === 0) {
         return false;

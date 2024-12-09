@@ -31,6 +31,8 @@ export function Auth() {
   const [isActive, setIsActive] = useState(false);
   const [fontsLoaded] = useFonts({
     "SF-Pro-Rounded-Regular": require("../assets/fonts/SF-Pro-Rounded-Regular.ttf"),
+    "SF-Pro-Rounded-Bold": require("../assets/fonts/SF-Pro-Rounded-Bold.ttf"),
+    "cmunci": require("../assets/fonts/cmunci.ttf"),
   });
 
   const handleSignUp = async () => {
@@ -139,11 +141,7 @@ export function Auth() {
     <View style={styles.container}>
       <Logo width={50} height={50} style={styles.icon} />
       {user ? (
-        <View style={styles.userContainer}>
-          <Text style={styles.welcomeText}>welcome {username ?? 'user'}.</Text>
-          <Button title="logout" onPress={handleLogout} />
-          <Button title="go to groups" onPress={() => router.push(`./group`)} />
-        </View>
+        <View style={styles.userContainer}/>
       ) : (
         <View>
           {step === 'login-email' && (

@@ -26,6 +26,7 @@ export const checkPendingVotes = async (user) => {
     for (const groupRef of groups) {
       const logsQuery = query(
         collection(db, "logs"),
+        where("author", "!=", userRef), // Exclude logs created by the user
         where("group", "==", groupRef) // Match logs belonging to the group
       );
       const logsSnapshot = await getDocs(logsQuery);
