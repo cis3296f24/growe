@@ -224,10 +224,15 @@ export async function generateVectorAndUploadImage(prompt, imageFilePath, svgFil
   try {
     // Step 0: If SVG already exists, return its download URL
     const svgRef = ref(storage, svgFilePath);
-    const svgExists = await svgRef.getDownloadURL();
-    if (svgExists) {
+    try {
+      const svgExists = await getDownloadURL(svgRef);
       console.log('SVG already exists:', svgExists);
       return svgExists;
+    } catch (error) {
+      if (error.code !== 'storage/object-not-found') {
+        throw error;
+      }
+      // If the SVG does not exist, continue with the process
     }
 
     // Step 1: Generate and upload the image, getting its download URL
