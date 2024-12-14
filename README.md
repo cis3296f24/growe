@@ -374,7 +374,7 @@ classDiagram
     +panHandler()
   }
 
-  class DaysofTheWeek {
+  class DaysOfTheWeek {
     +useState<object> dayLogCounts
     +useState<number> totalLogs
     +string[] days
